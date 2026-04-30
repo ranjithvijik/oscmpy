@@ -1,24 +1,14 @@
-"""
-OSCM Simulator - Complete Streamlit Application
-Operations and Supply Chain Management Simulator
-Based on Jacobs & Chase (2024). Operations and Supply Chain Management, 17th ed. McGraw-Hill.
-
-All 40 modules with theory, calculators, and practice problems.
-Organized by chapter order (Ch 1 → Ch 22).
-"""
-
 import streamlit as st
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.special import factorial
 import math
 
 # ============================================================
 # PAGE CONFIGURATION
 # ============================================================
 st.set_page_config(
-    page_title="OSCM Simulator v3.5",
+    page_title="OSCM Simulator v4.0 - Enhanced Edition",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -29,67 +19,83 @@ st.set_page_config(
 # ============================================================
 def init_theme():
     """Initialize theme in session state."""
-    if "theme" not in st.session_state:
-        st.session_state.theme = "light"
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = False
 
 def toggle_theme():
-    """Toggle between light and dark themes."""
-    st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+    """Toggle between dark and light mode."""
+    st.session_state.dark_mode = not st.session_state.dark_mode
 
 init_theme()
 
 # ============================================================
-# DYNAMIC CSS BASED ON THEME
+# DYNAMIC CSS STYLING (Merged Dark/Light Mode)
 # ============================================================
 def get_theme_css():
-    """Generate CSS based on current theme."""
-    is_dark = st.session_state.theme == "dark"
+    """Generate CSS based on current theme. Merged from v3.5 and v4.0"""
+    is_dark = st.session_state.dark_mode
     
     if is_dark:
-        # Dark Mode Colors
+        # Dark Mode Colors (Combining v3.5 robust vars with v4.0 improvements)
         bg_primary = "#0f172a"
         bg_secondary = "#1e293b"
         bg_card = "#1e293b"
         bg_input = "#334155"
-        text_primary = "#f1f5f9"
+        text_primary = "#e2e8f0"
         text_secondary = "#94a3b8"
         text_muted = "#64748b"
-        border_color = "#334155"
-        accent_primary = "#818cf8"
-        accent_secondary = "#a78bfa"
+        border_color = "#475569"
+        accent_primary = "#6366f1"
         success_bg = "#064e3b"
-        success_text = "#6ee7b7"
+        success_text = "#d1fae5"
         success_border = "#10b981"
-        warning_bg = "#78350f"
-        warning_text = "#fcd34d"
+        warning_bg = "#422006"
+        warning_text = "#fef3c7"
         warning_border = "#f59e0b"
         danger_bg = "#7f1d1d"
-        danger_text = "#fca5a5"
+        danger_text = "#fecaca"
         danger_border = "#ef4444"
         info_bg = "#1e3a5f"
         info_text = "#93c5fd"
         info_border = "#3b82f6"
         citation_bg = "#422006"
         citation_text = "#fef3c7"
-        citation_border = "#d97706"
-        equation_bg = "#1e3a5f"
-        equation_border = "#60a5fa"
+        citation_border = "#f59e0b"
+        equation_bg = "#0c4a6e"
+        equation_border = "#0ea5e9"
         equation_text = "#e0f2fe"
         theory_bg = "#1e293b"
         theory_border = "#818cf8"
-        insight_bg = "#064e3b"
-        insight_border = "#34d399"
-        insight_title = "#6ee7b7"
+        insight_bg = "linear-gradient(135deg, #064e3b 0%, #065f46 100%)"
+        insight_border = "#10b981"
+        insight_title = "#34d399"
         practice_bg = "#1e3a5f"
-        practice_border = "#60a5fa"
-        metric_highlight_bg = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+        practice_border = "#3b82f6"
+        metric_highlight_bg = "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)"
         metric_highlight_text = "#ffffff"
-        metric_normal_bg = "#334155"
+        metric_normal_bg = "linear-gradient(135deg, #1e293b 0%, #334155 100%)"
         metric_normal_text = "#f1f5f9"
         table_header_bg = "#334155"
         table_row_alt = "#1e293b"
         link_color = "#93c5fd"
         code_bg = "#0f172a"
+        
+        # New v4.0 components
+        textbook_bg = "#1e293b"
+        textbook_border = "#8b5cf6"
+        textbook_text = "#e2e8f0"
+        textbook_h4 = "#c4b5fd"
+        practice_prob_bg = "#1e293b"
+        practice_prob_border = "#6366f1"
+        practice_prob_text = "#e2e8f0"
+        practice_prob_h4 = "#a5b4fc"
+        solution_bg = "#064e3b"
+        solution_border = "#10b981"
+        solution_text = "#d1fae5"
+        hint_bg = "#422006"
+        hint_border = "#f59e0b"
+        hint_text = "#fef3c7"
+
     else:
         # Light Mode Colors
         bg_primary = "#ffffff"
@@ -101,7 +107,6 @@ def get_theme_css():
         text_muted = "#94a3b8"
         border_color = "#e2e8f0"
         accent_primary = "#6366f1"
-        accent_secondary = "#8b5cf6"
         success_bg = "#f0fdf4"
         success_text = "#166534"
         success_border = "#86efac"
@@ -115,406 +120,132 @@ def get_theme_css():
         info_text = "#1e40af"
         info_border = "#93c5fd"
         citation_bg = "#fefce8"
-        citation_text = "#854d0e"
+        citation_text = "#713f12"
         citation_border = "#eab308"
         equation_bg = "#f0f9ff"
         equation_border = "#bae6fd"
         equation_text = "#0c4a6e"
         theory_bg = "#f8fafc"
         theory_border = "#6366f1"
-        insight_bg = "#ecfdf5"
+        insight_bg = "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)"
         insight_border = "#6ee7b7"
         insight_title = "#047857"
-        practice_bg = "#eff6ff"
+        practice_bg = "#f0f7ff"
         practice_border = "#93c5fd"
         metric_highlight_bg = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
         metric_highlight_text = "#ffffff"
-        metric_normal_bg = "#f1f5f9"
+        metric_normal_bg = "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)"
         metric_normal_text = "#1e293b"
         table_header_bg = "#f1f5f9"
         table_row_alt = "#f8fafc"
         link_color = "#2563eb"
         code_bg = "#f1f5f9"
+
+        # New v4.0 components
+        textbook_bg = "#faf5ff"
+        textbook_border = "#8b5cf6"
+        textbook_text = "#1e293b"
+        textbook_h4 = "#6d28d9"
+        practice_prob_bg = "#fafafa"
+        practice_prob_border = "#6366f1"
+        practice_prob_text = "#1e293b"
+        practice_prob_h4 = "#4f46e5"
+        solution_bg = "#f0fdf4"
+        solution_border = "#86efac"
+        solution_text = "#166534"
+        hint_bg = "#fffbeb"
+        hint_border = "#fcd34d"
+        hint_text = "#92400e"
     
     return f"""
     <style>
         /* Global Styles */
-        .stApp {{
-            background-color: {bg_primary};
-            color: {text_primary};
-        }}
+        .stApp {{ background-color: {bg_primary}; color: {text_primary}; }}
         
         /* Main Header */
         .main-header {{
             background: {metric_highlight_bg};
-            padding: 1.5rem 2rem;
-            border-radius: 16px;
-            color: white;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem; border-radius: 12px; color: white;
+            margin-bottom: 1.5rem; border: 1px solid {accent_primary};
         }}
-        .main-header h1 {{
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: white !important;
-        }}
-        .main-header p {{
-            margin: 0.5rem 0 0 0;
-            opacity: 0.95;
-            color: white !important;
-        }}
+        .main-header h1 {{ margin: 0; font-size: 1.8rem; font-weight: 700; color: white !important; }}
+        .main-header p {{ margin: 0.5rem 0 0 0; opacity: 0.95; color: white !important; }}
         .chapter-badge {{
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
+            background: rgba(255,255,255,0.2); color: white;
+            padding: 0.25rem 0.75rem; border-radius: 6px;
+            font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem;
         }}
         
         /* Metric Cards */
         .metric-card {{
-            background: {metric_normal_bg};
-            border: 1px solid {border_color};
-            border-radius: 12px;
-            padding: 1.2rem;
-            text-align: center;
-            margin: 0.5rem 0;
+            background: {metric_normal_bg}; border: 1px solid {border_color};
+            border-radius: 12px; padding: 1.2rem; text-align: center; margin: 0.5rem 0;
+            color: {metric_normal_text};
         }}
         .metric-card.highlight {{
-            background: {metric_highlight_bg};
-            color: {metric_highlight_text};
-            border: none;
+            background: {metric_highlight_bg}; color: {metric_highlight_text}; border: 1px solid {accent_primary};
         }}
-        .metric-card.success {{
-            background: {success_bg};
-            border-color: {success_border};
-        }}
-        .metric-card.danger {{
-            background: {danger_bg};
-            border-color: {danger_border};
-        }}
-        .metric-value {{
-            font-size: 2rem;
-            font-weight: 700;
-            color: {text_primary};
-            line-height: 1.2;
-        }}
-        .metric-card.highlight .metric-value {{
-            color: white;
-        }}
-        .metric-card.success .metric-value {{
-            color: {success_text};
-        }}
-        .metric-card.danger .metric-value {{
-            color: {danger_text};
-        }}
-        .metric-label {{
-            font-size: 0.85rem;
-            color: {text_secondary};
-            margin-top: 0.4rem;
-        }}
-        .metric-card.highlight .metric-label {{
-            color: rgba(255,255,255,0.9);
-        }}
+        .metric-card.success {{ background: {success_bg}; border-color: {success_border}; color: {success_text}; }}
+        .metric-card.danger {{ background: {danger_bg}; border-color: {danger_border}; color: {danger_text}; }}
         
-        /* Theory Box */
-        .theory-box {{
-            background: {theory_bg};
-            border-left: 4px solid {theory_border};
-            padding: 1.2rem 1.5rem;
-            border-radius: 0 12px 12px 0;
-            margin: 1rem 0;
-            color: {text_primary};
-        }}
-        .theory-box h3 {{
-            color: {accent_primary};
-            margin-top: 0;
-        }}
+        .metric-value {{ font-size: 1.8rem; font-weight: 700; line-height: 1.2; }}
+        .metric-label {{ font-size: 0.85rem; opacity: 0.9; margin-top: 0.3rem; }}
         
-        /* Citation Box */
-        .citation-box {{
-            background: {citation_bg};
-            border-left: 4px solid {citation_border};
-            padding: 1.2rem 1.5rem;
-            border-radius: 0 12px 12px 0;
-            margin: 1rem 0;
-            font-style: italic;
-            color: {citation_text};
-        }}
-        .citation-source {{
-            display: block;
-            margin-top: 0.75rem;
-            font-style: normal;
-            font-weight: 600;
-            color: {citation_text};
-        }}
+        /* Educational Boxes */
+        .theory-box {{ background: {theory_bg}; border-left: 4px solid {theory_border}; padding: 1rem 1.2rem; border-radius: 0 8px 8px 0; margin: 1rem 0; }}
+        .citation-box {{ background: {citation_bg}; border-left: 4px solid {citation_border}; padding: 1rem 1.2rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-style: italic; color: {citation_text}; }}
+        .citation-source {{ display: block; margin-top: 0.5rem; font-style: normal; font-weight: 600; color: {citation_border}; }}
+        .equation-box {{ background: {equation_bg}; border: 1px solid {equation_border}; border-radius: 8px; padding: 1rem; margin: 0.8rem 0; text-align: center; color: {equation_text}; }}
+        .key-insight {{ background: {insight_bg}; border: 1px solid {insight_border}; border-radius: 8px; padding: 1rem; margin: 1rem 0; color: {success_text}; }}
+        .key-insight-title {{ font-weight: 700; color: {insight_title}; margin-bottom: 0.5rem; }}
+        .practice-box {{ background: {practice_bg}; border: 1px solid {practice_border}; border-radius: 8px; padding: 1rem; margin: 0.8rem 0; color: {info_text}; }}
         
-        /* Equation Box */
-        .equation-box {{
-            background: {equation_bg};
-            border: 1px solid {equation_border};
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin: 1rem 0;
-            text-align: center;
-        }}
-        .equation-label {{
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: {accent_primary};
-            margin-bottom: 0.5rem;
-        }}
-        .equation-description {{
-            font-size: 0.85rem;
-            color: {text_secondary};
-            margin-top: 0.75rem;
-            text-align: left;
-        }}
+        /* v4.0 New Components */
+        .textbook-content {{ background: {textbook_bg}; border-left: 4px solid {textbook_border}; padding: 1.2rem; border-radius: 0 8px 8px 0; margin: 1rem 0; color: {textbook_text}; }}
+        .textbook-content h4 {{ color: {textbook_h4}; margin-bottom: 0.8rem; }}
+        .practice-problem {{ background: {practice_prob_bg}; border: 2px solid {practice_prob_border}; border-radius: 12px; padding: 1.5rem; margin: 1rem 0; color: {practice_prob_text}; }}
+        .practice-problem h4 {{ color: {practice_prob_h4}; margin-bottom: 1rem; }}
+        .solution-box {{ background: {solution_bg}; border: 1px solid {solution_border}; border-radius: 8px; padding: 1rem; margin-top: 1rem; color: {solution_text}; }}
+        .hint-box {{ background: {hint_bg}; border: 1px solid {hint_border}; border-radius: 8px; padding: 0.8rem; margin: 0.5rem 0; color: {hint_text}; font-size: 0.9rem; }}
+        .formula-card {{ background: {theory_bg}; border: 2px solid {accent_primary}; border-radius: 10px; padding: 1rem; margin: 0.5rem 0; text-align: center; }}
+        .formula-title {{ color: {accent_primary}; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }}
         
-        /* Key Insight Box */
-        .key-insight {{
-            background: {insight_bg};
-            border: 1px solid {insight_border};
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin: 1rem 0;
-        }}
-        .key-insight-title {{
-            font-weight: 700;
-            color: {insight_title};
-            margin-bottom: 0.5rem;
-            font-size: 1rem;
-        }}
-        .key-insight-text {{
-            color: {text_primary};
-        }}
-        
-        /* Practice Box */
-        .practice-box {{
-            background: {practice_bg};
-            border: 1px solid {practice_border};
-            border-radius: 12px;
-            padding: 1.2rem;
-            margin: 1rem 0;
-        }}
-        .practice-badge {{
-            background: {accent_primary};
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }}
-        .practice-question {{
-            color: {text_primary};
-            font-weight: 500;
-            margin: 0.75rem 0;
-        }}
-        
+        /* Concept Cards & Solution Steps (v3.5 components retained) */
+        .concept-card {{ background: {bg_card}; border: 1px solid {border_color}; border-radius: 12px; padding: 1rem; margin: 0.5rem 0; transition: all 0.2s ease; }}
+        .concept-card:hover {{ border-color: {accent_primary}; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15); }}
+        .concept-icon {{ font-size: 1.5rem; margin-bottom: 0.5rem; }}
+        .concept-title {{ font-weight: 600; color: {text_primary}; margin-bottom: 0.3rem; }}
+        .concept-desc {{ font-size: 0.85rem; color: {text_secondary}; }}
+        .solution-step {{ background: {bg_secondary}; border-left: 3px solid {accent_primary}; padding: 0.75rem 1rem; margin: 0.5rem 0; border-radius: 0 8px 8px 0; }}
+        .step-number {{ background: {accent_primary}; color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem; }}
+
         /* Alert Boxes */
-        .alert {{
-            padding: 1rem 1.2rem;
-            border-radius: 10px;
-            margin: 0.75rem 0;
-        }}
-        .alert-success {{
-            background: {success_bg};
-            border: 1px solid {success_border};
-            color: {success_text};
-        }}
-        .alert-warning {{
-            background: {warning_bg};
-            border: 1px solid {warning_border};
-            color: {warning_text};
-        }}
-        .alert-danger {{
-            background: {danger_bg};
-            border: 1px solid {danger_border};
-            color: {danger_text};
-        }}
-        .alert-info {{
-            background: {info_bg};
-            border: 1px solid {info_border};
-            color: {info_text};
-        }}
+        .alert {{ padding: 1rem 1.2rem; border-radius: 10px; margin: 0.75rem 0; }}
+        .alert-success {{ background: {success_bg}; border: 1px solid {success_border}; color: {success_text}; }}
+        .alert-warning {{ background: {warning_bg}; border: 1px solid {warning_border}; color: {warning_text}; }}
+        .alert-danger {{ background: {danger_bg}; border: 1px solid {danger_border}; color: {danger_text}; }}
+        .alert-info {{ background: {info_bg}; border: 1px solid {info_border}; color: {info_text}; }}
         
         /* Tables */
-        .styled-table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-        }}
-        .styled-table th {{
-            background: {table_header_bg};
-            color: {text_primary};
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 2px solid {border_color};
-        }}
-        .styled-table td {{
-            padding: 0.75rem;
-            border-bottom: 1px solid {border_color};
-            color: {text_primary};
-        }}
-        .styled-table tr:nth-child(even) {{
-            background: {table_row_alt};
-        }}
+        .styled-table {{ width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }}
+        .styled-table th {{ background: {table_header_bg}; color: {text_primary}; padding: 0.75rem; text-align: left; border-bottom: 2px solid {border_color}; }}
+        .styled-table td {{ padding: 0.75rem; border-bottom: 1px solid {border_color}; color: {text_primary}; }}
+        .styled-table tr:nth-child(even) {{ background: {table_row_alt}; }}
         
         /* Sidebar Styling */
-        section[data-testid="stSidebar"] {{
-            background-color: {bg_secondary};
-        }}
-        section[data-testid="stSidebar"] .stMarkdown {{
-            color: {text_primary};
-        }}
+        section[data-testid="stSidebar"] {{ background-color: {bg_secondary}; color: {text_primary}; }}
+        section[data-testid="stSidebar"] .stMarkdown {{ color: {text_primary}; }}
         
-        /* Theme Toggle Button */
+        /* Inputs & Misc */
+        .stTextInput input, .stNumberInput input, .stSelectbox select {{ background: {bg_input}; color: {text_primary}; border-color: {border_color}; }}
+        .streamlit-expanderHeader {{ background: {bg_secondary}; color: {text_primary}; border-radius: 8px; }}
+        .stDataFrame {{ background-color: {bg_card}; }}
+        div[data-testid="stMetricValue"] {{ font-size: 1.5rem; color: {text_primary}; }}
+        
         .theme-toggle {{
-            position: fixed;
-            top: 0.75rem;
-            right: 1rem;
-            z-index: 9999;
-            background: {bg_card};
-            border: 1px solid {border_color};
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.3rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-        }}
-        .theme-toggle:hover {{
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }}
-        
-        /* Concept Cards */
-        .concept-card {{
-            background: {bg_card};
-            border: 1px solid {border_color};
-            border-radius: 12px;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            transition: all 0.2s ease;
-        }}
-        .concept-card:hover {{
-            border-color: {accent_primary};
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-        }}
-        .concept-icon {{
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }}
-        .concept-title {{
-            font-weight: 600;
-            color: {text_primary};
-            margin-bottom: 0.3rem;
-        }}
-        .concept-desc {{
-            font-size: 0.85rem;
-            color: {text_secondary};
-        }}
-        
-        /* Step-by-Step Solution */
-        .solution-step {{
-            background: {bg_secondary};
-            border-left: 3px solid {accent_primary};
-            padding: 0.75rem 1rem;
-            margin: 0.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }}
-        .step-number {{
-            background: {accent_primary};
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }}
-        
-        /* Formula Reference Card */
-        .formula-card {{
-            background: {equation_bg};
-            border: 1px solid {equation_border};
-            border-radius: 12px;
-            padding: 1rem;
-            margin: 0.5rem 0;
-        }}
-        .formula-title {{
-            font-weight: 600;
-            color: {accent_primary};
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }}
-        
-        /* Expander styling */
-        .streamlit-expanderHeader {{
-            background: {bg_secondary};
-            color: {text_primary};
-            border-radius: 8px;
-        }}
-        
-        /* Input fields */
-        .stTextInput input, .stNumberInput input, .stSelectbox select {{
-            background: {bg_input};
-            color: {text_primary};
-            border-color: {border_color};
-        }}
-        
-        /* Tabs */
-        .stTabs [data-baseweb="tab-list"] {{
-            gap: 8px;
-        }}
-        .stTabs [data-baseweb="tab"] {{
-            background: {bg_secondary};
-            color: {text_primary};
-            border-radius: 8px 8px 0 0;
-        }}
-        .stTabs [aria-selected="true"] {{
-            background: {accent_primary};
-            color: white;
-        }}
-        
-        /* Code blocks */
-        code {{
-            background: {code_bg};
-            color: {text_primary};
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-        }}
-        
-        /* Links */
-        a {{
-            color: {link_color};
-        }}
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {{
-            width: 8px;
-            height: 8px;
-        }}
-        ::-webkit-scrollbar-track {{
-            background: {bg_secondary};
-        }}
-        ::-webkit-scrollbar-thumb {{
-            background: {border_color};
-            border-radius: 4px;
-        }}
-        ::-webkit-scrollbar-thumb:hover {{
-            background: {text_muted};
+            background: {metric_normal_bg}; border: 1px solid {accent_primary};
+            border-radius: 8px; padding: 0.5rem 1rem; color: {accent_primary};
+            cursor: pointer; text-align: center; margin: 0.5rem 0;
         }}
     </style>
     """
@@ -523,7 +254,7 @@ def get_theme_css():
 st.markdown(get_theme_css(), unsafe_allow_html=True)
 
 # ============================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (Combined from v3.5 and v4.0)
 # ============================================================
 
 def display_header(icon, chapter, title, subtitle):
@@ -557,8 +288,17 @@ def display_key_insight(title, content):
     </div>
     """, unsafe_allow_html=True)
 
+def display_textbook_content(title, content):
+    """Display enhanced textbook content (v4.0)."""
+    st.markdown(f"""
+    <div class="textbook-content">
+        <h4>📖 {title}</h4>
+        <div>{content}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def display_equation(label, latex_eq, description=""):
-    """Display equation in styled box."""
+    """Display equation in styled box (v3.5)."""
     st.markdown(f"""
     <div class="equation-box">
         <div class="equation-label">{label}</div>
@@ -566,11 +306,25 @@ def display_equation(label, latex_eq, description=""):
     """, unsafe_allow_html=True)
     st.latex(latex_eq)
     if description:
-        st.markdown(f"<p style='font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;'>{description}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 0.85rem; opacity: 0.9; margin-top: 0.5rem;'>{description}</p>", unsafe_allow_html=True)
+
+def display_formula_card(title, formula_latex):
+    """Display a formula in a styled card (v4.0)."""
+    st.markdown(f"""
+    <div class="formula-card">
+        <div class="formula-title">{title}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.latex(formula_latex)
 
 def display_metric_card(value, label, card_type="normal"):
     """Display a metric card."""
+    # Maps v3.5 card_type ("normal", "highlight", "success", "danger") into classes
     css_class = f"metric-card {card_type}" if card_type != "normal" else "metric-card"
+    # To support v4.0's True/False `highlight` argument without breaking v3.5 string argument:
+    if highlight := (card_type == True or card_type == "highlight"):
+        css_class = "metric-card highlight"
+        
     st.markdown(f"""
     <div class="{css_class}">
         <div class="metric-value">{value}</div>
@@ -579,7 +333,7 @@ def display_metric_card(value, label, card_type="normal"):
     """, unsafe_allow_html=True)
 
 def display_concept_card(icon, title, description):
-    """Display a concept card."""
+    """Display a concept card (v3.5)."""
     st.markdown(f"""
     <div class="concept-card">
         <div class="concept-icon">{icon}</div>
@@ -589,7 +343,7 @@ def display_concept_card(icon, title, description):
     """, unsafe_allow_html=True)
 
 def display_solution_step(step_num, content):
-    """Display a solution step."""
+    """Display a solution step (v3.5)."""
     st.markdown(f"""
     <div class="solution-step">
         <span class="step-number">{step_num}</span>
@@ -598,8 +352,34 @@ def display_solution_step(step_num, content):
     """, unsafe_allow_html=True)
 
 def display_alert(content, alert_type="info"):
-    """Display an alert box."""
+    """Display an alert box (v3.5)."""
     st.markdown(f'<div class="alert alert-{alert_type}">{content}</div>', unsafe_allow_html=True)
+
+def display_practice_problem(problem_num, difficulty, problem_text):
+    """Display a practice problem with difficulty indicator (v4.0)."""
+    diff_colors = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
+    st.markdown(f"""
+    <div class="practice-problem">
+        <h4>Problem {problem_num} {diff_colors.get(difficulty, "⚪")} {difficulty}</h4>
+        <p>{problem_text}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def display_hint(hint_text):
+    """Display a hint box (v4.0)."""
+    st.markdown(f"""
+    <div class="hint-box">
+        💡 <strong>Hint:</strong> {hint_text}
+    </div>
+    """, unsafe_allow_html=True)
+
+def display_solution(solution_text):
+    """Display solution box (v4.0)."""
+    st.markdown(f"""
+    <div class="solution-box">
+        ✅ <strong>Solution:</strong><br>{solution_text}
+    </div>
+    """, unsafe_allow_html=True)
 
 def check_answer(user_answer, correct_answer, tolerance=0.05):
     """Check if user answer is within tolerance of correct answer."""
@@ -631,18 +411,6 @@ def format_number(value, decimals=2):
     return f"{value:,.{decimals}f}"
 
 # ============================================================
-# THEME TOGGLE IN SIDEBAR
-# ============================================================
-def render_theme_toggle():
-    """Render theme toggle button."""
-    theme_icon = "🌙" if st.session_state.theme == "light" else "☀️"
-    theme_text = "Dark Mode" if st.session_state.theme == "light" else "Light Mode"
-    
-    if st.sidebar.button(f"{theme_icon} {theme_text}", key="theme_toggle", use_container_width=True):
-        toggle_theme()
-        st.rerun()
-
-# ============================================================
 # Z-TABLE DATA
 # ============================================================
 Z_TABLE = {}
@@ -653,126 +421,101 @@ for z_int in range(-30, 40):
         Z_TABLE[round(z, 2)] = round(normal_cdf(z), 4)
 
 # ============================================================
-# MODULE 1: SUPPLY CHAIN RISK (Chapter 1)
+# MODULE 1: SUPPLY CHAIN RISK (Chapter 1) - MERGED
 # ============================================================
 def module_risk():
-    display_header("🛡️", "Chapter 1", "Supply Chain Risk Assessment", 
-                   "Probability and Impact Matrix (Exhibit 1.4)")
+    display_header("🛡️", "Chapter 1", "Supply Chain Risk Assessment", "Probability and Impact Matrix")
     
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
+    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice"])
     
     with tab1:
-        st.markdown("### Supply Chain Risk Management")
+        st.markdown("### Risk Identification & Assessment")
+        
+        display_textbook_content(
+            "Operations and Supply Chain Management Defined",
+            """OSCM is defined as the design, operation, and improvement of the systems that create 
+            and deliver the firm's primary products and services. Understanding OSCM is critical 
+            regardless of your business major - finance, marketing, or accounting - because all 
+            business functions are interconnected through operations and supply chain processes."""
+        )
         
         st.write("""
         **Supply chain risk** is the likelihood of a disruption that would impact the ability of a 
-        company to continuously supply products or services. Effective risk management involves 
-        systematic identification, assessment, and mitigation of potential threats.
+        company to continuously supply products or services. Risk management involves three steps:
+        1. **Identification** - Recognize potential risk events
+        2. **Assessment** - Evaluate probability and impact
+        3. **Mitigation** - Develop strategies to reduce risk
         """)
         
         display_citation(
-            "Supply chain risk management involves the identification of potential sources of risk "
-            "and implementation of appropriate strategies through a coordinated approach among "
-            "supply chain members to reduce supply chain vulnerability.",
+            "Supply chain risk management involves the identification of potential sources of risk and implementation of appropriate strategies through a coordinated approach among supply chain members to reduce supply chain vulnerability.",
             "Jacobs & Chase (2024, p. 12)"
         )
         
-        st.markdown("#### Risk Assessment Framework")
-        st.latex(r"\text{Risk Score} = \text{Probability} \times \text{Impact}")
+        st.markdown("### Core Formula")
+        display_formula_card("Risk Score Calculation", r"\text{Risk Score} = \text{Probability} \times \text{Impact}")
         
         st.write("""
-        Each risk event is scored on a scale (typically 1-5 or 1-10). Events with high scores 
-        require immediate mitigation strategies such as:
-        - **Redundancy** - Multiple suppliers, backup facilities
-        - **Insurance** - Financial protection against losses
-        - **Process Changes** - Redesigning vulnerable processes
-        - **Inventory Buffers** - Safety stock for critical items
+        Each risk event is scored on a scale (typically 1-5). Events with high scores require 
+        immediate mitigation strategies such as redundancy, insurance, or process changes.
         """)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("⚠️", "Risk Identification", 
-                "Systematically identify all potential sources of supply chain disruption")
-        with col2:
-            display_concept_card("📊", "Risk Assessment", 
-                "Evaluate probability and impact of each identified risk")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("🛡️", "Risk Mitigation", 
-                "Develop and implement strategies to reduce risk exposure")
-        with col2:
-            display_concept_card("📈", "Risk Monitoring", 
-                "Continuously track risk indicators and update assessments")
-        
-        display_key_insight(
-            "What-If Analysis",
-            "Some companies call this 'what if' analysis. Answering these 'what if' questions can be "
-            "useful for understanding how sensitive an analysis is to cost and profit assumptions. "
-            "Consider scenarios like: 25% increase in development time, 25% change in sales volume, "
-            "$1 change in price or cost. (Jacobs & Chase, 2024, p. 60)"
+        display_textbook_content(
+            "Process Analysis - A Basic Skill",
+            """Process analysis is a basic skill needed to understand how a business operates. 
+            Great insight is obtained by drawing a simple flowchart showing the flow of materials 
+            or information through an enterprise. Often, 90 percent or more of the time required 
+            to serve a customer is spent just waiting. Hence, merely eliminating the waiting time 
+            can dramatically improve performance."""
         )
         
-        st.markdown("#### Common Supply Chain Risk Categories")
+        display_key_insight(
+            "Risk Categories",
+            "Common supply chain risks include: supplier failure, natural disasters, quality issues, "
+            "logistics delays, demand volatility, geopolitical events, and cybersecurity threats."
+        )
         
-        risk_categories = pd.DataFrame({
-            "Category": ["Operational", "Financial", "Strategic", "Hazard", "Demand", "Supply"],
-            "Examples": [
-                "Equipment failure, quality issues, capacity constraints",
-                "Currency fluctuation, supplier bankruptcy, credit risk",
-                "Competitor actions, market changes, technology shifts",
-                "Natural disasters, accidents, terrorism",
-                "Forecast errors, demand volatility, bullwhip effect",
-                "Supplier failure, logistics disruption, material shortage"
-            ],
-            "Mitigation": [
-                "Preventive maintenance, quality systems, flexible capacity",
-                "Hedging, supplier financial monitoring, diversification",
-                "Market intelligence, scenario planning, agility",
-                "Insurance, business continuity planning, geographic spread",
-                "Demand sensing, collaborative forecasting, postponement",
-                "Multi-sourcing, safety stock, supplier development"
-            ]
-        })
-        st.dataframe(risk_categories, use_container_width=True, hide_index=True)
+        st.markdown("### The Three Elements of OSCM Integration")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            display_concept_card("📊", "Strategy", "Competitive positioning and service vision")
+        with col2:
+            display_concept_card("⚙️", "Processes", "Operations that create and deliver value")
+        with col3:
+            display_concept_card("👥", "People", "Workforce skills and organizational culture")
     
     with tab2:
         st.markdown("### Risk Assessment Matrix Calculator")
-        st.write("Score each risk event from 1 (Low) to 5 (High) for both Probability and Impact")
+        st.write("Score events from 1 (Low) to 5 (High) for both Probability and Impact")
         
         col1, col2 = st.columns([1, 1])
         
         with col1:
             st.markdown("#### Risk Event Scoring")
-            
+            risks = []
             risk_names = [
                 "Supplier Failure (Financial)",
                 "Natural Disaster / Weather",
                 "Quality Issue / Product Recall",
                 "Logistics / Customs Delay",
                 "Demand Volatility",
-                "Cybersecurity Breach",
-                "Regulatory Changes",
-                "Key Personnel Loss"
+                "Cybersecurity Breach"
             ]
             
-            risks = []
             for i, name in enumerate(risk_names):
                 with st.expander(f"📌 {name}", expanded=(i < 3)):
                     c1, c2 = st.columns(2)
                     with c1:
-                        prob = st.slider(f"Probability", 1, 5, 3, key=f"risk_p_{i}",
-                                        help="1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain")
+                        prob = st.slider(f"Probability", 1, 5, 3, key=f"risk_p_{i}")
                     with c2:
-                        impact = st.slider(f"Impact", 1, 5, 4, key=f"risk_i_{i}",
-                                          help="1=Negligible, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic")
+                        impact = st.slider(f"Impact", 1, 5, 4, key=f"risk_i_{i}")
                     risks.append({"name": name, "prob": prob, "impact": impact, "score": prob * impact})
         
         with col2:
             st.markdown("#### Risk Analysis Results")
-            
             df = pd.DataFrame(risks)
             df.columns = ["Risk Event", "Probability", "Impact", "Risk Score"]
+            # Sorting logic retained from v3.5
             df = df.sort_values("Risk Score", ascending=False)
             st.dataframe(df, use_container_width=True, hide_index=True)
             
@@ -787,163 +530,212 @@ def module_risk():
                 display_metric_card(f"{risk_percentage:.0f}%", "Risk Exposure Level", 
                                    "danger" if risk_percentage > 60 else "success" if risk_percentage < 40 else "normal")
             
-            # Risk Priority Classification
-            st.markdown("#### Risk Priority Classification")
+            st.markdown("### Risk Priority Matrix")
             high_risks = [r for r in risks if r["score"] >= 15]
             med_risks = [r for r in risks if 8 <= r["score"] < 15]
             low_risks = [r for r in risks if r["score"] < 8]
             
             if high_risks:
-                display_alert(f"🔴 <strong>HIGH PRIORITY ({len(high_risks)}):</strong> {', '.join([r['name'] for r in high_risks])}<br><em>Immediate action required</em>", "danger")
+                st.error(f"🔴 **HIGH PRIORITY ({len(high_risks)}):** {', '.join([r['name'] for r in high_risks])}\n*Immediate action required*")
             if med_risks:
-                display_alert(f"🟡 <strong>MEDIUM PRIORITY ({len(med_risks)}):</strong> {', '.join([r['name'] for r in med_risks])}<br><em>Monitor closely and develop contingency plans</em>", "warning")
+                st.warning(f"🟡 **MEDIUM PRIORITY ({len(med_risks)}):** {', '.join([r['name'] for r in med_risks])}\n*Monitor closely and develop contingency plans*")
             if low_risks:
-                display_alert(f"🟢 <strong>LOW PRIORITY ({len(low_risks)}):</strong> {', '.join([r['name'] for r in low_risks])}<br><em>Periodic review sufficient</em>", "success")
+                st.success(f"🟢 **LOW PRIORITY ({len(low_risks)}):** {', '.join([r['name'] for r in low_risks])}\n*Periodic review sufficient*")
     
     with tab3:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        # Problem 1
-        with st.expander("📝 Problem 1: Triple Bottom Line", expanded=True):
-            st.markdown("""
-            **Question:** What is the "Triple Bottom Line" and why is it important for modern supply chain management?
-            """)
+        # Problem 1 (v3.5 / v4.0)
+        with st.expander("🟢 Problem 1: Triple Bottom Line (Easy)"):
+            display_practice_problem(1, "Easy", 
+                "What are the three components of the Triple Bottom Line, and why is each important for sustainable business operations?")
             
-            user_answer_1 = st.text_area("Your Answer:", key="risk_p1_ans", height=100,
-                                         placeholder="Enter your answer here...")
+            show_hint1 = st.checkbox("Show Hint", key="risk_hint1")
+            if show_hint1:
+                display_hint("Think about the three P's: People, Profit, and Planet.")
             
-            if st.button("Check Answer", key="risk_p1_btn"):
-                st.markdown("---")
-                st.markdown("#### ✅ Model Answer:")
-                display_solution_step(1, "<strong>Definition:</strong> The Triple Bottom Line (TBL) evaluates a firm against three criteria:")
-                display_solution_step(2, "<strong>Social (People):</strong> Impact on employees, communities, and society - fair labor practices, community engagement, human rights")
-                display_solution_step(3, "<strong>Economic (Profit):</strong> Financial performance and long-term economic sustainability - not just short-term profits")
-                display_solution_step(4, "<strong>Environmental (Planet):</strong> Ecological footprint and environmental sustainability - carbon emissions, waste reduction, resource conservation")
-                
-                display_key_insight("Why It Matters",
-                    "Modern consumers and investors increasingly demand that companies demonstrate responsibility "
-                    "across all three dimensions. Supply chains that ignore social or environmental factors face "
-                    "reputational risks, regulatory penalties, and loss of market share.")
+            if st.button("Show Complete Solution", key="risk_q1"):
+                display_solution("""
+                <strong>The Triple Bottom Line (3BL)</strong> evaluates a firm against three criteria:<br><br>
+                <strong>1. Social (People)</strong><br>
+                • Impact on employees, communities, and society<br>
+                • Fair labor practices, community engagement<br>
+                • Employee well-being and development<br><br>
+                <strong>2. Economic (Profit)</strong><br>
+                • Financial performance and sustainability<br>
+                • Long-term profitability, not just short-term gains<br>
+                • Value creation for stakeholders<br><br>
+                <strong>3. Environmental (Planet)</strong><br>
+                • Ecological footprint and sustainability<br>
+                • Resource conservation, emissions reduction<br>
+                • Sustainable sourcing and waste management<br><br>
+                <em>Key Insight:</em> Companies that balance all three dimensions tend to have 
+                more resilient supply chains and better long-term performance.
+                """)
         
-        # Problem 2
-        with st.expander("📝 Problem 2: Efficiency vs. Effectiveness"):
-            st.markdown("""
-            **Question:** Distinguish between "Efficiency" and "Effectiveness" in operations management. 
-            Provide an example where a company might be efficient but not effective.
-            """)
+        # Problem 2 (v3.5 / v4.0)
+        with st.expander("🟡 Problem 2: Efficiency vs. Effectiveness (Medium)"):
+            display_practice_problem(2, "Medium",
+                "A manufacturing company reduced its production costs by 15% but customer complaints increased by 25%. "
+                "Analyze this situation using the concepts of efficiency and effectiveness. What went wrong?")
             
-            if st.button("Show Solution", key="risk_p2_btn"):
-                st.markdown("#### ✅ Solution:")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("**Efficiency**")
-                    st.write("Doing something at the **lowest possible cost** (doing things right)")
-                    st.write("*Focus: Resource utilization*")
-                with col2:
-                    st.markdown("**Effectiveness**")
-                    st.write("Doing the **right things** to create the most value for the customer")
-                    st.write("*Focus: Goal achievement*")
-                
-                display_alert(
-                    "<strong>Example:</strong> A factory produces widgets at the lowest cost per unit (efficient), "
-                    "but the widgets don't meet customer quality expectations (not effective). The company saves "
-                    "money on production but loses customers due to poor quality.",
-                    "info"
-                )
+            show_hint2 = st.checkbox("Show Hint", key="risk_hint2")
+            if show_hint2:
+                display_hint("Efficiency = doing things right (low cost). Effectiveness = doing the right things (customer value).")
+            
+            if st.button("Show Complete Solution", key="risk_q2"):
+                display_solution("""
+                <strong>Analysis:</strong><br><br>
+                <strong>Efficiency (Doing things right):</strong><br>
+                • The company improved efficiency by reducing costs 15%<br>
+                • This suggests process optimization or cost-cutting measures<br><br>
+                <strong>Effectiveness (Doing the right things):</strong><br>
+                • Customer complaints increased 25% - effectiveness decreased<br>
+                • The cost cuts likely compromised quality or service<br><br>
+                <strong>What Went Wrong:</strong><br>
+                • The company optimized for efficiency at the expense of effectiveness<br>
+                • Cost reductions may have affected: material quality, inspection processes, 
+                  customer service staffing, or delivery times<br>
+                • This is a classic trade-off failure<br><br>
+                <strong>Recommendation:</strong><br>
+                • Balance both metrics - find cost savings that don't impact customer value<br>
+                • Use customer feedback to identify which cost cuts caused problems<br>
+                • Remember: A highly efficient process that produces the wrong output is worthless
+                """)
         
-        # Problem 3
-        with st.expander("📝 Problem 3: Risk Score Calculation"):
-            st.markdown("""
-            **Question:** A company identifies the following risks:
-            - Supplier bankruptcy: Probability = 2, Impact = 5
-            - Equipment failure: Probability = 4, Impact = 3
-            - Demand surge: Probability = 3, Impact = 4
+        # Problem 3 (v4.0)
+        with st.expander("🔴 Problem 3: Risk Quantification (Hard)"):
+            display_practice_problem(3, "Hard",
+                """A company has identified three major supply chain risks:
+                • Risk A: Probability = 0.15, Impact = $2,000,000
+                • Risk B: Probability = 0.30, Impact = $500,000
+                • Risk C: Probability = 0.05, Impact = $10,000,000
+                
+                Calculate the Expected Monetary Value (EMV) for each risk and determine which risk 
+                should receive the highest mitigation priority. Also calculate the total risk exposure.""")
             
-            Calculate the risk score for each and determine which should be addressed first.
-            """)
-            
+            st.markdown("#### Your Calculations:")
             col1, col2, col3 = st.columns(3)
             with col1:
-                ans_1 = st.number_input("Supplier bankruptcy score:", key="risk_p3_1")
+                user_emv_a = st.number_input("EMV Risk A ($)", value=0, key="risk_emv_a")
             with col2:
-                ans_2 = st.number_input("Equipment failure score:", key="risk_p3_2")
+                user_emv_b = st.number_input("EMV Risk B ($)", value=0, key="risk_emv_b")
             with col3:
-                ans_3 = st.number_input("Demand surge score:", key="risk_p3_3")
+                user_emv_c = st.number_input("EMV Risk C ($)", value=0, key="risk_emv_c")
             
-            if st.button("Check Answers", key="risk_p3_btn"):
-                correct_1, correct_2, correct_3 = 10, 12, 12
+            user_total = st.number_input("Total Risk Exposure ($)", value=0, key="risk_total")
+            user_priority = st.selectbox("Highest Priority Risk", ["Select...", "Risk A", "Risk B", "Risk C"], key="risk_priority")
+            
+            if st.button("Check My Answers", key="risk_q3_check"):
+                correct_a = 0.15 * 2000000
+                correct_b = 0.30 * 500000
+                correct_c = 0.05 * 10000000
+                correct_total = correct_a + correct_b + correct_c
                 
                 results = []
-                if check_answer(ans_1, correct_1): results.append("✅ Supplier bankruptcy correct")
-                else: results.append(f"❌ Supplier bankruptcy: 2 × 5 = {correct_1}")
+                if check_answer(user_emv_a, correct_a): results.append("✅ EMV A correct")
+                else: results.append(f"❌ EMV A: Should be ${correct_a:,.0f}")
                 
-                if check_answer(ans_2, correct_2): results.append("✅ Equipment failure correct")
-                else: results.append(f"❌ Equipment failure: 4 × 3 = {correct_2}")
+                if check_answer(user_emv_b, correct_b): results.append("✅ EMV B correct")
+                else: results.append(f"❌ EMV B: Should be ${correct_b:,.0f}")
                 
-                if check_answer(ans_3, correct_3): results.append("✅ Demand surge correct")
-                else: results.append(f"❌ Demand surge: 3 × 4 = {correct_3}")
+                if check_answer(user_emv_c, correct_c): results.append("✅ EMV C correct")
+                else: results.append(f"❌ EMV C: Should be ${correct_c:,.0f}")
+                
+                if check_answer(user_total, correct_total): results.append("✅ Total correct")
+                else: results.append(f"❌ Total: Should be ${correct_total:,.0f}")
+                
+                max_emv = max(correct_a, correct_b, correct_c)
+                correct_priority = "Risk C" if max_emv == correct_c else "Risk A" if max_emv == correct_a else "Risk B"
+                
+                if user_priority == correct_priority: results.append(f"✅ Priority correct: {correct_priority}")
+                else: results.append(f"❌ Priority: Should be {correct_priority}")
                 
                 for r in results:
                     st.write(r)
-                
-                display_alert(
-                    "<strong>Priority:</strong> Equipment failure and Demand surge (both score 12) should be "
-                    "addressed first, followed by Supplier bankruptcy (score 10). However, the high impact (5) "
-                    "of supplier bankruptcy means it may warrant special attention despite lower probability.",
-                    "info"
-                )
+            
+            if st.button("Show Complete Solution", key="risk_q3"):
+                display_solution(f"""
+                <strong>Step 1: Calculate EMV for each risk</strong><br>
+                EMV = Probability × Impact<br><br>
+                • EMV(A) = 0.15 × $2,000,000 = <strong>${0.15*2000000:,.0f}</strong><br>
+                • EMV(B) = 0.30 × $500,000 = <strong>${0.30*500000:,.0f}</strong><br>
+                • EMV(C) = 0.05 × $10,000,000 = <strong>${0.05*10000000:,.0f}</strong><br><br>
+                <strong>Step 2: Total Risk Exposure</strong><br>
+                Total = $300,000 + $150,000 + $500,000 = <strong>$950,000</strong><br><br>
+                <strong>Step 3: Priority Ranking</strong><br>
+                1. Risk C ($500,000 EMV) - Highest priority<br>
+                2. Risk A ($300,000 EMV)<br>
+                3. Risk B ($150,000 EMV)<br><br>
+                <strong>Key Insight:</strong> Even though Risk C has the lowest probability (5%), 
+                its high impact makes it the highest priority.
+                """)
         
-        # Problem 4
-        with st.expander("📝 Problem 4: What-If Sensitivity Analysis"):
-            st.markdown("""
-            **Question:** Based on the textbook's guidance on sensitivity analysis, explain what happens 
+        # Problem 4 (v4.0)
+        with st.expander("🟡 Problem 4: Straddling Strategy (Medium)"):
+            display_practice_problem(4, "Medium",
+                "What is 'Straddling' in competitive strategy? Provide an example of a company that failed due to straddling.")
+            
+            if st.button("Show Complete Solution", key="risk_q4"):
+                display_solution("""
+                <strong>Straddling Definition:</strong><br>
+                Straddling occurs when a company seeks to match the benefits of a successful 
+                competitive position while maintaining its existing position. This often leads 
+                to failure due to conflicting processes and trade-offs.<br><br>
+                <strong>Why Straddling Fails:</strong><br>
+                • Conflicting operational requirements<br>
+                • Diluted brand positioning<br>
+                • Increased complexity without clear benefits<br>
+                • "Stuck in the middle" - neither low-cost nor differentiated<br><br>
+                <strong>Classic Example:</strong><br>
+                Continental Airlines tried to compete with Southwest Airlines by creating 
+                "Continental Lite" - a low-cost subsidiary. The result:<br>
+                • Confused customers about the brand<br>
+                • Operational conflicts between full-service and low-cost models<br>
+                • Neither service excelled<br>
+                • Eventually abandoned the strategy<br><br>
+                <strong>Lesson:</strong> Companies must make clear strategic choices and accept 
+                the trade-offs that come with their chosen position.
+                """)
+
+        # Problem 5 (v3.5 - Restored to prevent deletion)
+        with st.expander("🟡 Problem 5: What-If Sensitivity Analysis (Medium)"):
+            display_practice_problem(5, "Medium",
+                """Based on the textbook's guidance on sensitivity analysis, explain what happens 
             to project profitability if:
             1. Development time increases by 25%
             2. Sales volume decreases by 25%
-            3. Product cost increases by $1 per unit
-            """)
+            3. Product cost increases by $1 per unit""")
             
-            if st.button("Show Analysis", key="risk_p4_btn"):
+            if st.button("Show Analysis", key="risk_q5"):
                 st.markdown("#### ✅ Sensitivity Analysis:")
-                
                 display_solution_step(1, 
                     "<strong>25% increase in development time:</strong> Delays production ramp-up, marketing efforts, "
                     "and product sales. This pushes revenue further into the future, reducing its present value. "
                     "Also increases development costs and may allow competitors to enter first.")
-                
                 display_solution_step(2,
                     "<strong>25% decrease in sales volume:</strong> Directly reduces revenue while fixed costs remain "
                     "constant. This can turn a profitable project into a loss. The impact is magnified by operating "
                     "leverage (high fixed costs relative to variable costs).")
-                
                 display_solution_step(3,
                     "<strong>$1 increase in product cost:</strong> Reduces profit by $1 per unit sold. For high-volume "
                     "products, this can significantly impact total profitability. Consider: 100,000 units × $1 = $100,000 "
                     "reduction in profit.")
-                
-                display_citation(
-                    "A dollar spent or saved on development cost is worth the present value of that dollar to the "
-                    "value of the project.",
-                    "Jacobs & Chase (2024, p. 60)"
-                )
 
 # ============================================================
-# MODULE 2: PERT NETWORK (Chapter 4)
+# MODULE 2: PERT NETWORK (Chapter 4) - MERGED
 # ============================================================
 def module_pert():
     display_header("🔗", "Chapter 4", "PERT Network Diagram & Completion Probability", 
-                   "Critical path identification, slack calculation & Z-score probability (Exhibits 4.8–4.9)")
+                   "Critical path identification, slack calculation & Z-score probability")
     
-    tab1, tab2, tab3, tab4 = st.tabs(["📚 Theory", "🔬 Activity Estimator", "📊 Probability Calculator", "🎓 Practice Problems"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📚 Theory", "🔬 Activity Estimator", "📊 Probability Calculator", "🎓 Practice"])
     
     with tab1:
         st.markdown("### PERT Network Analysis")
-        
         st.write("""
         **PERT (Program Evaluation and Review Technique)** is a project management tool that uses 
-        probabilistic time estimates to account for uncertainty in activity durations. It was developed 
-        by the U.S. Navy in 1958 for the Polaris missile project.
+        probabilistic time estimates to account for uncertainty in activity durations.
         """)
         
         display_citation(
@@ -952,61 +744,46 @@ def module_pert():
             "Jacobs & Chase (2024, p. 99)"
         )
         
-        st.markdown("#### PERT Time Estimates")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_concept_card("🟢", "Optimistic (a)", 
-                "Best-case scenario - everything goes perfectly. Probability ≈ 1%")
-        with col2:
-            display_concept_card("🔵", "Most Likely (m)", 
-                "Normal conditions - most frequent outcome if repeated many times")
-        with col3:
-            display_concept_card("🔴", "Pessimistic (b)", 
-                "Worst-case scenario - everything goes wrong. Probability ≈ 1%")
-        
-        st.markdown("#### Key Formulas")
+        st.markdown("### Key Formulas")
         
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("##### Expected Time (Tₑ)")
-            st.latex(r"T_E = \frac{a + 4m + b}{6}")
-            st.write("Weighted average giving 4× weight to most likely estimate (based on Beta distribution)")
+            display_formula_card("PERT Expected Time", r"T_E = \frac{a + 4m + b}{6}")
+            st.write("Where: a = optimistic, m = most likely, b = pessimistic")
         
         with col2:
-            st.markdown("##### Variance (σ²)")
-            st.latex(r"\sigma^2 = \left(\frac{b - a}{6}\right)^2")
-            st.write("Measures uncertainty - larger spread between a and b means higher variance")
+            display_formula_card("PERT Variance", r"\sigma^2 = \left(\frac{b - a}{6}\right)^2")
+            st.write("Variance of each activity's time estimate")
         
-        st.markdown("##### Standard Deviation (σ)")
-        st.latex(r"\sigma = \frac{b - a}{6}")
-        
-        st.markdown("#### Project Completion Probability")
-        st.latex(r"Z = \frac{D - T_E}{\sqrt{\sum \sigma^2_{cp}}}")
+        st.markdown("### Project Completion Probability")
+        display_formula_card("Z-Score for Project Completion", r"Z = \frac{D - T_E}{\sqrt{\sum \sigma^2_{cp}}}")
         
         st.write("""
         Where:
-        - **D** = Desired (target) completion time
-        - **Tₑ** = Expected project duration (sum of critical path expected times)
-        - **Σσ²cp** = Sum of variances on the critical path
-        - **Z** = Standard normal deviate (look up in Z-table for probability)
+        - **D** = Desired completion time (target deadline)
+        - **T_E** = Expected project duration (sum of critical path activities)
+        - **Σσ²_cp** = Sum of variances on the critical path
         """)
         
-        display_key_insight(
-            "Critical Path Selection with Multiple Critical Paths",
-            "When there are two or more critical paths of equal length, use the one with the "
-            "<strong>largest total variance</strong> for probability calculations. This conservative "
-            "approach focuses attention on activities most likely to cause schedule problems."
+        display_textbook_content(
+            "Understanding the Beta Distribution",
+            """PERT uses the beta distribution because it can model asymmetric uncertainty. 
+            The formula T_E = (a + 4m + b)/6 is an approximation of the mean of a beta distribution. 
+            The weight of 4 on the most likely estimate reflects that this value has the highest 
+            probability of occurring."""
         )
         
-        st.markdown("#### Example from Textbook (Exhibit 4.9)")
+        display_key_insight(
+            "Critical Path Selection",
+            "When there are two critical paths of equal length, use the one with the largest "
+            "total variance for probability calculations to be conservative."
+        )
         
-        example_data = pd.DataFrame({
-            "Path": ["A-B-E-G-I", "A-C-F-G-I", "A-D-F-G-I", "A-D-H-I"],
-            "Length (days)": [22, 17, 21, 21],
-            "Status": ["CRITICAL PATH", "Slack = 5", "Slack = 1", "Slack = 1"]
-        })
-        st.dataframe(example_data, use_container_width=True, hide_index=True)
+        st.markdown("### Standard Normal Distribution Table (Excerpt)")
+        z_data = []
+        for z in [0.0, 0.5, 1.0, 1.28, 1.65, 1.96, 2.0, 2.33, 2.5, 3.0]:
+            z_data.append({"Z-Score": z, "P(Z ≤ z)": f"{normal_cdf(z):.4f}", "P(Z > z)": f"{1-normal_cdf(z):.4f}"})
+        st.dataframe(pd.DataFrame(z_data), use_container_width=True)
     
     with tab2:
         st.markdown("### Activity Time Estimator")
@@ -1014,23 +791,19 @@ def module_pert():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### Input Estimates")
-            a = st.slider("Optimistic Time (a)", 1, 20, 4, help="Best-case duration")
-            m = st.slider("Most Likely Time (m)", 1, 30, 8, help="Most probable duration")
-            b = st.slider("Pessimistic Time (b)", 1, 40, 16, help="Worst-case duration")
+            a = st.slider("Optimistic Time (a)", 1, 20, 4)
+            m = st.slider("Most Likely Time (m)", 1, 30, 8)
+            b = st.slider("Pessimistic Time (b)", 1, 40, 16)
             
             if not (a <= m <= b):
-                display_alert("⚠️ PERT estimates should satisfy a ≤ m ≤ b", "warning")
-            else:
-                display_alert("✅ Valid PERT estimates", "success")
+                st.warning("⚠️ PERT estimates should satisfy a ≤ m ≤ b")
         
         with col2:
             te = (a + 4*m + b) / 6
             variance = ((b - a) / 6) ** 2
             std_dev = math.sqrt(variance)
             
-            st.markdown("#### Calculated Results")
-            
+            st.markdown("#### Results")
             col_a, col_b, col_c = st.columns(3)
             with col_a:
                 display_metric_card(f"{te:.2f}", "Expected Time (Tₑ)", "highlight")
@@ -1040,14 +813,8 @@ def module_pert():
                 display_metric_card(f"{std_dev:.2f}", "Std Dev (σ)", "normal")
             
             st.markdown("#### Step-by-Step Calculation")
-            display_solution_step(1, f"Expected Time: Tₑ = ({a} + 4×{m} + {b}) / 6 = {a + 4*m + b} / 6 = <strong>{te:.2f}</strong>")
-            display_solution_step(2, f"Variance: σ² = (({b} - {a}) / 6)² = ({b-a} / 6)² = ({(b-a)/6:.2f})² = <strong>{variance:.2f}</strong>")
-            display_solution_step(3, f"Std Dev: σ = √{variance:.2f} = <strong>{std_dev:.2f}</strong>")
-            
-            st.markdown("#### Probability Ranges")
-            st.write(f"- 68% chance: {te - std_dev:.1f} to {te + std_dev:.1f} days")
-            st.write(f"- 95% chance: {te - 2*std_dev:.1f} to {te + 2*std_dev:.1f} days")
-            st.write(f"- 99.7% chance: {te - 3*std_dev:.1f} to {te + 3*std_dev:.1f} days")
+            st.latex(rf"T_E = \frac{{{a} + 4({m}) + {b}}}{{6}} = \frac{{{a + 4*m + b}}}{{6}} = {te:.2f}")
+            st.latex(rf"\sigma^2 = \left(\frac{{{b} - {a}}}{{6}}\right)^2 = \left(\frac{{{b-a}}}{{6}}\right)^2 = {variance:.2f}")
     
     with tab3:
         st.markdown("### Project Completion Probability Calculator")
@@ -1055,20 +822,14 @@ def module_pert():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### Project Parameters")
-            te_project = st.number_input("Expected Project Duration (Tₑ)", value=38.0, step=0.5,
-                                         help="Sum of expected times on critical path")
-            d_target = st.number_input("Desired Completion (D)", value=35.0, step=0.5,
-                                       help="Target completion date")
-            sum_variance = st.number_input("Sum of CP Variances (Σσ²)", value=11.89, step=0.1,
-                                           help="Sum of variances for all critical path activities")
+            te_project = st.number_input("Expected Project Duration (Tₑ)", value=38.0, step=0.5)
+            d_target = st.number_input("Desired Completion (D)", value=35.0, step=0.5)
+            sum_variance = st.number_input("Sum of CP Variances (Σσ²)", value=11.89, step=0.1)
         
         with col2:
             if sum_variance > 0:
                 z_score = (d_target - te_project) / math.sqrt(sum_variance)
                 prob = normal_cdf(z_score)
-                
-                st.markdown("#### Results")
                 
                 col_a, col_b = st.columns(2)
                 with col_a:
@@ -1077,51 +838,35 @@ def module_pert():
                     card_type = "danger" if prob < 0.5 else "success"
                     display_metric_card(f"{prob*100:.1f}%", "P(Complete by D)", card_type)
                 
-                st.markdown("#### Interpretation")
-                if prob < 0.25:
-                    display_alert(
-                        f"🔴 <strong>Very Low Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Only a {prob*100:.1f}% chance of completing by day {d_target}. "
-                        f"Consider crashing critical activities or extending the deadline to {te_project}+ days.",
-                        "danger"
-                    )
-                elif prob < 0.5:
-                    display_alert(
-                        f"🟡 <strong>Below Average Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Less than 50% chance of meeting the deadline. Risk mitigation recommended.",
-                        "warning"
-                    )
-                else:
-                    display_alert(
-                        f"🟢 <strong>Good Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Reasonable chance of meeting the deadline.",
-                        "success"
-                    )
-                
-                st.markdown("#### Calculation")
+                st.markdown("#### Calculation Steps")
                 st.latex(rf"Z = \frac{{{d_target} - {te_project}}}{{\sqrt{{{sum_variance}}}}} = \frac{{{d_target - te_project:.2f}}}{{{math.sqrt(sum_variance):.2f}}} = {z_score:.2f}")
+                
+                if prob < 0.5:
+                    st.warning(f"""
+                    ⚠️ Only a **{prob*100:.1f}%** chance of completing in {d_target} weeks. 
+                    The project manager should plan for {te_project}+ weeks or crash critical activities.
+                    """)
+                else:
+                    st.success(f"✅ Good probability ({prob*100:.1f}%) of meeting the deadline.")
         
         # Variance Builder
         st.markdown("---")
         st.markdown("### Critical Path Variance Builder")
-        st.write("Enter activity estimates to calculate total path variance")
         
-        num_activities = st.number_input("Number of CP Activities", 1, 10, 5, key="pert_num_act")
+        num_activities = st.number_input("Number of CP Activities", 1, 10, 3, key="pert_cp_num")
         
         activities = []
+        cols = st.columns(4)
+        cols[0].write("**Activity**")
+        cols[1].write("**a**")
+        cols[2].write("**m**")
+        cols[3].write("**b**")
+        
         total_te = 0
         total_var = 0
         
-        cols_header = st.columns([1, 1, 1, 1, 1, 1])
-        cols_header[0].write("**Activity**")
-        cols_header[1].write("**a**")
-        cols_header[2].write("**m**")
-        cols_header[3].write("**b**")
-        cols_header[4].write("**Tₑ**")
-        cols_header[5].write("**σ²**")
-        
         for i in range(int(num_activities)):
-            cols = st.columns([1, 1, 1, 1, 1, 1])
+            cols = st.columns(4)
             with cols[0]:
                 st.write(f"Activity {chr(65+i)}")
             with cols[1]:
@@ -1135,11 +880,10 @@ def module_pert():
             var_i = ((b_i - a_i) / 6) ** 2
             total_te += te_i
             total_var += var_i
-            
-            with cols[4]:
-                st.write(f"{te_i:.2f}")
-            with cols[5]:
-                st.write(f"{var_i:.3f}")
+            activities.append({"Activity": chr(65+i), "a": a_i, "m": m_i, "b": b_i, "Tₑ": round(te_i, 2), "σ²": round(var_i, 3)})
+        
+        df = pd.DataFrame(activities)
+        st.dataframe(df, use_container_width=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1147,222 +891,248 @@ def module_pert():
         with col2:
             display_metric_card(f"{total_var:.3f}", "Total Path Variance", "normal")
         with col3:
-            display_metric_card(f"{math.sqrt(total_var):.3f}", "Path Std Deviation", "normal")
+            display_metric_card(f"{math.sqrt(total_var):.3f}", "Path Standard Deviation", "normal")
     
     with tab4:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
         # Problem 1
-        with st.expander("📝 Problem 1: Calculate Expected Time (Easy)", expanded=True):
-            st.markdown("""
-            **Given:** Activity X has the following time estimates:
-            - Optimistic (a) = 5 days
-            - Most Likely (m) = 8 days
-            - Pessimistic (b) = 17 days
+        with st.expander("🟢 Problem 1: Calculate Expected Time (Easy)"):
+            display_practice_problem(1, "Easy", 
+                "Given: a = 5 days, m = 8 days, b = 17 days. Calculate the expected time (Tₑ).")
             
-            **Calculate:** Expected time (Tₑ) and variance (σ²)
-            """)
+            user_te = st.number_input("Your Answer (Tₑ):", key="pert_p1", format="%.2f")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_te = st.number_input("Expected Time (Tₑ):", key="pert_p1_te", format="%.2f")
-            with col2:
-                ans_var = st.number_input("Variance (σ²):", key="pert_p1_var", format="%.2f")
+            show_hint = st.checkbox("Show Hint", key="pert_hint1")
+            if show_hint:
+                display_hint("Use the formula: Tₑ = (a + 4m + b) / 6")
             
             if st.button("Check Answer", key="pert_p1_btn"):
-                correct_te = (5 + 4*8 + 17) / 6
-                correct_var = ((17 - 5) / 6) ** 2
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"Tₑ = (a + 4m + b) / 6 = (5 + 4×8 + 17) / 6 = (5 + 32 + 17) / 6 = 54 / 6 = <strong>9.00 days</strong>")
-                display_solution_step(2, f"σ² = ((b - a) / 6)² = ((17 - 5) / 6)² = (12 / 6)² = 2² = <strong>4.00</strong>")
-                
-                if check_answer(ans_te, correct_te) and check_answer(ans_var, correct_var):
-                    display_alert("✅ Both answers correct!", "success")
+                correct = (5 + 4*8 + 17) / 6
+                if check_answer(user_te, correct):
+                    st.success(f"✅ Correct! Tₑ = (5 + 4×8 + 17)/6 = {correct:.2f} days")
                 else:
-                    if not check_answer(ans_te, correct_te):
-                        display_alert(f"❌ Expected time incorrect. Correct answer: {correct_te:.2f}", "danger")
-                    if not check_answer(ans_var, correct_var):
-                        display_alert(f"❌ Variance incorrect. Correct answer: {correct_var:.2f}", "danger")
+                    st.error(f"❌ Incorrect. Let's work through it:")
+                    display_solution(f"""
+                    T_E = (a + 4m + b) / 6<br>
+                    T_E = (5 + 4×8 + 17) / 6<br>
+                    T_E = (5 + 32 + 17) / 6<br>
+                    T_E = 54 / 6 = <strong>{correct:.2f} days</strong>
+                    """)
         
         # Problem 2
-        with st.expander("📝 Problem 2: Project Completion Probability (Medium)"):
-            st.markdown("""
-            **Given:** A project has:
-            - Expected duration (Tₑ) = 45 weeks
-            - Sum of critical path variances = 16 weeks²
-            - Target completion = 41 weeks
+        with st.expander("🟢 Problem 2: Calculate Variance (Easy)"):
+            display_practice_problem(2, "Easy",
+                "Given: a = 3 days, b = 15 days. Calculate the variance (σ²).")
             
-            **Calculate:** 
-            1. The Z-score
-            2. The probability of completing by week 41
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_z = st.number_input("Z-Score:", key="pert_p2_z", format="%.2f")
-            with col2:
-                ans_prob = st.number_input("Probability (%):", key="pert_p2_prob", format="%.1f")
+            user_var = st.number_input("Your Answer (σ²):", key="pert_p2", format="%.2f")
             
             if st.button("Check Answer", key="pert_p2_btn"):
-                correct_z = (41 - 45) / math.sqrt(16)
-                correct_prob = normal_cdf(correct_z) * 100
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"Z = (D - Tₑ) / √(Σσ²) = (41 - 45) / √16 = -4 / 4 = <strong>-1.00</strong>")
-                display_solution_step(2, f"Look up Z = -1.00 in standard normal table")
-                display_solution_step(3, f"P(Z ≤ -1.00) = <strong>{correct_prob:.1f}%</strong>")
-                
-                display_alert(
-                    f"<strong>Interpretation:</strong> There is only a {correct_prob:.1f}% chance of completing "
-                    f"the project by week 41. The project manager should either extend the deadline or crash "
-                    f"critical path activities.",
-                    "info"
-                )
+                correct = ((15 - 3) / 6) ** 2
+                if check_answer(user_var, correct):
+                    st.success(f"✅ Correct! σ² = ((15-3)/6)² = {correct:.2f}")
+                else:
+                    st.error(f"❌ Incorrect.")
+                    display_solution(f"""
+                    σ² = ((b - a) / 6)²<br>
+                    σ² = ((15 - 3) / 6)²<br>
+                    σ² = (12 / 6)²<br>
+                    σ² = 2² = <strong>{correct:.2f}</strong>
+                    """)
         
         # Problem 3
-        with st.expander("📝 Problem 3: Critical Path Analysis (Hard)"):
-            st.markdown("""
-            **Given:** A project has the following activities on the critical path:
+        with st.expander("🟡 Problem 3: Project Completion Probability (Medium)"):
+            display_practice_problem(3, "Medium",
+                """A project has the following critical path activities:
+                
+                | Activity | a | m | b |
+                |----------|---|---|---|
+                | A | 2 | 4 | 6 |
+                | B | 3 | 5 | 13 |
+                | C | 4 | 6 | 8 |
+                
+                Calculate: (a) Expected project duration, (b) Total variance, 
+                (c) Probability of completing in 17 days.""")
             
-            | Activity | a | m | b |
-            |----------|---|---|---|
-            | A | 2 | 4 | 6 |
-            | B | 3 | 5 | 13 |
-            | C | 4 | 6 | 8 |
-            | D | 2 | 3 | 10 |
+            st.markdown("#### Your Calculations:")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                user_duration = st.number_input("Expected Duration:", key="pert_p3_dur", format="%.2f")
+            with col2:
+                user_variance = st.number_input("Total Variance:", key="pert_p3_var", format="%.2f")
+            with col3:
+                user_prob = st.number_input("P(Complete ≤ 17):", key="pert_p3_prob", format="%.1f")
             
-            **Calculate:**
-            1. Expected time for each activity
-            2. Total expected project duration
-            3. Total variance
-            4. Probability of completing in 20 days or less
-            """)
-            
-            if st.button("Show Complete Solution", key="pert_p3_btn"):
-                st.markdown("#### Solution:")
+            if st.button("Check All Answers", key="pert_p3_btn"):
+                te_a = (2 + 4*4 + 6) / 6
+                te_b = (3 + 4*5 + 13) / 6
+                te_c = (4 + 4*6 + 8) / 6
+                total_te = te_a + te_b + te_c
                 
-                activities = [
-                    ("A", 2, 4, 6),
-                    ("B", 3, 5, 13),
-                    ("C", 4, 6, 8),
-                    ("D", 2, 3, 10)
-                ]
+                var_a = ((6-2)/6)**2
+                var_b = ((13-3)/6)**2
+                var_c = ((8-4)/6)**2
+                total_var = var_a + var_b + var_c
                 
-                results = []
-                total_te = 0
-                total_var = 0
-                
-                for name, a, m, b in activities:
-                    te = (a + 4*m + b) / 6
-                    var = ((b - a) / 6) ** 2
-                    total_te += te
-                    total_var += var
-                    results.append({"Activity": name, "a": a, "m": m, "b": b, "Tₑ": f"{te:.2f}", "σ²": f"{var:.3f}"})
-                
-                st.dataframe(pd.DataFrame(results), use_container_width=True, hide_index=True)
-                
-                display_solution_step(1, f"Total Expected Duration: Tₑ = {total_te:.2f} days")
-                display_solution_step(2, f"Total Variance: Σσ² = {total_var:.3f}")
-                display_solution_step(3, f"Standard Deviation: σ = √{total_var:.3f} = {math.sqrt(total_var):.3f}")
-                
-                z = (20 - total_te) / math.sqrt(total_var)
+                z = (17 - total_te) / math.sqrt(total_var)
                 prob = normal_cdf(z) * 100
                 
-                display_solution_step(4, f"Z = (20 - {total_te:.2f}) / {math.sqrt(total_var):.3f} = {z:.2f}")
-                display_solution_step(5, f"P(Complete ≤ 20 days) = {prob:.1f}%")
+                results = []
+                if check_answer(user_duration, total_te): results.append(f"✅ Duration correct: {total_te:.2f} days")
+                else: results.append(f"❌ Duration: Should be {total_te:.2f} days")
+                
+                if check_answer(user_variance, total_var): results.append(f"✅ Variance correct: {total_var:.2f}")
+                else: results.append(f"❌ Variance: Should be {total_var:.2f}")
+                
+                if check_answer(user_prob, prob, tolerance=0.02): results.append(f"✅ Probability correct: {prob:.1f}%")
+                else: results.append(f"❌ Probability: Should be {prob:.1f}%")
+                
+                for r in results: st.write(r)
+            
+            if st.button("Show Complete Solution", key="pert_p3_sol"):
+                te_a = (2 + 4*4 + 6) / 6
+                te_b = (3 + 4*5 + 13) / 6
+                te_c = (4 + 4*6 + 8) / 6
+                total_te = te_a + te_b + te_c
+                
+                var_a = ((6-2)/6)**2
+                var_b = ((13-3)/6)**2
+                var_c = ((8-4)/6)**2
+                total_var = var_a + var_b + var_c
+                
+                z = (17 - total_te) / math.sqrt(total_var)
+                prob = normal_cdf(z) * 100
+                
+                display_solution(f"""
+                <strong>Step 1: Calculate Expected Times</strong><br>
+                T_E(A) = (2 + 4×4 + 6)/6 = {te_a:.2f} days<br>
+                T_E(B) = (3 + 4×5 + 13)/6 = {te_b:.2f} days<br>
+                T_E(C) = (4 + 4×6 + 8)/6 = {te_c:.2f} days<br>
+                <strong>Total Duration = {total_te:.2f} days</strong><br><br>
+                
+                <strong>Step 2: Calculate Variances</strong><br>
+                σ²(A) = ((6-2)/6)² = {var_a:.3f}<br>
+                σ²(B) = ((13-3)/6)² = {var_b:.3f}<br>
+                σ²(C) = ((8-4)/6)² = {var_c:.3f}<br>
+                <strong>Total Variance = {total_var:.3f}</strong><br><br>
+                
+                <strong>Step 3: Calculate Z-Score</strong><br>
+                Z = (17 - {total_te:.2f}) / √{total_var:.3f}<br>
+                Z = {17 - total_te:.2f} / {math.sqrt(total_var):.3f} = {z:.2f}<br><br>
+                
+                <strong>Step 4: Find Probability</strong><br>
+                P(Z ≤ {z:.2f}) = <strong>{prob:.1f}%</strong>
+                """)
+        
+        # Problem 4
+        with st.expander("🔴 Problem 4: Multiple Critical Paths (Hard)"):
+            display_practice_problem(4, "Hard",
+                """A project has two potential critical paths of equal length (20 days):
+                
+                Path 1: Activities A-B-C with total variance = 4.0
+                Path 2: Activities D-E-F with total variance = 9.0
+                
+                Management wants to know the probability of completing in 18 days.
+                Which path should be used for the calculation and why? Calculate the probability.""")
+            
+            if st.button("Show Complete Solution", key="pert_p4"):
+                z_path2 = (18 - 20) / math.sqrt(9)
+                prob = normal_cdf(z_path2) * 100
+                
+                display_solution(f"""
+                <strong>Which Path to Use?</strong><br>
+                Use <strong>Path 2</strong> (variance = 9.0) because:<br>
+                • When paths have equal expected duration, use the one with LARGER variance<br>
+                • This is the conservative approach - it gives the lower probability<br>
+                • Higher variance means more uncertainty, so we plan for the worst case<br><br>
+                
+                <strong>Calculation:</strong><br>
+                Z = (D - T_E) / √(Σσ²)<br>
+                Z = (18 - 20) / √9<br>
+                Z = -2 / 3 = {z_path2:.2f}<br><br>
+                
+                P(Z ≤ {z_path2:.2f}) = <strong>{prob:.1f}%</strong><br><br>
+                
+                <strong>Interpretation:</strong><br>
+                There is only a {prob:.1f}% chance of completing in 18 days. 
+                Management should either extend the deadline or allocate additional 
+                resources to crash critical activities.
+                """)
 
 # ============================================================
-# MODULE 3: PROJECT CRASHING (Chapter 4)
+# MODULE 3: PROJECT CRASHING (Chapter 4) - MERGED
 # ============================================================
 def module_crashing():
     display_header("⚡", "Chapter 4", "Project Crashing", "Time-cost trade-off analysis")
     
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
+    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice"])
     
     with tab1:
         st.markdown("### Project Crashing Theory")
-        
         st.write("""
-        **Project crashing** (also called project compression) involves reducing project duration 
-        by adding resources to critical path activities. The goal is to achieve the desired 
-        completion date at minimum additional cost.
+        **Project crashing** involves reducing project duration by adding resources to critical 
+        path activities. The goal is to minimize the total cost of crashing while meeting a 
+        target completion date.
         """)
         
-        st.markdown("#### Crash Cost per Day Formula")
-        st.latex(r"\text{Crash Cost per Day} = \frac{\text{Crash Cost} - \text{Normal Cost}}{\text{Normal Time} - \text{Crash Time}}")
+        display_formula_card("Crash Cost per Time Unit", 
+            r"\text{Crash Cost/Day} = \frac{\text{Crash Cost} - \text{Normal Cost}}{\text{Normal Time} - \text{Crash Time}}")
         
-        st.markdown("#### Key Concepts")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("⏱️", "Normal Time", 
-                "Standard duration using normal resources and methods")
-            display_concept_card("💰", "Normal Cost", 
-                "Cost to complete activity in normal time")
-        with col2:
-            display_concept_card("⚡", "Crash Time", 
-                "Minimum possible duration with maximum resources")
-            display_concept_card("💸", "Crash Cost", 
-                "Cost to complete activity in crash time (always higher)")
+        st.markdown("### Crashing Procedure")
+        st.write("""
+        1. **Identify the critical path** - Only crash activities on the critical path
+        2. **Calculate crash cost per day** for each critical activity
+        3. **Crash the cheapest activity first** - Select the activity with lowest crash cost/day
+        4. **Crash until**:
+           - Target duration is reached, OR
+           - Activity reaches its crash limit, OR
+           - A new critical path emerges (then evaluate both paths)
+        5. **Repeat** until target is met or no more crashing is possible
+        """)
         
         display_key_insight(
             "Crashing Strategy",
-            "Always crash the activity on the critical path with the <strong>lowest crash cost per day</strong> first. "
-            "Continue until: (1) target date is reached, (2) critical path changes, or (3) no more crashing is possible. "
-            "When the critical path changes, you may need to crash multiple paths simultaneously."
+            "Always crash the activity on the critical path with the lowest crash cost per day first. "
+            "Continue until the target date is reached or no more crashing is possible. "
+            "Watch for new critical paths that may emerge!"
         )
         
-        st.markdown("#### Crashing Procedure")
-        st.write("""
-        1. **Identify** the critical path
-        2. **Calculate** crash cost per day for each critical activity
-        3. **Select** the activity with lowest crash cost per day
-        4. **Crash** that activity by one day (or until it reaches crash time or path changes)
-        5. **Recalculate** critical path and repeat until target is met
-        """)
+        display_textbook_content(
+            "When to Crash",
+            """Crashing is appropriate when:
+            • The project is behind schedule and penalties apply
+            • Early completion offers bonuses or competitive advantage
+            • Resources need to be freed for other projects
+            • Market conditions require faster delivery
+            
+            Remember: Crashing increases direct costs but may reduce indirect costs (overhead, 
+            penalties) and opportunity costs."""
+        )
     
     with tab2:
         st.markdown("### Crash Cost Calculator")
         
-        num_activities = st.number_input("Number of Activities", 2, 10, 4, key="crash_num")
+        num_activities = st.number_input("Number of Activities", 2, 10, 3)
         
         activities = []
-        
-        st.markdown("#### Activity Data")
-        
-        cols_header = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
-        headers = ["Activity", "Normal Time", "Crash Time", "Normal Cost", "Crash Cost", "Max Crash", "Cost/Day"]
-        for i, h in enumerate(headers):
-            cols_header[i].write(f"**{h}**")
-        
         for i in range(int(num_activities)):
-            cols = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
-            
+            st.markdown(f"**Activity {chr(65+i)}**")
+            cols = st.columns(5)
             with cols[0]:
-                st.write(f"**{chr(65+i)}**")
+                nt = st.number_input("Normal Time", value=5+i, key=f"crash_nt_{i}")
             with cols[1]:
-                nt = st.number_input(f"NT_{i}", value=5+i, key=f"crash_nt_{i}", label_visibility="collapsed")
+                ct = st.number_input("Crash Time", value=3+i, key=f"crash_ct_{i}")
             with cols[2]:
-                ct = st.number_input(f"CT_{i}", value=3+i//2, key=f"crash_ct_{i}", label_visibility="collapsed")
+                nc = st.number_input("Normal Cost ($)", value=1000+i*200, key=f"crash_nc_{i}")
             with cols[3]:
-                nc = st.number_input(f"NC_{i}", value=1000+i*200, key=f"crash_nc_{i}", label_visibility="collapsed")
+                cc = st.number_input("Crash Cost ($)", value=1800+i*300, key=f"crash_cc_{i}")
             with cols[4]:
-                cc = st.number_input(f"CC_{i}", value=1800+i*400, key=f"crash_cc_{i}", label_visibility="collapsed")
-            
-            max_crash = nt - ct
-            if max_crash > 0:
-                cpd = (cc - nc) / max_crash
-            else:
-                cpd = float('inf')
-            
-            with cols[5]:
-                st.write(f"{max_crash} days")
-            with cols[6]:
-                if cpd != float('inf'):
-                    st.write(f"${cpd:.0f}")
+                if nt > ct:
+                    cpd = (cc - nc) / (nt - ct)
+                    st.metric("Cost/Day", f"${cpd:.0f}")
                 else:
-                    st.write("N/A")
+                    cpd = float('inf')
+                    st.metric("Cost/Day", "N/A")
             
             activities.append({
                 "Activity": chr(65+i),
@@ -1370,75 +1140,106 @@ def module_crashing():
                 "Crash Time": ct,
                 "Normal Cost": nc,
                 "Crash Cost": cc,
-                "Max Crash Days": max_crash,
-                "Cost/Day": cpd if cpd != float('inf') else None
+                "Max Crash Days": nt - ct,
+                "Cost/Day": cpd if nt > ct else None
             })
         
-        # Summary
-        st.markdown("---")
-        st.markdown("#### Summary")
+        df = pd.DataFrame(activities)
+        st.dataframe(df, use_container_width=True)
         
+        # Summary
         total_normal_time = sum(a["Normal Time"] for a in activities)
         total_crash_time = sum(a["Crash Time"] for a in activities)
-        total_normal_cost = sum(a["Normal Cost"] for a in activities)
-        total_crash_cost = sum(a["Crash Cost"] for a in activities)
+        total_crash_cost = sum(a["Crash Cost"] - a["Normal Cost"] for a in activities)
         
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
-            display_metric_card(f"{total_normal_time}", "Normal Duration", "normal")
+            display_metric_card(f"{total_normal_time} days", "Normal Duration", "normal")
         with col2:
-            display_metric_card(f"{total_crash_time}", "Crash Duration", "highlight")
+            display_metric_card(f"{total_crash_time} days", "Minimum Duration", "highlight")
         with col3:
-            display_metric_card(f"${total_normal_cost:,}", "Normal Cost", "normal")
-        with col4:
-            display_metric_card(f"${total_crash_cost:,}", "Full Crash Cost", "danger")
+            display_metric_card(f"${total_crash_cost:,.0f}", "Full Crash Cost", "danger")
         
-        # Crashing priority
-        crashable = [a for a in activities if a["Cost/Day"] is not None and a["Max Crash Days"] > 0]
-        if crashable:
-            crashable_sorted = sorted(crashable, key=lambda x: x["Cost/Day"])
-            
-            st.markdown("#### Crashing Priority (Lowest Cost First)")
-            for i, a in enumerate(crashable_sorted):
-                st.write(f"{i+1}. **Activity {a['Activity']}**: ${a['Cost/Day']:.0f}/day (can crash {a['Max Crash Days']} days)")
+        # Crashing recommendation
+        valid_activities = [a for a in activities if a["Cost/Day"] and a["Cost/Day"] != float('inf')]
+        if valid_activities:
+            cheapest = min(valid_activities, key=lambda x: x["Cost/Day"])
+            st.success(f"💡 **Recommendation:** Crash Activity {cheapest['Activity']} first (${cheapest['Cost/Day']:.0f}/day)")
     
     with tab3:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        with st.expander("📝 Problem 1: Calculate Crash Cost per Day"):
-            st.markdown("""
-            **Given:** Activity X has:
-            - Normal Time = 10 days, Crash Time = 6 days
-            - Normal Cost = $5,000, Crash Cost = $9,000
+        with st.expander("🟡 Problem 1: Crash Cost Calculation (Medium)"):
+            display_practice_problem(1, "Medium",
+                """Activity X has:
+                • Normal Time = 10 days, Normal Cost = $5,000
+                • Crash Time = 6 days, Crash Cost = $9,000
+                
+                Calculate the crash cost per day.""")
             
-            **Calculate:** Crash cost per day
-            """)
-            
-            ans = st.number_input("Crash Cost per Day ($):", key="crash_p1")
+            user_cpd = st.number_input("Crash Cost per Day ($):", key="crash_p1")
             
             if st.button("Check Answer", key="crash_p1_btn"):
                 correct = (9000 - 5000) / (10 - 6)
-                
-                display_solution_step(1, "Crash Cost per Day = (Crash Cost - Normal Cost) / (Normal Time - Crash Time)")
-                display_solution_step(2, f"= ($9,000 - $5,000) / (10 - 6)")
-                display_solution_step(3, f"= $4,000 / 4 days = <strong>${correct:.0f}/day</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
+                if check_answer(user_cpd, correct):
+                    st.success(f"✅ Correct! Crash Cost/Day = ${correct:,.0f}")
                 else:
-                    display_alert(f"❌ Incorrect. Correct answer: ${correct:.0f}/day", "danger")
+                    display_solution(f"""
+                    Crash Cost/Day = (Crash Cost - Normal Cost) / (Normal Time - Crash Time)<br>
+                    = ($9,000 - $5,000) / (10 - 6)<br>
+                    = $4,000 / 4 days<br>
+                    = <strong>${correct:,.0f}/day</strong>
+                    """)
+        
+        with st.expander("🔴 Problem 2: Crashing Decision (Hard)"):
+            display_practice_problem(2, "Hard",
+                """A project has a critical path A-B-C with normal duration of 15 days.
+                The client offers a $2,000 bonus for each day the project finishes early.
+                
+                | Activity | Normal Time | Crash Time | Crash Cost/Day |
+                |----------|-------------|------------|----------------|
+                | A | 5 | 3 | $800 |
+                | B | 6 | 4 | $1,500 |
+                | C | 4 | 3 | $2,500 |
+                
+                How many days should you crash, and what is the net benefit?""")
+            
+            if st.button("Show Complete Solution", key="crash_p2"):
+                display_solution("""
+                <strong>Analysis:</strong><br>
+                Bonus = $2,000/day saved<br><br>
+                
+                <strong>Step 1: Compare crash costs to bonus</strong><br>
+                • Activity A: $800/day < $2,000 bonus → Profitable to crash<br>
+                • Activity B: $1,500/day < $2,000 bonus → Profitable to crash<br>
+                • Activity C: $2,500/day > $2,000 bonus → NOT profitable<br><br>
+                
+                <strong>Step 2: Crash in order of lowest cost</strong><br>
+                1. Crash A by 2 days: Cost = 2 × $800 = $1,600, Benefit = 2 × $2,000 = $4,000<br>
+                   Net = $4,000 - $1,600 = <strong>$2,400</strong><br><br>
+                2. Crash B by 2 days: Cost = 2 × $1,500 = $3,000, Benefit = 2 × $2,000 = $4,000<br>
+                   Net = $4,000 - $3,000 = <strong>$1,000</strong><br><br>
+                3. Don't crash C (cost > benefit)<br><br>
+                
+                <strong>Total:</strong><br>
+                • Days crashed: 4 days (A: 2, B: 2)<br>
+                • New duration: 15 - 4 = 11 days<br>
+                • Total crash cost: $1,600 + $3,000 = $4,600<br>
+                • Total bonus: 4 × $2,000 = $8,000<br>
+                • <strong>Net benefit: $8,000 - $4,600 = $3,400</strong>
+                """)
 
 # ============================================================
-# MODULE 4: BREAK-EVEN ANALYSIS (Chapter 5)
+# MODULE 4: BREAK-EVEN ANALYSIS (Chapter 5) - MERGED
 # ============================================================
 def module_breakeven():
     display_header("📈", "Chapter 5", "Break-Even Analysis", "Cost-Volume-Profit (CVP) Analysis")
     
+    # Fully merged tabs including Sensitivity from v3.5
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["📚 Theory", "🔬 Simulator", "📊 Sensitivity", "⚖️ Comparison", "🎓 Practice"])
     
     with tab1:
         st.markdown("### Cost-Volume-Profit Analysis")
-        
         st.write("""
         **Break-even analysis** determines the point at which total revenue equals total cost. 
         It establishes the relationship between fixed costs, variable costs, selling price, 
@@ -1452,66 +1253,40 @@ def module_breakeven():
             "Jacobs & Chase (2024, p. 155)"
         )
         
-        st.markdown("#### Cost Structure Components")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_concept_card("🏢", "Fixed Costs (F)", 
-                "Costs that remain constant regardless of output: rent, depreciation, insurance, salaries")
-        with col2:
-            display_concept_card("📦", "Variable Costs (V)", 
-                "Costs that vary with output: raw materials, direct labor, packaging, shipping per unit")
-        with col3:
-            display_concept_card("💵", "Contribution Margin", 
-                "Price minus Variable Cost (P - V). Each unit contributes this toward covering fixed costs")
-        
-        st.markdown("#### Key Formulas")
-        
+        st.markdown("### Key Formulas")
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("##### Break-Even Point (Units)")
-            st.latex(r"BEP_{units} = \frac{F}{P - V}")
-            
-            st.markdown("##### Break-Even Point (Revenue)")
-            st.latex(r"BEP_{\$} = \frac{F}{1 - \frac{V}{P}} = BEP_{units} \times P")
-        
+            display_formula_card("Break-Even Point (Units)", r"BEP_{units} = \frac{F}{P - V}")
+            st.write("Where F = Fixed Costs, P = Price, V = Variable Cost per unit")
         with col2:
-            st.markdown("##### Volume for Target Profit")
-            st.latex(r"Q_{target} = \frac{F + \text{Target Profit}}{P - V}")
-            
-            st.markdown("##### Total Cost & Revenue")
-            st.latex(r"TC = F + V \cdot Q \quad ; \quad TR = P \cdot Q")
+            display_formula_card("Break-Even Point (Revenue)", r"BEP_{\$} = \frac{F}{1 - \frac{V}{P}}")
+        
+        display_formula_card("Volume for Target Profit", r"Q_{target} = \frac{F + \text{Target Profit}}{P - V}")
+        
+        st.markdown("### Additional Formulas")
+        col1, col2 = st.columns(2)
+        with col1:
+            display_formula_card("Contribution Margin", r"CM = P - V")
+        with col2:
+            display_formula_card("Contribution Margin Ratio", r"CM\% = \frac{P - V}{P}")
         
         display_key_insight(
             "Comparing Capacity Alternatives",
             "When comparing two process alternatives (e.g., manual vs. automated), the option with "
             "higher fixed costs but lower variable costs will have a higher BEP but becomes more "
-            "profitable at higher volumes. The <strong>indifference point</strong> where both options "
-            "yield equal total cost is: Q* = (F₂ - F₁) / (V₁ - V₂)"
+            "profitable at higher volumes."
         )
         
-        st.markdown("#### Assumptions & Limitations")
-        st.write("""
-        - Revenue and costs are linear functions of volume
-        - Fixed costs remain constant within the relevant range
-        - All units produced are sold (no inventory buildup)
-        - Single product analysis (or constant product mix)
-        - Price and variable cost per unit are constant
-        """)
+        display_formula_card("Indifference Point (Two Alternatives)", r"Q^* = \frac{F_2 - F_1}{V_1 - V_2}")
     
     with tab2:
         st.markdown("### Break-Even Calculator")
         
         col1, col2 = st.columns(2)
-        
         with col1:
-            st.markdown("#### Cost Parameters")
             fixed_cost = st.slider("Fixed Costs ($)", 10000, 200000, 50000, 5000)
             price = st.slider("Price per Unit ($)", 10, 500, 100, 5)
             variable_cost = st.slider("Variable Cost per Unit ($)", 5, 400, 60, 5)
-            
-            if price <= variable_cost:
-                display_alert("⚠️ Price must be greater than Variable Cost!", "danger")
         
         with col2:
             if price > variable_cost:
@@ -1520,42 +1295,35 @@ def module_breakeven():
                 contribution_margin = price - variable_cost
                 cm_ratio = contribution_margin / price
                 
-                st.markdown("#### Results")
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    display_metric_card(f"{bep_units:,.0f}", "BEP (Units)", "highlight")
-                with col_b:
-                    display_metric_card(f"${bep_revenue:,.0f}", "BEP (Revenue)", "highlight")
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    display_metric_card(f"${contribution_margin:.2f}", "Contribution Margin", "normal")
-                with col_b:
-                    display_metric_card(f"{cm_ratio:.1%}", "CM Ratio", "normal")
+                st.metric("Break-Even Units", f"{bep_units:,.0f}")
+                st.metric("Break-Even Revenue", f"${bep_revenue:,.0f}")
+                st.metric("Contribution Margin", f"${contribution_margin:.2f}/unit")
+                st.metric("CM Ratio", f"{cm_ratio:.1%}")
                 
                 st.markdown("#### Calculation")
-                st.latex(rf"BEP = \frac{{{fixed_cost:,}}}{{{price} - {variable_cost}}} = \frac{{{fixed_cost:,}}}{{{contribution_margin}}} = {bep_units:,.0f} \text{{ units}}")
+                st.latex(rf"BEP = \frac{{{fixed_cost:,}}}{{{price} - {variable_cost}}} = {bep_units:,.0f} \text{{ units}}")
+            else:
+                st.error("⚠️ Price must be greater than Variable Cost!")
         
         # Target Profit Calculator
+        st.markdown("---")
+        st.markdown("### Target Profit Analysis")
+        target_profit = st.number_input("Target Annual Profit ($)", value=25000, step=5000)
+        
         if price > variable_cost:
-            st.markdown("---")
-            st.markdown("### Target Profit Analysis")
-            
-            target_profit = st.number_input("Target Annual Profit ($)", value=25000, step=5000)
-            
             target_units = (fixed_cost + target_profit) / (price - variable_cost)
             target_revenue = target_units * price
             
             col1, col2 = st.columns(2)
             with col1:
-                display_metric_card(f"{target_units:,.0f}", "Required Units", "success")
+                st.metric("Required Units", f"{target_units:,.0f}")
             with col2:
-                display_metric_card(f"${target_revenue:,.0f}", "Required Revenue", "success")
+                st.metric("Required Revenue", f"${target_revenue:,.0f}")
             
-            st.latex(rf"Q_{{target}} = \frac{{{fixed_cost:,} + {target_profit:,}}}{{{price} - {variable_cost}}} = {target_units:,.0f} \text{{ units}}")
-    
+            st.latex(rf"Q_{{target}} = \frac{{{fixed_cost:,} + {target_profit:,}}}{{{price} - {variable_cost}}} = {target_units:,.0f}")
+            
     with tab3:
+        # Restored Sensitivity Analysis from v3.5
         st.markdown("### Sensitivity Analysis (What-If)")
         
         display_citation(
@@ -1609,12 +1377,11 @@ def module_breakeven():
                 "Notice that BEP is most sensitive to changes in contribution margin (P - V). "
                 "A $10 price increase has a larger impact than a 25% change in fixed costs."
             )
-    
+            
     with tab4:
         st.markdown("### Scenario Comparison")
         
         col1, col2 = st.columns(2)
-        
         with col1:
             st.markdown("#### Scenario A (Current)")
             fc_a = st.number_input("Fixed Costs A ($)", value=50000, key="be_fc_a")
@@ -1623,111 +1390,92 @@ def module_breakeven():
             
             if p_a > vc_a:
                 bep_a = fc_a / (p_a - vc_a)
-                display_metric_card(f"{bep_a:,.0f}", "BEP A (units)", "highlight")
+                display_metric_card(f"{bep_a:,.0f} units", "BEP A", "highlight")
         
         with col2:
             st.markdown("#### Scenario B (Alternative)")
-            fc_b = st.number_input("Fixed Costs B ($)", value=80000, key="be_fc_b")
+            fc_b = st.number_input("Fixed Costs B ($)", value=70000, key="be_fc_b")
             p_b = st.number_input("Price B ($)", value=100, key="be_p_b")
-            vc_b = st.number_input("Variable Cost B ($)", value=45, key="be_vc_b")
+            vc_b = st.number_input("Variable Cost B ($)", value=50, key="be_vc_b")
             
             if p_b > vc_b:
                 bep_b = fc_b / (p_b - vc_b)
-                display_metric_card(f"{bep_b:,.0f}", "BEP B (units)", "highlight")
+                display_metric_card(f"{bep_b:,.0f} units", "BEP B", "highlight")
         
         # Indifference Point
         if p_a > vc_a and p_b > vc_b and vc_a != vc_b:
+            indiff_point = (fc_b - fc_a) / (vc_a - vc_b)
             st.markdown("---")
             st.markdown("### Indifference Analysis")
+            st.metric("Indifference Point", f"{indiff_point:,.0f} units")
             
-            indiff_point = (fc_b - fc_a) / (vc_a - vc_b)
+            st.latex(rf"Q^* = \frac{{{fc_b:,} - {fc_a:,}}}{{{vc_a} - {vc_b}}} = {indiff_point:,.0f}")
             
             if indiff_point > 0:
-                display_metric_card(f"{indiff_point:,.0f}", "Indifference Point (units)", "highlight")
-                
-                st.latex(rf"Q^* = \frac{{F_B - F_A}}{{V_A - V_B}} = \frac{{{fc_b:,} - {fc_a:,}}}{{{vc_a} - {vc_b}}} = {indiff_point:,.0f}")
-                
-                lower_fc = "A" if fc_a < fc_b else "B"
-                lower_vc = "A" if vc_a < vc_b else "B"
-                
-                display_alert(
-                    f"📊 <strong>Decision Rule:</strong><br>"
-                    f"• Below {indiff_point:,.0f} units: Choose Scenario {lower_fc} (lower fixed costs)<br>"
-                    f"• Above {indiff_point:,.0f} units: Choose Scenario {lower_vc} (lower variable costs)",
-                    "info"
-                )
+                st.info(f"""
+                📊 **Analysis:**
+                - Below {indiff_point:,.0f} units: Choose {'A' if fc_a < fc_b else 'B'} (lower fixed costs)
+                - Above {indiff_point:,.0f} units: Choose {'B' if vc_b < vc_a else 'A'} (lower variable costs)
+                """)
     
     with tab5:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        # Problem 1
-        with st.expander("📝 Problem 1: Basic BEP Calculation (Easy)", expanded=True):
-            st.markdown("""
-            **Given:**
-            - Fixed Costs = $40,000
-            - Selling Price = $120 per unit
-            - Variable Cost = $80 per unit
+        with st.expander("🟢 Problem 1: Basic BEP Calculation (Easy)"):
+            display_practice_problem(1, "Easy",
+                "Fixed Costs = $40,000, Price = $120/unit, Variable Cost = $80/unit. Calculate the break-even point in units.")
             
-            **Calculate:** Break-even point in units
-            """)
-            
-            ans = st.number_input("BEP (units):", key="be_p1")
+            user_bep = st.number_input("Your Answer (units):", key="be_p1")
             
             if st.button("Check Answer", key="be_p1_btn"):
                 correct = 40000 / (120 - 80)
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, "Contribution Margin = Price - Variable Cost = $120 - $80 = $40")
-                display_solution_step(2, "BEP = Fixed Costs / Contribution Margin")
-                display_solution_step(3, f"BEP = $40,000 / $40 = <strong>{correct:,.0f} units</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
+                if check_answer(user_bep, correct):
+                    st.success(f"✅ Correct! BEP = {correct:,.0f} units")
                 else:
-                    display_alert(f"❌ Incorrect. Correct answer: {correct:,.0f} units", "danger")
+                    display_solution(f"""
+                    BEP = F / (P - V)<br>
+                    BEP = $40,000 / ($120 - $80)<br>
+                    BEP = $40,000 / $40<br>
+                    BEP = <strong>{correct:,.0f} units</strong>
+                    """)
         
-        # Problem 2
-        with st.expander("📝 Problem 2: Target Profit (Medium)"):
-            st.markdown("""
-            **Given:**
-            - Fixed Costs = $60,000
-            - Selling Price = $50 per unit
-            - Variable Cost = $30 per unit
-            - Target Profit = $20,000
+        with st.expander("🟡 Problem 2: Target Profit (Medium)"):
+            display_practice_problem(2, "Medium",
+                """A company has:
+                • Fixed Costs = $60,000
+                • Price = $50/unit
+                • Variable Cost = $30/unit
+                • Target Profit = $20,000
+                
+                How many units must be sold to achieve the target profit?""")
             
-            **Calculate:** Units needed to achieve target profit
-            """)
-            
-            ans = st.number_input("Required units:", key="be_p2")
+            user_target = st.number_input("Your Answer (units):", key="be_p2")
             
             if st.button("Check Answer", key="be_p2_btn"):
                 correct = (60000 + 20000) / (50 - 30)
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, "Contribution Margin = $50 - $30 = $20")
-                display_solution_step(2, "Q = (Fixed Costs + Target Profit) / CM")
-                display_solution_step(3, f"Q = ($60,000 + $20,000) / $20 = $80,000 / $20 = <strong>{correct:,.0f} units</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
+                if check_answer(user_target, correct):
+                    st.success(f"✅ Correct! {correct:,.0f} units")
                 else:
-                    display_alert(f"❌ Incorrect. Correct answer: {correct:,.0f} units", "danger")
-        
-        # Problem 3
-        with st.expander("📝 Problem 3: Indifference Point (Hard)"):
-            st.markdown("""
-            **Given:** Two manufacturing options:
-            
-            | Option | Fixed Costs | Variable Cost/Unit |
-            |--------|-------------|-------------------|
-            | Manual | $20,000 | $15 |
-            | Automated | $80,000 | $5 |
-            
-            **Calculate:**
-            1. Indifference point (where both options have equal total cost)
-            2. Which option is better at 5,000 units?
-            3. Which option is better at 8,000 units?
-            """)
+                    display_solution(f"""
+                    Q = (F + Target Profit) / (P - V)<br>
+                    Q = ($60,000 + $20,000) / ($50 - $30)<br>
+                    Q = $80,000 / $20<br>
+                    Q = <strong>{correct:,.0f} units</strong>
+                    """)
+
+        # V3.5 Restored Manual vs Auto Indifference Problem
+        with st.expander("🔴 Problem 3: Indifference Point (Hard)"):
+            display_practice_problem(3, "Hard",
+                """Two manufacturing options:
+                
+                | Option | Fixed Costs | Variable Cost/Unit |
+                |--------|-------------|-------------------|
+                | Manual | $20,000 | $15 |
+                | Automated | $80,000 | $5 |
+                
+                1. Indifference point (where both options have equal total cost)
+                2. Which option is better at 5,000 units?
+                3. Which option is better at 8,000 units?""")
             
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -1737,9 +1485,8 @@ def module_breakeven():
             with col3:
                 ans_8000 = st.selectbox("Better at 8,000:", ["Manual", "Automated"], key="be_p3_3")
             
-            if st.button("Check Answer", key="be_p3_btn"):
+            if st.button("Check Answer", key="be_p3_btn_orig"):
                 correct_indiff = (80000 - 20000) / (15 - 5)
-                
                 tc_manual_5000 = 20000 + 15 * 5000
                 tc_auto_5000 = 80000 + 5 * 5000
                 tc_manual_8000 = 20000 + 15 * 8000
@@ -1747,23 +1494,81 @@ def module_breakeven():
                 
                 st.markdown("#### Solution:")
                 display_solution_step(1, f"Indifference Point = (F₂ - F₁) / (V₁ - V₂) = ($80,000 - $20,000) / ($15 - $5) = $60,000 / $10 = <strong>{correct_indiff:,.0f} units</strong>")
-                
                 display_solution_step(2, f"At 5,000 units:<br>• Manual: $20,000 + $15×5,000 = ${tc_manual_5000:,}<br>• Automated: $80,000 + $5×5,000 = ${tc_auto_5000:,}<br><strong>Manual is better</strong>")
-                
                 display_solution_step(3, f"At 8,000 units:<br>• Manual: $20,000 + $15×8,000 = ${tc_manual_8000:,}<br>• Automated: $80,000 + $5×8,000 = ${tc_auto_8000:,}<br><strong>Automated is better</strong>")
 
+        # V4.0 Make vs Buy Indifference Problem
+        with st.expander("🔴 Problem 4: Make vs. Buy Decision (Hard)"):
+            display_practice_problem(4, "Hard",
+                """A company is deciding between making a component in-house or buying it:
+                
+                **Make Option:**
+                • Fixed Cost = $100,000/year (equipment)
+                • Variable Cost = $15/unit
+                
+                **Buy Option:**
+                • Purchase Price = $25/unit (no fixed costs)
+                
+                a) At what volume are the two options equivalent?
+                b) If expected demand is 8,000 units, which option is better and by how much?""")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                user_indiff = st.number_input("Indifference Point (units):", key="be_p4a")
+            with col2:
+                user_better = st.selectbox("Better option at 8,000 units:", ["Select...", "Make", "Buy"], key="be_p4b")
+            
+            user_savings = st.number_input("Savings amount ($):", key="be_p4c")
+            
+            if st.button("Check All Answers", key="be_p4_btn"):
+                correct_indiff = 100000 / (25 - 15)
+                make_cost_8000 = 100000 + 15 * 8000
+                buy_cost_8000 = 25 * 8000
+                correct_better = "Buy" if buy_cost_8000 < make_cost_8000 else "Make"
+                correct_savings = abs(make_cost_8000 - buy_cost_8000)
+                
+                results = []
+                if check_answer(user_indiff, correct_indiff): results.append(f"✅ Indifference point correct: {correct_indiff:,.0f} units")
+                else: results.append(f"❌ Indifference point: Should be {correct_indiff:,.0f} units")
+                
+                if user_better == correct_better: results.append(f"✅ Better option correct: {correct_better}")
+                else: results.append(f"❌ Better option: Should be {correct_better}")
+                
+                if check_answer(user_savings, correct_savings): results.append(f"✅ Savings correct: ${correct_savings:,.0f}")
+                else: results.append(f"❌ Savings: Should be ${correct_savings:,.0f}")
+                
+                for r in results:
+                    st.write(r)
+            
+            if st.button("Show Complete Solution", key="be_p4_sol"):
+                display_solution("""
+                <strong>Part a) Indifference Point</strong><br>
+                Set Make Cost = Buy Cost<br>
+                $100,000 + $15Q = $25Q<br>
+                $100,000 = $10Q<br>
+                Q = <strong>10,000 units</strong><br><br>
+                
+                <strong>Part b) At 8,000 units</strong><br>
+                Make Cost = $100,000 + $15(8,000) = $100,000 + $120,000 = $220,000<br>
+                Buy Cost = $25(8,000) = $200,000<br><br>
+                
+                <strong>Buy is better by $220,000 - $200,000 = $20,000</strong><br><br>
+                
+                <em>Note: Since 8,000 < 10,000 (indifference point), Buy is preferred 
+                because it has lower fixed costs.</em>
+                """)
+
 # ============================================================
-# MODULE 5: DECISION TREES (Chapter 5)
+# MODULE 5: DECISION TREES (Chapter 5) - MERGED
 # ============================================================
 def module_decision():
     display_header("🌳", "Chapter 5", "Decision Trees & Expected Monetary Value", 
                    "Structured decision-making under uncertainty")
     
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
+    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice"])
     
     with tab1:
         st.markdown("### Expected Monetary Value (EMV) Analysis")
-        
         st.write("""
         **Decision tree analysis** is a quantitative approach for evaluating alternatives that 
         involve sequential decisions and chance events. It provides a visual framework for 
@@ -1778,34 +1583,27 @@ def module_decision():
         )
         
         st.markdown("#### Decision Tree Components")
-        
         col1, col2, col3 = st.columns(3)
         with col1:
-            display_concept_card("◻️", "Decision Node", 
-                "Point where decision maker chooses between alternatives (square symbol)")
+            st.markdown("**◻️ Decision Node**")
+            st.write("Point where decision maker chooses between alternatives")
         with col2:
-            display_concept_card("⭕", "Chance Node", 
-                "Point where chance determines outcome - probabilities must sum to 1.0 (circle symbol)")
+            st.markdown("**⭕ Chance Node**")
+            st.write("Point where chance determines outcome (probabilities sum to 1)")
         with col3:
-            display_concept_card("🔺", "Terminal Node", 
-                "Final payoff at end of branch - the monetary outcome (triangle symbol)")
+            st.markdown("**🔺 Terminal Node**")
+            st.write("Final payoff at end of branch")
         
-        st.markdown("#### Key Formulas")
+        st.markdown("### Key Formulas")
+        display_formula_card("Expected Monetary Value", r"EMV = \sum_{i=1}^{n} (P_i \times V_i)")
+        st.write("**Decision rule:** Select the alternative with the highest EMV")
         
-        st.markdown("##### Expected Monetary Value (EMV)")
-        st.latex(r"EMV = \sum_{i=1}^{n} (P_i \times V_i)")
-        st.write("Where Pᵢ = probability of outcome i, Vᵢ = monetary value of outcome i")
-        st.write("**Decision Rule:** Select the alternative with the highest EMV")
-        
-        st.markdown("##### Expected Value of Perfect Information (EVPI)")
-        st.latex(r"EVPI = EV_{with\ PI} - EV_{without\ PI}")
-        st.write("EVPI represents the maximum amount you should pay for perfect information")
+        display_formula_card("Expected Value of Perfect Information", r"EVPI = EV_{with\ PI} - EV_{without\ PI}")
         
         display_key_insight(
             "Roll Back Method",
-            "Decision trees are solved from <strong>right to left</strong> (backward induction). "
-            "At each chance node, calculate the EMV. At each decision node, select the alternative "
-            "with the highest EMV. This process 'rolls back' the tree to determine the optimal initial decision."
+            "Decision trees are solved from right to left (backward induction). At each chance node, "
+            "calculate the EMV. At each decision node, select the alternative with the highest EMV."
         )
     
     with tab2:
@@ -1814,100 +1612,140 @@ def module_decision():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### 🏭 Large Facility Option")
-            st.write("Higher risk, higher potential reward")
-            
-            prob_high = st.slider("P(High Demand)", 0, 100, 60, help="Probability of high demand scenario") / 100
+            st.markdown("#### Large Facility Option")
+            prob_high = st.slider("P(High Demand)", 0, 100, 60) / 100
             payoff_high_large = st.number_input("High Demand Payoff ($)", value=200000, key="dt_h_l")
             payoff_low_large = st.number_input("Low Demand Payoff ($)", value=-50000, key="dt_l_l")
             
             emv_large = prob_high * payoff_high_large + (1 - prob_high) * payoff_low_large
+            st.metric("EMV (Large)", f"${emv_large:,.0f}")
             
-            st.markdown("##### Calculation:")
-            st.latex(rf"EMV_{{Large}} = {prob_high:.2f} \times \${payoff_high_large:,} + {1-prob_high:.2f} \times \${payoff_low_large:,}")
-            display_metric_card(f"${emv_large:,.0f}", "EMV (Large Facility)", "highlight")
+            st.latex(rf"EMV_L = {prob_high:.2f} \times {payoff_high_large:,} + {1-prob_high:.2f} \times ({payoff_low_large:,})")
         
         with col2:
-            st.markdown("#### 🏠 Small Facility Option")
-            st.write("Lower risk, more conservative")
-            
-            st.write(f"P(High Demand) = {prob_high:.0%} (same as above)")
+            st.markdown("#### Small Facility Option")
             payoff_high_small = st.number_input("High Demand Payoff ($)", value=90000, key="dt_h_s")
             payoff_low_small = st.number_input("Low Demand Payoff ($)", value=25000, key="dt_l_s")
             
             emv_small = prob_high * payoff_high_small + (1 - prob_high) * payoff_low_small
+            st.metric("EMV (Small)", f"${emv_small:,.0f}")
             
-            st.markdown("##### Calculation:")
-            st.latex(rf"EMV_{{Small}} = {prob_high:.2f} \times \${payoff_high_small:,} + {1-prob_high:.2f} \times \${payoff_low_small:,}")
-            display_metric_card(f"${emv_small:,.0f}", "EMV (Small Facility)", "normal")
+            st.latex(rf"EMV_S = {prob_high:.2f} \times {payoff_high_small:,} + {1-prob_high:.2f} \times {payoff_low_small:,}")
         
         st.markdown("---")
-        st.markdown("### Decision Recommendation")
+        st.markdown("### Recommendation")
         
         if emv_large > emv_small:
-            display_alert(f"✅ <strong>Choose Large Facility</strong><br>EMV = ${emv_large:,.0f} > ${emv_small:,.0f}", "success")
-        elif emv_small > emv_large:
-            display_alert(f"✅ <strong>Choose Small Facility</strong><br>EMV = ${emv_small:,.0f} > ${emv_large:,.0f}", "success")
+            st.success(f"✅ **Choose Large Facility** (EMV ${emv_large:,.0f} > ${emv_small:,.0f})")
         else:
-            display_alert(f"⚖️ <strong>Indifferent</strong><br>Both options have EMV = ${emv_large:,.0f}", "info")
+            st.success(f"✅ **Choose Small Facility** (EMV ${emv_small:,.0f} > ${emv_large:,.0f})")
         
         # EVPI Calculation
         st.markdown("---")
         st.markdown("### Expected Value of Perfect Information (EVPI)")
         
-        # EV with perfect information = weighted average of best outcomes in each state
-        best_high = max(payoff_high_large, payoff_high_small)
-        best_low = max(payoff_low_large, payoff_low_small)
-        ev_with_pi = prob_high * best_high + (1 - prob_high) * best_low
+        ev_with_pi = prob_high * max(payoff_high_large, payoff_high_small) + \
+                     (1 - prob_high) * max(payoff_low_large, payoff_low_small)
         ev_without_pi = max(emv_large, emv_small)
         evpi = ev_with_pi - ev_without_pi
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            display_metric_card(f"${ev_with_pi:,.0f}", "EV with Perfect Info", "normal")
+            st.metric("EV with Perfect Info", f"${ev_with_pi:,.0f}")
         with col2:
-            display_metric_card(f"${ev_without_pi:,.0f}", "EV without Perfect Info", "normal")
+            st.metric("EV without Perfect Info", f"${ev_without_pi:,.0f}")
         with col3:
-            display_metric_card(f"${evpi:,.0f}", "EVPI", "highlight")
+            st.metric("EVPI", f"${evpi:,.0f}")
         
-        display_alert(
-            f"💡 <strong>Interpretation:</strong> You should pay at most <strong>${evpi:,.0f}</strong> for perfect "
-            f"market information (e.g., a market research study that perfectly predicts demand).",
-            "info"
-        )
+        st.info(f"💡 You should pay at most **${evpi:,.0f}** for perfect market information.")
     
     with tab3:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        with st.expander("📝 Problem 1: Calculate EMV (Easy)", expanded=True):
-            st.markdown("""
-            **Given:** A company is deciding between two options:
-            - **Option A:** 40% chance of $100,000, 60% chance of $20,000
-            - **Option B:** 50% chance of $80,000, 50% chance of $30,000
+        with st.expander("🟢 Problem 1: Basic EMV (Easy)"):
+            display_practice_problem(1, "Easy",
+                """Calculate the EMV for Option A:
+                • 40% chance of $100,000
+                • 60% chance of $20,000""")
             
-            **Calculate:** EMV for each option and determine which to choose
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_a = st.number_input("EMV(A) ($):", key="dt_p1_a")
-            with col2:
-                ans_b = st.number_input("EMV(B) ($):", key="dt_p1_b")
+            user_emv = st.number_input("EMV ($):", key="dt_p1")
             
             if st.button("Check Answer", key="dt_p1_btn"):
+                correct = 0.4 * 100000 + 0.6 * 20000
+                if check_answer(user_emv, correct):
+                    st.success(f"✅ Correct! EMV = ${correct:,.0f}")
+                else:
+                    display_solution(f"""
+                    EMV = P₁ × V₁ + P₂ × V₂<br>
+                    EMV = 0.40 × $100,000 + 0.60 × $20,000<br>
+                    EMV = $40,000 + $12,000<br>
+                    EMV = <strong>${correct:,.0f}</strong>
+                    """)
+        
+        with st.expander("🟡 Problem 2: Decision Comparison (Medium)"):
+            display_practice_problem(2, "Medium",
+                """Compare two investment options:
+                
+                **Option A:** 40% chance of $100,000, 60% chance of $20,000
+                **Option B:** 50% chance of $80,000, 50% chance of $30,000
+                
+                Which option has the higher EMV?""")
+            
+            if st.button("Show Solution", key="dt_p2"):
                 emv_a = 0.4 * 100000 + 0.6 * 20000
                 emv_b = 0.5 * 80000 + 0.5 * 30000
+                display_solution(f"""
+                <strong>Option A:</strong><br>
+                EMV(A) = 0.4 × $100,000 + 0.6 × $20,000<br>
+                EMV(A) = $40,000 + $12,000 = <strong>${emv_a:,.0f}</strong><br><br>
                 
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"EMV(A) = 0.40 × $100,000 + 0.60 × $20,000 = $40,000 + $12,000 = <strong>${emv_a:,.0f}</strong>")
-                display_solution_step(2, f"EMV(B) = 0.50 × $80,000 + 0.50 × $30,000 = $40,000 + $15,000 = <strong>${emv_b:,.0f}</strong>")
-                display_solution_step(3, f"<strong>Choose Option {'A' if emv_a > emv_b else 'B'}</strong> (higher EMV)")
+                <strong>Option B:</strong><br>
+                EMV(B) = 0.5 × $80,000 + 0.5 × $30,000<br>
+                EMV(B) = $40,000 + $15,000 = <strong>${emv_b:,.0f}</strong><br><br>
                 
-                if check_answer(ans_a, emv_a) and check_answer(ans_b, emv_b):
-                    display_alert("✅ Both answers correct!", "success")
+                <strong>Decision: Choose Option {'A' if emv_a > emv_b else 'B'}</strong> 
+                (${max(emv_a, emv_b):,.0f} > ${min(emv_a, emv_b):,.0f})
+                """)
+        
+        with st.expander("🔴 Problem 3: EVPI Calculation (Hard)"):
+            display_practice_problem(3, "Hard",
+                """Using the options from Problem 2:
+                
+                **Option A:** 40% chance of $100,000, 60% chance of $20,000
+                **Option B:** 50% chance of $80,000, 50% chance of $30,000
+                
+                Assume the probabilities represent the same market conditions (high/low demand).
+                Calculate the Expected Value of Perfect Information (EVPI).""")
+            
+            user_evpi = st.number_input("EVPI ($):", key="dt_p3")
+            
+            if st.button("Check Answer", key="dt_p3_btn"):
+                ev_with_pi = 0.4 * 100000 + 0.6 * 30000
+                ev_without_pi = max(0.4*100000 + 0.6*20000, 0.5*80000 + 0.5*30000)
+                correct_evpi = ev_with_pi - ev_without_pi
+                
+                if check_answer(user_evpi, correct_evpi):
+                    st.success(f"✅ Correct! EVPI = ${correct_evpi:,.0f}")
+                else:
+                    display_solution(f"""
+                    <strong>Step 1: EV with Perfect Information</strong><br>
+                    If we knew the market state in advance:<br>
+                    • High demand (40%): Choose A ($100,000 > $80,000)<br>
+                    • Low demand (60%): Choose B ($30,000 > $20,000)<br><br>
+                    EV_PI = 0.40 × $100,000 + 0.60 × $30,000<br>
+                    EV_PI = $40,000 + $18,000 = ${ev_with_pi:,.0f}<br><br>
+                    
+                    <strong>Step 2: EV without Perfect Information</strong><br>
+                    EMV(A) = ${0.4*100000 + 0.6*20000:,.0f}<br>
+                    EMV(B) = ${0.5*80000 + 0.5*30000:,.0f}<br>
+                    Best EMV = ${ev_without_pi:,.0f}<br><br>
+                    
+                    <strong>Step 3: EVPI</strong><br>
+                    EVPI = ${ev_with_pi:,.0f} - ${ev_without_pi:,.0f} = <strong>${correct_evpi:,.0f}</strong>
+                    """)
 
 # ============================================================
-# MODULE 6: LEARNING CURVES (Chapter 6)
+# MODULE 6: LEARNING CURVES (Chapter 6) - MERGED
 # ============================================================
 def module_learning():
     display_header("📉", "Chapter 6", "Learning Curves", "Experience curve cost reduction")
@@ -1930,15 +1768,14 @@ def module_learning():
             "Jacobs & Chase (2024, p. 168)"
         )
         
+        st.markdown("### Key Formulas")
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("#### Unit Time Formula")
-            st.latex(r"Y_x = K \cdot x^n")
+            display_formula_card("Unit Time Formula", r"Y_x = K \cdot x^n")
             st.write("Where Yₓ = time for unit x, K = time for first unit, n = learning exponent")
         
         with col2:
-            st.markdown("#### Learning Exponent")
-            st.latex(r"n = \frac{\log(b)}{\log(2)}")
+            display_formula_card("Learning Exponent", r"n = \frac{\log(b)}{\log(2)}")
             st.write("Where b = learning rate (e.g., 0.80 for 80% curve)")
         
         display_key_insight(
@@ -1980,7 +1817,7 @@ def module_learning():
         
         unit_time = k * (target_unit ** n)
         
-        # Cumulative time (approximation using integral)
+        # Retain cumulative calculation from v3.5
         cumulative_time = k * (target_unit ** (n + 1)) / (n + 1) if n != -1 else k * math.log(target_unit)
         avg_time = cumulative_time / target_unit if target_unit > 0 else 0
         
@@ -1991,23 +1828,42 @@ def module_learning():
             st.metric("Cumulative Time (1 to X)", f"{cumulative_time:.1f} hrs")
         with col3:
             st.metric("Cumulative Average", f"{avg_time:.1f} hrs")
+            
+        st.latex(rf"Y_{{{target_unit}}} = {k} \times {target_unit}^{{{n:.3f}}} = {unit_time:.1f}")
     
     with tab3:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        with st.expander("Problem: Calculate Unit Time"):
-            st.write("First unit takes 100 hours. With an 80% learning curve, how long will unit 8 take?")
+        with st.expander("🟢 Problem 1: Calculate Unit Time (Easy)"):
+            display_practice_problem(1, "Easy",
+                "First unit takes 100 hours. With an 80% learning curve, how long will unit 8 take?")
+            
             user_ans = st.number_input("Your Answer (hours):", key="lc_p1")
+            
+            show_hint = st.checkbox("Show Hint", key="lc_hint1")
+            if show_hint:
+                display_hint("Unit 8 is the 3rd doubling (1→2→4→8). Each doubling multiplies by 0.80.")
+            
             if st.button("Check Answer", key="lc_p1_btn"):
                 n = math.log(0.8) / math.log(2)
                 correct = 100 * (8 ** n)
                 if check_answer(user_ans, correct):
-                    st.success(f"✅ Correct! Y₈ = 100 × 8^{n:.3f} = {correct:.1f} hours")
+                    st.success(f"✅ Correct! Y₈ = {correct:.1f} hours")
                 else:
-                    st.error(f"❌ Incorrect. Y₈ = 100 × 8^{n:.3f} = {correct:.1f} hours")
+                    display_solution(f"""
+                    <strong>Method 1: Using the formula</strong><br>
+                    n = log(0.80) / log(2) = {n:.3f}<br>
+                    Y₈ = 100 × 8^{n:.3f} = <strong>{correct:.1f} hours</strong><br><br>
+                    
+                    <strong>Method 2: Doubling approach</strong><br>
+                    Unit 1: 100 hours<br>
+                    Unit 2: 100 × 0.80 = 80 hours<br>
+                    Unit 4: 80 × 0.80 = 64 hours<br>
+                    Unit 8: 64 × 0.80 = <strong>51.2 hours</strong>
+                    """)
 
 # ============================================================
-# MODULE 7: DECOUPLING POINT (Chapter 7)
+# MODULE 7: DECOUPLING POINT (Chapter 7) - FULL V3.5 RESTORE
 # ============================================================
 def module_decoupling():
     display_header("🔀", "Chapter 7", "Customer Order Decoupling Point", 
@@ -2081,7 +1937,7 @@ def module_decoupling():
             """)
 
 # ============================================================
-# MODULE 8: LINE BALANCING (Chapter 8)
+# MODULE 8: LINE BALANCING (Chapter 8) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_linebalance():
     display_header("⚖️", "Chapter 8", "Assembly Line Balancing", 
@@ -2150,7 +2006,7 @@ def module_linebalance():
                     st.progress(min(avg_util/100, 1.0), text=f"Station {i+1}: {avg_util:.0f}%")
 
 # ============================================================
-# MODULE 9: SERVICE DESIGN (Chapter 9)
+# MODULE 9: SERVICE DESIGN (Chapter 9) - FULL V3.5 RESTORE
 # ============================================================
 def module_service():
     display_header("🎯", "Chapter 9", "Service Process Design", "Designing customer-centric delivery systems")
@@ -2222,7 +2078,7 @@ def module_service():
         st.dataframe(df, use_container_width=True)
 
 # ============================================================
-# MODULE 10: QUEUING THEORY (Chapter 10)
+# MODULE 10: QUEUING THEORY (Chapter 10) - FULL V3.5 RESTORE + V4.0 Elements
 # ============================================================
 def module_queuing():
     display_header("👥", "Chapter 10", "Queuing Theory (Waiting Line Models)", 
@@ -2380,7 +2236,7 @@ def module_queuing():
     with tab5:
         st.markdown("### Practice Problems")
         
-        with st.expander("Problem: Calculate Lq"):
+        with st.expander("🟡 Problem: Calculate Lq"):
             st.write("λ = 12/hr, μ = 18/hr. Calculate Lq for M/M/1.")
             user_ans = st.number_input("Your Answer:", key="q_p1", format="%.2f")
             if st.button("Check Answer", key="q_p1_btn"):
@@ -2391,7 +2247,7 @@ def module_queuing():
                     st.error(f"❌ Incorrect. Lq = 12²/(18×6) = {correct:.2f}")
 
 # ============================================================
-# MODULE 11: DISTRIBUTIONS (Chapter 10)
+# MODULE 11: DISTRIBUTIONS (Chapter 10) - FULL V3.5 RESTORE
 # ============================================================
 def module_distributions():
     display_header("📐", "Chapter 10", "Exponential & Poisson Distributions", 
@@ -2474,7 +2330,7 @@ def module_distributions():
         st.dataframe(pd.DataFrame(data), use_container_width=True)
 
 # ============================================================
-# MODULE 12: LITTLE'S LAW (Chapter 11)
+# MODULE 12: LITTLE'S LAW (Chapter 11) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_littles():
     display_header("🔄", "Chapter 11", "Little's Law", "The fundamental law of process analysis")
@@ -2496,7 +2352,9 @@ def module_littles():
             "Jacobs & Chase (2024, p. 312)"
         )
         
-        st.latex(r"I = R \times T")
+        display_formula_card("Little's Law", r"I = R \times T")
+        st.write("Where I = Inventory (WIP), R = Throughput Rate, T = Flow Time")
+        
         st.latex(r"T = \frac{I}{R} \quad ; \quad R = \frac{I}{T}")
         
         st.markdown("#### Applications")
@@ -2531,7 +2389,7 @@ def module_littles():
             st.progress(min(I/100, 1.0), text=f"WIP: {I} units in system")
 
 # ============================================================
-# MODULE 13: SIX SIGMA / DPMO (Chapter 12)
+# MODULE 13: SIX SIGMA / DPMO (Chapter 12) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_dpmo():
     display_header("🎯", "Chapter 12", "DPMO & DMAIC", "Six Sigma quality methodology")
@@ -2546,7 +2404,7 @@ def module_dpmo():
         measure of quality that strives for near perfection.
         """)
         
-        st.latex(r"DPMO = \frac{\text{Total Defects}}{\text{Total Opportunities}} \times 1,000,000")
+        display_formula_card("DPMO", r"DPMO = \frac{\text{Total Defects}}{\text{Total Opportunities}} \times 1,000,000")
         
         st.markdown("#### Sigma Level Conversion")
         df = pd.DataFrame({
@@ -2601,7 +2459,7 @@ def module_dpmo():
                 st.write(f"**Deliverable:** {deliverable}")
 
 # ============================================================
-# MODULE 14: FMEA (Chapter 12)
+# MODULE 14: FMEA (Chapter 12) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_fmea():
     display_header("⚠️", "Chapter 12", "FMEA Risk Analysis", "Failure Mode and Effects Analysis")
@@ -2616,7 +2474,7 @@ def module_fmea():
         Risk Priority Number (RPN).
         """)
         
-        st.latex(r"RPN = \text{Severity} \times \text{Occurrence} \times \text{Detection}")
+        display_formula_card("Risk Priority Number", r"RPN = \text{Severity} \times \text{Occurrence} \times \text{Detection}")
         
         st.markdown("#### Rating Scales (1-10)")
         col1, col2, col3 = st.columns(3)
@@ -2668,7 +2526,7 @@ def module_fmea():
             st.metric("Average RPN", f"{sum(m['RPN'] for m in modes)/len(modes):.0f}")
 
 # ============================================================
-# MODULE 15: SQC - CONTROL CHARTS (Chapter 13)
+# MODULE 15: SQC - CONTROL CHARTS (Chapter 13) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_sqc():
     display_header("📉", "Chapter 13", "Statistical Quality Control", "p-Chart & c-Chart calculators")
@@ -2685,10 +2543,10 @@ def module_sqc():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("#### p-Chart Formulas")
-            st.latex(r"\bar{p} = \frac{\text{Total Defectives}}{\text{Total Inspected}}")
-            st.latex(r"S_p = \sqrt{\frac{\bar{p}(1-\bar{p})}{n}}")
-            st.latex(r"UCL = \bar{p} + 3S_p")
-            st.latex(r"LCL = \bar{p} - 3S_p")
+            display_formula_card("Center Line", r"\bar{p} = \frac{\text{Total Defectives}}{\text{Total Inspected}}")
+            display_formula_card("Standard Error", r"S_p = \sqrt{\frac{\bar{p}(1-\bar{p})}{n}}")
+            display_formula_card("Upper Control Limit", r"UCL = \bar{p} + 3S_p")
+            display_formula_card("Lower Control Limit", r"LCL = \bar{p} - 3S_p")
         
         with col2:
             st.markdown("#### c-Chart Formulas")
@@ -2710,29 +2568,30 @@ def module_sqc():
                 d = st.number_input(f"Sample {i+1}", value=8+i%5, key=f"pc_d_{i}")
                 defectives.append(d)
         
-        total_def = sum(defectives)
-        total_insp = n * num_samples
-        p_bar = total_def / total_insp
-        sp = math.sqrt(p_bar * (1 - p_bar) / n)
-        ucl = p_bar + 3 * sp
-        lcl = max(0, p_bar - 3 * sp)
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("p̄ (Center)", f"{p_bar:.4f}")
-        with col2:
-            st.metric("UCL", f"{ucl:.4f}")
-        with col3:
-            st.metric("LCL", f"{lcl:.4f}")
-        
-        # Check for out of control
-        proportions = [d/n for d in defectives]
-        ooc = [i+1 for i, p in enumerate(proportions) if p > ucl or p < lcl]
-        
-        if ooc:
-            st.error(f"⚠️ Out of Control: Samples {ooc}")
-        else:
-            st.success("✅ All points within control limits")
+        if n > 0:
+            total_def = sum(defectives)
+            total_insp = n * num_samples
+            p_bar = total_def / total_insp
+            sp = math.sqrt(p_bar * (1 - p_bar) / n)
+            ucl = p_bar + 3 * sp
+            lcl = max(0, p_bar - 3 * sp)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("p̄ (Center)", f"{p_bar:.4f}")
+            with col2:
+                st.metric("UCL", f"{ucl:.4f}")
+            with col3:
+                st.metric("LCL", f"{lcl:.4f}")
+            
+            # Check for out of control
+            proportions = [d/n for d in defectives]
+            ooc = [i+1 for i, p in enumerate(proportions) if p > ucl or p < lcl]
+            
+            if ooc:
+                st.error(f"⚠️ Out of Control: Samples {ooc}")
+            else:
+                st.success("✅ All points within control limits")
     
     with tab3:
         st.markdown("### c-Chart Calculator")
@@ -2760,7 +2619,7 @@ def module_sqc():
             st.metric("LCL", f"{lcl_c:.2f}")
 
 # ============================================================
-# MODULE 16: PROCESS CAPABILITY (Chapter 13)
+# MODULE 16: PROCESS CAPABILITY (Chapter 13) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_capability():
     display_header("🎯", "Chapter 13", "Process Capability — Cp & Cpk", 
@@ -2786,11 +2645,11 @@ def module_capability():
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("#### Cp (Potential)")
-            st.latex(r"C_p = \frac{USL - LSL}{6\sigma}")
+            display_formula_card("Cp", r"C_p = \frac{USL - LSL}{6\sigma}")
         
         with col2:
             st.markdown("#### Cpk (Actual)")
-            st.latex(r"C_{pk} = \min\left(\frac{USL - \bar{X}}{3\sigma}, \frac{\bar{X} - LSL}{3\sigma}\right)")
+            display_formula_card("Cpk", r"C_{pk} = \min\left(\frac{USL - \bar{X}}{3\sigma}, \frac{\bar{X} - LSL}{3\sigma}\right)")
         
         st.markdown("#### Interpretation")
         df = pd.DataFrame({
@@ -2841,7 +2700,7 @@ def module_capability():
                     st.error("❌ Not Capable: Immediate improvement needed")
 
 # ============================================================
-# MODULE 17: ACCEPTANCE SAMPLING (Chapter 13)
+# MODULE 17: ACCEPTANCE SAMPLING (Chapter 13) - FULL V3.5 RESTORE
 # ============================================================
 def module_sampling():
     display_header("📊", "Chapter 13", "Acceptance Sampling", "Statistical methods for lot acceptance")
@@ -2877,13 +2736,9 @@ def module_sampling():
         with col2:
             # Calculate P(Accept) using Poisson approximation
             np_val = n * p
-            p_accept = sum([poisson_pmf(k, np_val) for k in range(c + 1)])
+            p_accept = sum([poisson_pmf(k, np_val) for k in range(int(c) + 1)])
             
             st.metric("P(Accept Lot)", f"{p_accept:.3f}")
-            
-            # Find approximate AQL and LTPD
-            # AQL: p where P(accept) ≈ 0.95
-            # LTPD: p where P(accept) ≈ 0.10
             
             st.info(f"""
             📊 **Sampling Plan (n={n}, c={c})**
@@ -2891,7 +2746,7 @@ def module_sampling():
             """)
 
 # ============================================================
-# MODULE 18: PARETO ANALYSIS (Chapter 13)
+# MODULE 18: PARETO ANALYSIS (Chapter 13) - FULL V3.5 RESTORE
 # ============================================================
 def module_pareto():
     display_header("📊", "Chapter 13", "Pareto Analysis", "The 80/20 rule for quality improvement")
@@ -2945,7 +2800,7 @@ def module_pareto():
         st.success(f"🎯 **Vital Few (80% of problems):** {', '.join(vital_few)}")
 
 # ============================================================
-# MODULE 19: FISHBONE DIAGRAM (Chapter 13)
+# MODULE 19: FISHBONE DIAGRAM (Chapter 13) - FULL V3.5 RESTORE
 # ============================================================
 def module_fishbone():
     display_header("🐟", "Chapter 13", "Fishbone Diagram", "Cause-and-effect analysis (Ishikawa)")
@@ -2998,7 +2853,7 @@ def module_fishbone():
             st.markdown(f"**{cat}:** {', '.join([c for c in cause_list if c.strip()])}")
 
 # ============================================================
-# MODULE 20: LEAN SUPPLY CHAINS (Chapter 14)
+# MODULE 20: LEAN SUPPLY CHAINS (Chapter 14) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_lean():
     display_header("🔄", "Chapter 14", "Lean Supply Chains", "Eliminating waste and maximizing value")
@@ -3025,6 +2880,13 @@ def module_lean():
         
         for letter, (name, desc) in wastes.items():
             st.write(f"**{letter} - {name}:** {desc}")
+            
+        display_textbook_content(
+            "Value Stream Mapping",
+            """VSM is a great visual way to analyze an existing system and to find areas where waste 
+            can be eliminated. Value stream maps are simple to draw, and it is possible to construct 
+            the maps totally with paper and pencil."""
+        )
     
     with tab2:
         st.markdown("### Lead Time Reduction Calculator")
@@ -3049,10 +2911,16 @@ def module_lean():
             future_fg = fg_days * (1 - fg_red/100)
             future_lt = future_rm + future_wip + future_fg
             
-            reduction_pct = (1 - future_lt/current_lt) * 100
+            reduction_pct = (1 - future_lt/current_lt) * 100 if current_lt > 0 else 0
             
             st.metric("Future Lead Time", f"{future_lt:.1f} days")
             st.metric("Lead Time Reduction", f"{reduction_pct:.0f}%")
+            
+            display_citation(
+                "Note that the lead time in the new system is only five days, compared to the "
+                "34-day lead time with the old system.",
+                "Jacobs & Chase (2024)"
+            )
     
     with tab3:
         st.markdown("### Value Stream Mapping")
@@ -3066,7 +2934,7 @@ def module_lean():
         st.write(" ".join(flow))
 
 # ============================================================
-# MODULE 21: CENTROID METHOD (Chapter 15)
+# MODULE 21: CENTROID METHOD (Chapter 15) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_centroid():
     display_header("📍", "Chapter 15", "Centroid Method", "Weighted center of gravity for facility location")
@@ -3087,8 +2955,8 @@ def module_centroid():
             "Jacobs & Chase (2024, p. 456)"
         )
         
-        st.latex(r"C_x = \frac{\sum(d_{ix} \times V_i)}{\sum V_i}")
-        st.latex(r"C_y = \frac{\sum(d_{iy} \times V_i)}{\sum V_i}")
+        display_formula_card("X Coordinate", r"C_x = \frac{\sum(d_{ix} \times V_i)}{\sum V_i}")
+        display_formula_card("Y Coordinate", r"C_y = \frac{\sum(d_{iy} \times V_i)}{\sum V_i}")
     
     with tab2:
         st.markdown("### Centroid Calculator")
@@ -3109,17 +2977,18 @@ def module_centroid():
             locations.append({"name": name, "x": x, "y": y, "v": v})
         
         total_v = sum(loc["v"] for loc in locations)
-        cx = sum(loc["x"] * loc["v"] for loc in locations) / total_v
-        cy = sum(loc["y"] * loc["v"] for loc in locations) / total_v
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Optimal X (Cx)", f"{cx:.1f}")
-        with col2:
-            st.metric("Optimal Y (Cy)", f"{cy:.1f}")
+        if total_v > 0:
+            cx = sum(loc["x"] * loc["v"] for loc in locations) / total_v
+            cy = sum(loc["y"] * loc["v"] for loc in locations) / total_v
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Optimal X (Cx)", f"{cx:.1f}")
+            with col2:
+                st.metric("Optimal Y (Cy)", f"{cy:.1f}")
 
 # ============================================================
-# MODULE 22: FACTOR RATING (Chapter 15)
+# MODULE 22: FACTOR RATING (Chapter 15) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_factor():
     display_header("⚖️", "Chapter 15", "Factor Rating Method", "Multi-criteria location analysis")
@@ -3133,7 +3002,7 @@ def module_factor():
         potential location. The location with the highest weighted score is preferred.
         """)
         
-        st.latex(r"\text{Score} = \sum_{i=1}^{n} (w_i \times s_i)")
+        display_formula_card("Weighted Score", r"\text{Score} = \sum_{i=1}^{n} (w_i \times s_i)")
     
     with tab2:
         st.markdown("### Factor Rating Calculator")
@@ -3173,7 +3042,7 @@ def module_factor():
             st.success("📍 **Recommendation:** Location B is preferred")
 
 # ============================================================
-# MODULE 23: TRANSPORTATION METHOD (Chapter 15)
+# MODULE 23: TRANSPORTATION METHOD (Chapter 15) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_transportation():
     display_header("🚚", "Chapter 15", "Transportation Method", "Optimal allocation of supply to demand")
@@ -3188,7 +3057,7 @@ def module_transportation():
         for an initial solution, then optimized.
         """)
         
-        st.latex(r"\text{Minimize } Z = \sum_{i}\sum_{j} c_{ij} \cdot x_{ij}")
+        display_formula_card("Objective Function", r"\text{Minimize } Z = \sum_{i}\sum_{j} c_{ij} \cdot x_{ij}")
         
         st.write("""
         Subject to:
@@ -3231,7 +3100,7 @@ def module_transportation():
         st.metric("Total Transportation Cost", f"${total_cost:,}")
 
 # ============================================================
-# MODULE 24: GLOBAL SOURCING (Chapter 16)
+# MODULE 24: GLOBAL SOURCING (Chapter 16) - FULL V3.5 RESTORE
 # ============================================================
 def module_sourcing():
     display_header("🌐", "Chapter 16", "Global Sourcing", "Total cost of ownership analysis")
@@ -3281,7 +3150,7 @@ def module_sourcing():
             st.success(f"📍 **Recommendation:** Overseas supplier (saves ${dom_total - ovs_total:.2f}/unit)")
 
 # ============================================================
-# MODULE 25: FORECASTING (Chapter 18)
+# MODULE 25: FORECASTING (Chapter 18) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_forecast():
     display_header("📈", "Chapter 18", "Enhanced Forecasting", "WMA, Holt's, Seasonal & Tracking Signal")
@@ -3290,7 +3159,7 @@ def module_forecast():
     
     with tab1:
         st.markdown("### Weighted Moving Average")
-        st.latex(r"F_t = \frac{\sum_{i=1}^{n} w_i \cdot A_{t-i}}{\sum_{i=1}^{n} w_i}")
+        display_formula_card("Weighted Moving Average", r"F_t = \frac{\sum_{i=1}^{n} w_i \cdot A_{t-i}}{\sum_{i=1}^{n} w_i}")
         
         col1, col2 = st.columns(2)
         
@@ -3360,7 +3229,7 @@ def module_forecast():
     
     with tab4:
         st.markdown("### Tracking Signal Monitor")
-        st.latex(r"TS = \frac{RSFE}{MAD}")
+        display_formula_card("Tracking Signal", r"TS = \frac{RSFE}{MAD}")
         
         st.write("""
         - **RSFE** = Running Sum of Forecast Errors = Σ(Aₜ - Fₜ)
@@ -3402,7 +3271,7 @@ def module_forecast():
             st.success("✅ Tracking signal within acceptable range.")
 
 # ============================================================
-# MODULE 26: REGRESSION (Chapter 18)
+# MODULE 26: REGRESSION (Chapter 18) - FULL V3.5 RESTORE + V4.0 Cards
 # ============================================================
 def module_regression():
     display_header("📈", "Chapter 18", "Linear Regression Trend Line", "Least squares forecasting")
@@ -3416,8 +3285,8 @@ def module_regression():
         It's used for trend projection and causal forecasting.
         """)
         
-        st.latex(r"Y = a + bx")
-        st.latex(r"b = \frac{n\sum xy - \sum x \sum y}{n\sum x^2 - (\sum x)^2}")
+        display_formula_card("Regression Line", r"Y = a + bx")
+        display_formula_card("Slope", r"b = \frac{n\sum xy - \sum x \sum y}{n\sum x^2 - (\sum x)^2}")
         st.latex(r"a = \bar{y} - b\bar{x}")
     
     with tab2:
@@ -3452,7 +3321,7 @@ def module_regression():
         st.metric(f"Forecast for Period {forecast_x}", f"{forecast_y:.1f}")
 
 # ============================================================
-# MODULE 27: AGGREGATE PLANNING (Chapter 19)
+# MODULE 27: AGGREGATE PLANNING (Chapter 19) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_aggregate():
     display_header("📋", "Chapter 19", "Aggregate Planning & S&OP", "Balancing supply and demand")
@@ -3539,7 +3408,7 @@ def module_aggregate():
             st.success(f"📊 **Recommendation:** Level Strategy saves ${chase_total - level_total:,.0f}")
 
 # ============================================================
-# MODULE 28: EOQ (Chapter 20)
+# MODULE 28: EOQ (Chapter 20) - FULL V3.5 RESTORE + V4.0 Elements
 # ============================================================
 def module_eoq():
     display_header("📦", "Chapter 20", "Economic Order Quantity (EOQ)", "Minimizing total inventory costs")
@@ -3556,9 +3425,9 @@ def module_eoq():
             "Jacobs & Chase (2024, p. 598)"
         )
         
-        st.latex(r"TC = \frac{D}{Q} \cdot S + \frac{Q}{2} \cdot H")
-        st.latex(r"Q^* = \sqrt{\frac{2DS}{H}}")
-        st.latex(r"TC_{min} = \sqrt{2DSH}")
+        display_formula_card("Total Cost", r"TC = \frac{D}{Q} \cdot S + \frac{Q}{2} \cdot H")
+        display_formula_card("Optimal Order Quantity", r"Q^* = \sqrt{\frac{2DS}{H}}")
+        display_formula_card("Minimum Total Cost", r"TC_{min} = \sqrt{2DSH}")
         
         display_key_insight(
             "Robustness of EOQ",
@@ -3589,7 +3458,7 @@ def module_eoq():
     
     with tab3:
         st.markdown("### Production Order Quantity (EPQ)")
-        st.latex(r"Q^*_p = \sqrt{\frac{2DS}{H(1-d/p)}}")
+        display_formula_card("Optimal Production Lot Size", r"Q^*_p = \sqrt{\frac{2DS}{H(1-d/p)}}")
         
         col1, col2 = st.columns(2)
         
@@ -3605,20 +3474,25 @@ def module_eoq():
                 st.error("Production rate must exceed demand rate!")
     
     with tab4:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        with st.expander("Problem: Calculate Q*"):
-            st.write("D = 5,000, S = $100, H = $4. Calculate optimal Q*.")
+        with st.expander("🟢 Problem 1: Calculate Q* (Easy)"):
+            display_practice_problem(1, "Easy", "D = 5,000, S = $100, H = $4. Calculate optimal Q*.")
             user_ans = st.number_input("Your Answer:", key="eoq_p1")
+            
             if st.button("Check Answer", key="eoq_p1_btn"):
                 correct = math.sqrt(2 * 5000 * 100 / 4)
                 if check_answer(user_ans, correct):
-                    st.success(f"✅ Correct! Q* = √(2×5000×100/4) = {correct:.0f}")
+                    st.success(f"✅ Correct! Q* = {correct:.0f}")
                 else:
-                    st.error(f"❌ Incorrect. Q* = √(2×5000×100/4) = {correct:.0f}")
+                    display_solution(f"""
+                    Q* = √(2DS / H)<br>
+                    Q* = √(2 × 5000 × 100 / 4)<br>
+                    Q* = <strong>{correct:.0f} units</strong>
+                    """)
 
 # ============================================================
-# MODULE 29: SAFETY STOCK (Chapter 20)
+# MODULE 29: SAFETY STOCK (Chapter 20) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_safetystock():
     display_header("🛡️", "Chapter 20", "Safety Stock & Reorder Point", 
@@ -3629,8 +3503,8 @@ def module_safetystock():
     with tab1:
         st.markdown("### Safety Stock Theory")
         
-        st.latex(r"SS = z \cdot \sigma_d \cdot \sqrt{LT}")
-        st.latex(r"ROP = \bar{d} \times LT + SS")
+        display_formula_card("Safety Stock", r"SS = z \cdot \sigma_d \cdot \sqrt{LT}")
+        display_formula_card("Reorder Point", r"ROP = \bar{d} \times LT + SS")
         
         st.markdown("#### Common Z-Values")
         df = pd.DataFrame({
@@ -3671,7 +3545,7 @@ def module_safetystock():
             st.latex(rf"ROP = {d_avg} \times {lt} + {ss:.0f} = {rop:.0f}")
 
 # ============================================================
-# MODULE 30: NEWSVENDOR (Chapter 20)
+# MODULE 30: NEWSVENDOR (Chapter 20) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_newsvendor():
     display_header("📰", "Chapter 20", "Newsvendor Model", "Single-period inventory optimization")
@@ -3685,10 +3559,13 @@ def module_newsvendor():
         ordering opportunity. It balances the cost of understocking against overstocking.
         """)
         
-        st.latex(r"C_u = \text{Price} - \text{Cost}")
-        st.latex(r"C_o = \text{Cost} - \text{Salvage}")
-        st.latex(r"P \leq \frac{C_u}{C_u + C_o}")
-        st.latex(r"Q^* = \mu + z\sigma")
+        col1, col2 = st.columns(2)
+        with col1:
+            display_formula_card("Cost of Understocking", r"C_u = \text{Price} - \text{Cost}")
+            display_formula_card("Cost of Overstocking", r"C_o = \text{Cost} - \text{Salvage}")
+        with col2:
+            display_formula_card("Critical Ratio", r"P \leq \frac{C_u}{C_u + C_o}")
+            display_formula_card("Optimal Quantity", r"Q^* = \mu + z\sigma")
     
     with tab2:
         st.markdown("### Newsvendor Calculator")
@@ -3716,7 +3593,7 @@ def module_newsvendor():
             st.metric("Optimal Q*", f"{Q_star:.0f} units")
 
 # ============================================================
-# MODULE 31: MRP (Chapter 21)
+# MODULE 31: MRP (Chapter 21) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_mrp():
     display_header("🏭", "Chapter 21", "Material Requirements Planning", "Scheduling dependent-demand inventory")
@@ -3733,8 +3610,11 @@ def module_mrp():
             "Jacobs & Chase (2024)"
         )
         
-        st.latex(r"\text{Net} = \text{Gross} - (\text{On Hand} + \text{Scheduled Receipts})")
-        st.latex(r"\text{Release Period} = \text{Receipt Period} - \text{Lead Time}")
+        col1, col2 = st.columns(2)
+        with col1:
+            display_formula_card("Net Requirements", r"\text{Net} = \text{Gross} - (\text{OH} + \text{SR})")
+        with col2:
+            display_formula_card("Release Period", r"\text{Release} = \text{Receipt Period} - \text{LT}")
         
         st.markdown("#### MRP Inputs")
         col1, col2, col3 = st.columns(3)
@@ -3834,7 +3714,7 @@ def module_mrp():
         st.write(f"- Part-E: {end_qty * 1 * 2}")
 
 # ============================================================
-# MODULE 32: MRP LOT SIZING (Chapter 21)
+# MODULE 32: MRP LOT SIZING (Chapter 21) - FULL V3.5 RESTORE
 # ============================================================
 def module_mrp_lotsizing():
     display_header("📦", "Chapter 21", "MRP Lot Sizing Comparison", "L4L, EOQ, and POQ techniques")
@@ -3874,7 +3754,7 @@ def module_mrp_lotsizing():
     st.success("**Result:** POQ method is most cost-effective for this demand pattern.")
 
 # ============================================================
-# MODULE 33: JOB SCHEDULING (Chapter 22)
+# MODULE 33: JOB SCHEDULING (Chapter 22) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_scheduling():
     display_header("📅", "Chapter 22", "Job Sequencing & Priority Rules", "Determining job processing order")
@@ -3901,7 +3781,7 @@ def module_scheduling():
         for rule, desc in rules.items():
             st.write(f"**{rule}:** {desc}")
         
-        st.latex(r"CR = \frac{\text{Due Date} - \text{Today}}{\text{Processing Time}}")
+        display_formula_card("Critical Ratio", r"CR = \frac{\text{Due Date} - \text{Today}}{\text{Processing Time}}")
         
         display_key_insight(
             "SPT Optimality",
@@ -3968,14 +3848,16 @@ def module_scheduling():
             st.metric("Avg Tardiness", f"{sum(tardiness)/len(tardiness):.2f}")
     
     with tab3:
-        st.markdown("### Practice Problems")
+        st.markdown("### 📝 Enhanced Practice Problems")
         
-        with st.expander("Problem: Which rule minimizes average flow time?"):
+        with st.expander("🟢 Problem 1: Flow Time Calculation (Easy)"):
+            display_practice_problem(1, "Easy", "Which rule mathematically minimizes the average flow time for a set of jobs?")
+            
             if st.button("Show Answer", key="sch_p1"):
-                st.success("**SPT (Shortest Processing Time)** minimizes average flow time.")
+                display_solution("**SPT (Shortest Processing Time)** minimizes average flow time by ensuring that the shortest jobs get out of the system quickly, preventing them from waiting behind long jobs.")
 
 # ============================================================
-# MODULE 34: POKA-YOKE (Chapter 9)
+# MODULE 34: POKA-YOKE (Chapter 9) - FULL V3.5 RESTORE
 # ============================================================
 def module_pokayoke():
     display_header("🛡️", "Chapter 9", "Poka-yoke Database", "Mistake-proofing techniques")
@@ -4006,7 +3888,7 @@ def module_pokayoke():
         st.write("Alerts when error occurs (e.g., car door ajar warning)")
 
 # ============================================================
-# MODULE 35: SQC PRACTICE (Chapter 13)
+# MODULE 35: SQC PRACTICE (Chapter 13) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_sqc_practice():
     display_header("🎓", "Chapter 13", "SQC Practice Questions", "Statistical Quality Control exam prep")
@@ -4021,1265 +3903,12 @@ def module_sqc_practice():
     
     for i, (q, a) in enumerate(questions):
         with st.expander(f"Q{i+1}: {q}"):
+            display_practice_problem(i+1, "Medium", q)
             if st.button(f"Show Answer", key=f"sqc_prac_{i}"):
-                st.success(a)
+                display_solution(a)
 
 # ============================================================
-# MODULE 1: SUPPLY CHAIN RISK (Chapter 1)
-# ============================================================
-def module_risk():
-    display_header("🛡️", "Chapter 1", "Supply Chain Risk Assessment", 
-                   "Probability and Impact Matrix (Exhibit 1.4)")
-    
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
-    
-    with tab1:
-        st.markdown("### Supply Chain Risk Management")
-        
-        st.write("""
-        **Supply chain risk** is the likelihood of a disruption that would impact the ability of a 
-        company to continuously supply products or services. Effective risk management involves 
-        systematic identification, assessment, and mitigation of potential threats.
-        """)
-        
-        display_citation(
-            "Supply chain risk management involves the identification of potential sources of risk "
-            "and implementation of appropriate strategies through a coordinated approach among "
-            "supply chain members to reduce supply chain vulnerability.",
-            "Jacobs & Chase (2024, p. 12)"
-        )
-        
-        st.markdown("#### Risk Assessment Framework")
-        st.latex(r"\text{Risk Score} = \text{Probability} \times \text{Impact}")
-        
-        st.write("""
-        Each risk event is scored on a scale (typically 1-5 or 1-10). Events with high scores 
-        require immediate mitigation strategies such as:
-        - **Redundancy** - Multiple suppliers, backup facilities
-        - **Insurance** - Financial protection against losses
-        - **Process Changes** - Redesigning vulnerable processes
-        - **Inventory Buffers** - Safety stock for critical items
-        """)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("⚠️", "Risk Identification", 
-                "Systematically identify all potential sources of supply chain disruption")
-        with col2:
-            display_concept_card("📊", "Risk Assessment", 
-                "Evaluate probability and impact of each identified risk")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("🛡️", "Risk Mitigation", 
-                "Develop and implement strategies to reduce risk exposure")
-        with col2:
-            display_concept_card("📈", "Risk Monitoring", 
-                "Continuously track risk indicators and update assessments")
-        
-        display_key_insight(
-            "What-If Analysis",
-            "Some companies call this 'what if' analysis. Answering these 'what if' questions can be "
-            "useful for understanding how sensitive an analysis is to cost and profit assumptions. "
-            "Consider scenarios like: 25% increase in development time, 25% change in sales volume, "
-            "$1 change in price or cost. (Jacobs & Chase, 2024, p. 60)"
-        )
-        
-        st.markdown("#### Common Supply Chain Risk Categories")
-        
-        risk_categories = pd.DataFrame({
-            "Category": ["Operational", "Financial", "Strategic", "Hazard", "Demand", "Supply"],
-            "Examples": [
-                "Equipment failure, quality issues, capacity constraints",
-                "Currency fluctuation, supplier bankruptcy, credit risk",
-                "Competitor actions, market changes, technology shifts",
-                "Natural disasters, accidents, terrorism",
-                "Forecast errors, demand volatility, bullwhip effect",
-                "Supplier failure, logistics disruption, material shortage"
-            ],
-            "Mitigation": [
-                "Preventive maintenance, quality systems, flexible capacity",
-                "Hedging, supplier financial monitoring, diversification",
-                "Market intelligence, scenario planning, agility",
-                "Insurance, business continuity planning, geographic spread",
-                "Demand sensing, collaborative forecasting, postponement",
-                "Multi-sourcing, safety stock, supplier development"
-            ]
-        })
-        st.dataframe(risk_categories, use_container_width=True, hide_index=True)
-    
-    with tab2:
-        st.markdown("### Risk Assessment Matrix Calculator")
-        st.write("Score each risk event from 1 (Low) to 5 (High) for both Probability and Impact")
-        
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.markdown("#### Risk Event Scoring")
-            
-            risk_names = [
-                "Supplier Failure (Financial)",
-                "Natural Disaster / Weather",
-                "Quality Issue / Product Recall",
-                "Logistics / Customs Delay",
-                "Demand Volatility",
-                "Cybersecurity Breach",
-                "Regulatory Changes",
-                "Key Personnel Loss"
-            ]
-            
-            risks = []
-            for i, name in enumerate(risk_names):
-                with st.expander(f"📌 {name}", expanded=(i < 3)):
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        prob = st.slider(f"Probability", 1, 5, 3, key=f"risk_p_{i}",
-                                        help="1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain")
-                    with c2:
-                        impact = st.slider(f"Impact", 1, 5, 4, key=f"risk_i_{i}",
-                                          help="1=Negligible, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic")
-                    risks.append({"name": name, "prob": prob, "impact": impact, "score": prob * impact})
-        
-        with col2:
-            st.markdown("#### Risk Analysis Results")
-            
-            df = pd.DataFrame(risks)
-            df.columns = ["Risk Event", "Probability", "Impact", "Risk Score"]
-            df = df.sort_values("Risk Score", ascending=False)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            
-            total_score = sum(r["score"] for r in risks)
-            max_score = len(risks) * 25
-            risk_percentage = (total_score / max_score) * 100
-            
-            col_a, col_b = st.columns(2)
-            with col_a:
-                display_metric_card(f"{total_score}", "Total Risk Score", "highlight")
-            with col_b:
-                display_metric_card(f"{risk_percentage:.0f}%", "Risk Exposure Level", 
-                                   "danger" if risk_percentage > 60 else "success" if risk_percentage < 40 else "normal")
-            
-            # Risk Priority Classification
-            st.markdown("#### Risk Priority Classification")
-            high_risks = [r for r in risks if r["score"] >= 15]
-            med_risks = [r for r in risks if 8 <= r["score"] < 15]
-            low_risks = [r for r in risks if r["score"] < 8]
-            
-            if high_risks:
-                display_alert(f"🔴 <strong>HIGH PRIORITY ({len(high_risks)}):</strong> {', '.join([r['name'] for r in high_risks])}<br><em>Immediate action required</em>", "danger")
-            if med_risks:
-                display_alert(f"🟡 <strong>MEDIUM PRIORITY ({len(med_risks)}):</strong> {', '.join([r['name'] for r in med_risks])}<br><em>Monitor closely and develop contingency plans</em>", "warning")
-            if low_risks:
-                display_alert(f"🟢 <strong>LOW PRIORITY ({len(low_risks)}):</strong> {', '.join([r['name'] for r in low_risks])}<br><em>Periodic review sufficient</em>", "success")
-    
-    with tab3:
-        st.markdown("### Practice Problems")
-        
-        # Problem 1
-        with st.expander("📝 Problem 1: Triple Bottom Line", expanded=True):
-            st.markdown("""
-            **Question:** What is the "Triple Bottom Line" and why is it important for modern supply chain management?
-            """)
-            
-            user_answer_1 = st.text_area("Your Answer:", key="risk_p1_ans", height=100,
-                                         placeholder="Enter your answer here...")
-            
-            if st.button("Check Answer", key="risk_p1_btn"):
-                st.markdown("---")
-                st.markdown("#### ✅ Model Answer:")
-                display_solution_step(1, "<strong>Definition:</strong> The Triple Bottom Line (TBL) evaluates a firm against three criteria:")
-                display_solution_step(2, "<strong>Social (People):</strong> Impact on employees, communities, and society - fair labor practices, community engagement, human rights")
-                display_solution_step(3, "<strong>Economic (Profit):</strong> Financial performance and long-term economic sustainability - not just short-term profits")
-                display_solution_step(4, "<strong>Environmental (Planet):</strong> Ecological footprint and environmental sustainability - carbon emissions, waste reduction, resource conservation")
-                
-                display_key_insight("Why It Matters",
-                    "Modern consumers and investors increasingly demand that companies demonstrate responsibility "
-                    "across all three dimensions. Supply chains that ignore social or environmental factors face "
-                    "reputational risks, regulatory penalties, and loss of market share.")
-        
-        # Problem 2
-        with st.expander("📝 Problem 2: Efficiency vs. Effectiveness"):
-            st.markdown("""
-            **Question:** Distinguish between "Efficiency" and "Effectiveness" in operations management. 
-            Provide an example where a company might be efficient but not effective.
-            """)
-            
-            if st.button("Show Solution", key="risk_p2_btn"):
-                st.markdown("#### ✅ Solution:")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("**Efficiency**")
-                    st.write("Doing something at the **lowest possible cost** (doing things right)")
-                    st.write("*Focus: Resource utilization*")
-                with col2:
-                    st.markdown("**Effectiveness**")
-                    st.write("Doing the **right things** to create the most value for the customer")
-                    st.write("*Focus: Goal achievement*")
-                
-                display_alert(
-                    "<strong>Example:</strong> A factory produces widgets at the lowest cost per unit (efficient), "
-                    "but the widgets don't meet customer quality expectations (not effective). The company saves "
-                    "money on production but loses customers due to poor quality.",
-                    "info"
-                )
-        
-        # Problem 3
-        with st.expander("📝 Problem 3: Risk Score Calculation"):
-            st.markdown("""
-            **Question:** A company identifies the following risks:
-            - Supplier bankruptcy: Probability = 2, Impact = 5
-            - Equipment failure: Probability = 4, Impact = 3
-            - Demand surge: Probability = 3, Impact = 4
-            
-            Calculate the risk score for each and determine which should be addressed first.
-            """)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                ans_1 = st.number_input("Supplier bankruptcy score:", key="risk_p3_1")
-            with col2:
-                ans_2 = st.number_input("Equipment failure score:", key="risk_p3_2")
-            with col3:
-                ans_3 = st.number_input("Demand surge score:", key="risk_p3_3")
-            
-            if st.button("Check Answers", key="risk_p3_btn"):
-                correct_1, correct_2, correct_3 = 10, 12, 12
-                
-                results = []
-                if check_answer(ans_1, correct_1): results.append("✅ Supplier bankruptcy correct")
-                else: results.append(f"❌ Supplier bankruptcy: 2 × 5 = {correct_1}")
-                
-                if check_answer(ans_2, correct_2): results.append("✅ Equipment failure correct")
-                else: results.append(f"❌ Equipment failure: 4 × 3 = {correct_2}")
-                
-                if check_answer(ans_3, correct_3): results.append("✅ Demand surge correct")
-                else: results.append(f"❌ Demand surge: 3 × 4 = {correct_3}")
-                
-                for r in results:
-                    st.write(r)
-                
-                display_alert(
-                    "<strong>Priority:</strong> Equipment failure and Demand surge (both score 12) should be "
-                    "addressed first, followed by Supplier bankruptcy (score 10). However, the high impact (5) "
-                    "of supplier bankruptcy means it may warrant special attention despite lower probability.",
-                    "info"
-                )
-        
-        # Problem 4
-        with st.expander("📝 Problem 4: What-If Sensitivity Analysis"):
-            st.markdown("""
-            **Question:** Based on the textbook's guidance on sensitivity analysis, explain what happens 
-            to project profitability if:
-            1. Development time increases by 25%
-            2. Sales volume decreases by 25%
-            3. Product cost increases by $1 per unit
-            """)
-            
-            if st.button("Show Analysis", key="risk_p4_btn"):
-                st.markdown("#### ✅ Sensitivity Analysis:")
-                
-                display_solution_step(1, 
-                    "<strong>25% increase in development time:</strong> Delays production ramp-up, marketing efforts, "
-                    "and product sales. This pushes revenue further into the future, reducing its present value. "
-                    "Also increases development costs and may allow competitors to enter first.")
-                
-                display_solution_step(2,
-                    "<strong>25% decrease in sales volume:</strong> Directly reduces revenue while fixed costs remain "
-                    "constant. This can turn a profitable project into a loss. The impact is magnified by operating "
-                    "leverage (high fixed costs relative to variable costs).")
-                
-                display_solution_step(3,
-                    "<strong>$1 increase in product cost:</strong> Reduces profit by $1 per unit sold. For high-volume "
-                    "products, this can significantly impact total profitability. Consider: 100,000 units × $1 = $100,000 "
-                    "reduction in profit.")
-                
-                display_citation(
-                    "A dollar spent or saved on development cost is worth the present value of that dollar to the "
-                    "value of the project.",
-                    "Jacobs & Chase (2024, p. 60)"
-                )
-
-# ============================================================
-# MODULE 2: PERT NETWORK (Chapter 4)
-# ============================================================
-def module_pert():
-    display_header("🔗", "Chapter 4", "PERT Network Diagram & Completion Probability", 
-                   "Critical path identification, slack calculation & Z-score probability (Exhibits 4.8–4.9)")
-    
-    tab1, tab2, tab3, tab4 = st.tabs(["📚 Theory", "🔬 Activity Estimator", "📊 Probability Calculator", "🎓 Practice Problems"])
-    
-    with tab1:
-        st.markdown("### PERT Network Analysis")
-        
-        st.write("""
-        **PERT (Program Evaluation and Review Technique)** is a project management tool that uses 
-        probabilistic time estimates to account for uncertainty in activity durations. It was developed 
-        by the U.S. Navy in 1958 for the Polaris missile project.
-        """)
-        
-        display_citation(
-            "A conservative approach dictates using the critical path with the largest total variance "
-            "to focus management's attention on the activities most likely to exhibit broad variations.",
-            "Jacobs & Chase (2024, p. 99)"
-        )
-        
-        st.markdown("#### PERT Time Estimates")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_concept_card("🟢", "Optimistic (a)", 
-                "Best-case scenario - everything goes perfectly. Probability ≈ 1%")
-        with col2:
-            display_concept_card("🔵", "Most Likely (m)", 
-                "Normal conditions - most frequent outcome if repeated many times")
-        with col3:
-            display_concept_card("🔴", "Pessimistic (b)", 
-                "Worst-case scenario - everything goes wrong. Probability ≈ 1%")
-        
-        st.markdown("#### Key Formulas")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("##### Expected Time (Tₑ)")
-            st.latex(r"T_E = \frac{a + 4m + b}{6}")
-            st.write("Weighted average giving 4× weight to most likely estimate (based on Beta distribution)")
-        
-        with col2:
-            st.markdown("##### Variance (σ²)")
-            st.latex(r"\sigma^2 = \left(\frac{b - a}{6}\right)^2")
-            st.write("Measures uncertainty - larger spread between a and b means higher variance")
-        
-        st.markdown("##### Standard Deviation (σ)")
-        st.latex(r"\sigma = \frac{b - a}{6}")
-        
-        st.markdown("#### Project Completion Probability")
-        st.latex(r"Z = \frac{D - T_E}{\sqrt{\sum \sigma^2_{cp}}}")
-        
-        st.write("""
-        Where:
-        - **D** = Desired (target) completion time
-        - **Tₑ** = Expected project duration (sum of critical path expected times)
-        - **Σσ²cp** = Sum of variances on the critical path
-        - **Z** = Standard normal deviate (look up in Z-table for probability)
-        """)
-        
-        display_key_insight(
-            "Critical Path Selection with Multiple Critical Paths",
-            "When there are two or more critical paths of equal length, use the one with the "
-            "<strong>largest total variance</strong> for probability calculations. This conservative "
-            "approach focuses attention on activities most likely to cause schedule problems."
-        )
-        
-        st.markdown("#### Example from Textbook (Exhibit 4.9)")
-        
-        example_data = pd.DataFrame({
-            "Path": ["A-B-E-G-I", "A-C-F-G-I", "A-D-F-G-I", "A-D-H-I"],
-            "Length (days)": [22, 17, 21, 21],
-            "Status": ["CRITICAL PATH", "Slack = 5", "Slack = 1", "Slack = 1"]
-        })
-        st.dataframe(example_data, use_container_width=True, hide_index=True)
-    
-    with tab2:
-        st.markdown("### Activity Time Estimator")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Input Estimates")
-            a = st.slider("Optimistic Time (a)", 1, 20, 4, help="Best-case duration")
-            m = st.slider("Most Likely Time (m)", 1, 30, 8, help="Most probable duration")
-            b = st.slider("Pessimistic Time (b)", 1, 40, 16, help="Worst-case duration")
-            
-            if not (a <= m <= b):
-                display_alert("⚠️ PERT estimates should satisfy a ≤ m ≤ b", "warning")
-            else:
-                display_alert("✅ Valid PERT estimates", "success")
-        
-        with col2:
-            te = (a + 4*m + b) / 6
-            variance = ((b - a) / 6) ** 2
-            std_dev = math.sqrt(variance)
-            
-            st.markdown("#### Calculated Results")
-            
-            col_a, col_b, col_c = st.columns(3)
-            with col_a:
-                display_metric_card(f"{te:.2f}", "Expected Time (Tₑ)", "highlight")
-            with col_b:
-                display_metric_card(f"{variance:.2f}", "Variance (σ²)", "normal")
-            with col_c:
-                display_metric_card(f"{std_dev:.2f}", "Std Dev (σ)", "normal")
-            
-            st.markdown("#### Step-by-Step Calculation")
-            display_solution_step(1, f"Expected Time: Tₑ = ({a} + 4×{m} + {b}) / 6 = {a + 4*m + b} / 6 = <strong>{te:.2f}</strong>")
-            display_solution_step(2, f"Variance: σ² = (({b} - {a}) / 6)² = ({b-a} / 6)² = ({(b-a)/6:.2f})² = <strong>{variance:.2f}</strong>")
-            display_solution_step(3, f"Std Dev: σ = √{variance:.2f} = <strong>{std_dev:.2f}</strong>")
-            
-            st.markdown("#### Probability Ranges")
-            st.write(f"- 68% chance: {te - std_dev:.1f} to {te + std_dev:.1f} days")
-            st.write(f"- 95% chance: {te - 2*std_dev:.1f} to {te + 2*std_dev:.1f} days")
-            st.write(f"- 99.7% chance: {te - 3*std_dev:.1f} to {te + 3*std_dev:.1f} days")
-    
-    with tab3:
-        st.markdown("### Project Completion Probability Calculator")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Project Parameters")
-            te_project = st.number_input("Expected Project Duration (Tₑ)", value=38.0, step=0.5,
-                                         help="Sum of expected times on critical path")
-            d_target = st.number_input("Desired Completion (D)", value=35.0, step=0.5,
-                                       help="Target completion date")
-            sum_variance = st.number_input("Sum of CP Variances (Σσ²)", value=11.89, step=0.1,
-                                           help="Sum of variances for all critical path activities")
-        
-        with col2:
-            if sum_variance > 0:
-                z_score = (d_target - te_project) / math.sqrt(sum_variance)
-                prob = normal_cdf(z_score)
-                
-                st.markdown("#### Results")
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    display_metric_card(f"{z_score:.2f}", "Z-Score", "normal")
-                with col_b:
-                    card_type = "danger" if prob < 0.5 else "success"
-                    display_metric_card(f"{prob*100:.1f}%", "P(Complete by D)", card_type)
-                
-                st.markdown("#### Interpretation")
-                if prob < 0.25:
-                    display_alert(
-                        f"🔴 <strong>Very Low Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Only a {prob*100:.1f}% chance of completing by day {d_target}. "
-                        f"Consider crashing critical activities or extending the deadline to {te_project}+ days.",
-                        "danger"
-                    )
-                elif prob < 0.5:
-                    display_alert(
-                        f"🟡 <strong>Below Average Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Less than 50% chance of meeting the deadline. Risk mitigation recommended.",
-                        "warning"
-                    )
-                else:
-                    display_alert(
-                        f"🟢 <strong>Good Probability ({prob*100:.1f}%)</strong><br>"
-                        f"Reasonable chance of meeting the deadline.",
-                        "success"
-                    )
-                
-                st.markdown("#### Calculation")
-                st.latex(rf"Z = \frac{{{d_target} - {te_project}}}{{\sqrt{{{sum_variance}}}}} = \frac{{{d_target - te_project:.2f}}}{{{math.sqrt(sum_variance):.2f}}} = {z_score:.2f}")
-        
-        # Variance Builder
-        st.markdown("---")
-        st.markdown("### Critical Path Variance Builder")
-        st.write("Enter activity estimates to calculate total path variance")
-        
-        num_activities = st.number_input("Number of CP Activities", 1, 10, 5, key="pert_num_act")
-        
-        activities = []
-        total_te = 0
-        total_var = 0
-        
-        cols_header = st.columns([1, 1, 1, 1, 1, 1])
-        cols_header[0].write("**Activity**")
-        cols_header[1].write("**a**")
-        cols_header[2].write("**m**")
-        cols_header[3].write("**b**")
-        cols_header[4].write("**Tₑ**")
-        cols_header[5].write("**σ²**")
-        
-        for i in range(int(num_activities)):
-            cols = st.columns([1, 1, 1, 1, 1, 1])
-            with cols[0]:
-                st.write(f"Activity {chr(65+i)}")
-            with cols[1]:
-                a_i = st.number_input(f"a_{i}", value=2+i, key=f"pert_a_{i}", label_visibility="collapsed")
-            with cols[2]:
-                m_i = st.number_input(f"m_{i}", value=4+i, key=f"pert_m_{i}", label_visibility="collapsed")
-            with cols[3]:
-                b_i = st.number_input(f"b_{i}", value=8+i*2, key=f"pert_b_{i}", label_visibility="collapsed")
-            
-            te_i = (a_i + 4*m_i + b_i) / 6
-            var_i = ((b_i - a_i) / 6) ** 2
-            total_te += te_i
-            total_var += var_i
-            
-            with cols[4]:
-                st.write(f"{te_i:.2f}")
-            with cols[5]:
-                st.write(f"{var_i:.3f}")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_metric_card(f"{total_te:.2f}", "Total Path Duration", "highlight")
-        with col2:
-            display_metric_card(f"{total_var:.3f}", "Total Path Variance", "normal")
-        with col3:
-            display_metric_card(f"{math.sqrt(total_var):.3f}", "Path Std Deviation", "normal")
-    
-    with tab4:
-        st.markdown("### Practice Problems")
-        
-        # Problem 1
-        with st.expander("📝 Problem 1: Calculate Expected Time (Easy)", expanded=True):
-            st.markdown("""
-            **Given:** Activity X has the following time estimates:
-            - Optimistic (a) = 5 days
-            - Most Likely (m) = 8 days
-            - Pessimistic (b) = 17 days
-            
-            **Calculate:** Expected time (Tₑ) and variance (σ²)
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_te = st.number_input("Expected Time (Tₑ):", key="pert_p1_te", format="%.2f")
-            with col2:
-                ans_var = st.number_input("Variance (σ²):", key="pert_p1_var", format="%.2f")
-            
-            if st.button("Check Answer", key="pert_p1_btn"):
-                correct_te = (5 + 4*8 + 17) / 6
-                correct_var = ((17 - 5) / 6) ** 2
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"Tₑ = (a + 4m + b) / 6 = (5 + 4×8 + 17) / 6 = (5 + 32 + 17) / 6 = 54 / 6 = <strong>9.00 days</strong>")
-                display_solution_step(2, f"σ² = ((b - a) / 6)² = ((17 - 5) / 6)² = (12 / 6)² = 2² = <strong>4.00</strong>")
-                
-                if check_answer(ans_te, correct_te) and check_answer(ans_var, correct_var):
-                    display_alert("✅ Both answers correct!", "success")
-                else:
-                    if not check_answer(ans_te, correct_te):
-                        display_alert(f"❌ Expected time incorrect. Correct answer: {correct_te:.2f}", "danger")
-                    if not check_answer(ans_var, correct_var):
-                        display_alert(f"❌ Variance incorrect. Correct answer: {correct_var:.2f}", "danger")
-        
-        # Problem 2
-        with st.expander("📝 Problem 2: Project Completion Probability (Medium)"):
-            st.markdown("""
-            **Given:** A project has:
-            - Expected duration (Tₑ) = 45 weeks
-            - Sum of critical path variances = 16 weeks²
-            - Target completion = 41 weeks
-            
-            **Calculate:** 
-            1. The Z-score
-            2. The probability of completing by week 41
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_z = st.number_input("Z-Score:", key="pert_p2_z", format="%.2f")
-            with col2:
-                ans_prob = st.number_input("Probability (%):", key="pert_p2_prob", format="%.1f")
-            
-            if st.button("Check Answer", key="pert_p2_btn"):
-                correct_z = (41 - 45) / math.sqrt(16)
-                correct_prob = normal_cdf(correct_z) * 100
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"Z = (D - Tₑ) / √(Σσ²) = (41 - 45) / √16 = -4 / 4 = <strong>-1.00</strong>")
-                display_solution_step(2, f"Look up Z = -1.00 in standard normal table")
-                display_solution_step(3, f"P(Z ≤ -1.00) = <strong>{correct_prob:.1f}%</strong>")
-                
-                display_alert(
-                    f"<strong>Interpretation:</strong> There is only a {correct_prob:.1f}% chance of completing "
-                    f"the project by week 41. The project manager should either extend the deadline or crash "
-                    f"critical path activities.",
-                    "info"
-                )
-        
-        # Problem 3
-        with st.expander("📝 Problem 3: Critical Path Analysis (Hard)"):
-            st.markdown("""
-            **Given:** A project has the following activities on the critical path:
-            
-            | Activity | a | m | b |
-            |----------|---|---|---|
-            | A | 2 | 4 | 6 |
-            | B | 3 | 5 | 13 |
-            | C | 4 | 6 | 8 |
-            | D | 2 | 3 | 10 |
-            
-            **Calculate:**
-            1. Expected time for each activity
-            2. Total expected project duration
-            3. Total variance
-            4. Probability of completing in 20 days or less
-            """)
-            
-            if st.button("Show Complete Solution", key="pert_p3_btn"):
-                st.markdown("#### Solution:")
-                
-                activities = [
-                    ("A", 2, 4, 6),
-                    ("B", 3, 5, 13),
-                    ("C", 4, 6, 8),
-                    ("D", 2, 3, 10)
-                ]
-                
-                results = []
-                total_te = 0
-                total_var = 0
-                
-                for name, a, m, b in activities:
-                    te = (a + 4*m + b) / 6
-                    var = ((b - a) / 6) ** 2
-                    total_te += te
-                    total_var += var
-                    results.append({"Activity": name, "a": a, "m": m, "b": b, "Tₑ": f"{te:.2f}", "σ²": f"{var:.3f}"})
-                
-                st.dataframe(pd.DataFrame(results), use_container_width=True, hide_index=True)
-                
-                display_solution_step(1, f"Total Expected Duration: Tₑ = {total_te:.2f} days")
-                display_solution_step(2, f"Total Variance: Σσ² = {total_var:.3f}")
-                display_solution_step(3, f"Standard Deviation: σ = √{total_var:.3f} = {math.sqrt(total_var):.3f}")
-                
-                z = (20 - total_te) / math.sqrt(total_var)
-                prob = normal_cdf(z) * 100
-                
-                display_solution_step(4, f"Z = (20 - {total_te:.2f}) / {math.sqrt(total_var):.3f} = {z:.2f}")
-                display_solution_step(5, f"P(Complete ≤ 20 days) = {prob:.1f}%")
-
-# ============================================================
-# MODULE 3: PROJECT CRASHING (Chapter 4)
-# ============================================================
-def module_crashing():
-    display_header("⚡", "Chapter 4", "Project Crashing", "Time-cost trade-off analysis")
-    
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
-    
-    with tab1:
-        st.markdown("### Project Crashing Theory")
-        
-        st.write("""
-        **Project crashing** (also called project compression) involves reducing project duration 
-        by adding resources to critical path activities. The goal is to achieve the desired 
-        completion date at minimum additional cost.
-        """)
-        
-        st.markdown("#### Crash Cost per Day Formula")
-        st.latex(r"\text{Crash Cost per Day} = \frac{\text{Crash Cost} - \text{Normal Cost}}{\text{Normal Time} - \text{Crash Time}}")
-        
-        st.markdown("#### Key Concepts")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            display_concept_card("⏱️", "Normal Time", 
-                "Standard duration using normal resources and methods")
-            display_concept_card("💰", "Normal Cost", 
-                "Cost to complete activity in normal time")
-        with col2:
-            display_concept_card("⚡", "Crash Time", 
-                "Minimum possible duration with maximum resources")
-            display_concept_card("💸", "Crash Cost", 
-                "Cost to complete activity in crash time (always higher)")
-        
-        display_key_insight(
-            "Crashing Strategy",
-            "Always crash the activity on the critical path with the <strong>lowest crash cost per day</strong> first. "
-            "Continue until: (1) target date is reached, (2) critical path changes, or (3) no more crashing is possible. "
-            "When the critical path changes, you may need to crash multiple paths simultaneously."
-        )
-        
-        st.markdown("#### Crashing Procedure")
-        st.write("""
-        1. **Identify** the critical path
-        2. **Calculate** crash cost per day for each critical activity
-        3. **Select** the activity with lowest crash cost per day
-        4. **Crash** that activity by one day (or until it reaches crash time or path changes)
-        5. **Recalculate** critical path and repeat until target is met
-        """)
-    
-    with tab2:
-        st.markdown("### Crash Cost Calculator")
-        
-        num_activities = st.number_input("Number of Activities", 2, 10, 4, key="crash_num")
-        
-        activities = []
-        
-        st.markdown("#### Activity Data")
-        
-        cols_header = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
-        headers = ["Activity", "Normal Time", "Crash Time", "Normal Cost", "Crash Cost", "Max Crash", "Cost/Day"]
-        for i, h in enumerate(headers):
-            cols_header[i].write(f"**{h}**")
-        
-        for i in range(int(num_activities)):
-            cols = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
-            
-            with cols[0]:
-                st.write(f"**{chr(65+i)}**")
-            with cols[1]:
-                nt = st.number_input(f"NT_{i}", value=5+i, key=f"crash_nt_{i}", label_visibility="collapsed")
-            with cols[2]:
-                ct = st.number_input(f"CT_{i}", value=3+i//2, key=f"crash_ct_{i}", label_visibility="collapsed")
-            with cols[3]:
-                nc = st.number_input(f"NC_{i}", value=1000+i*200, key=f"crash_nc_{i}", label_visibility="collapsed")
-            with cols[4]:
-                cc = st.number_input(f"CC_{i}", value=1800+i*400, key=f"crash_cc_{i}", label_visibility="collapsed")
-            
-            max_crash = nt - ct
-            if max_crash > 0:
-                cpd = (cc - nc) / max_crash
-            else:
-                cpd = float('inf')
-            
-            with cols[5]:
-                st.write(f"{max_crash} days")
-            with cols[6]:
-                if cpd != float('inf'):
-                    st.write(f"${cpd:.0f}")
-                else:
-                    st.write("N/A")
-            
-            activities.append({
-                "Activity": chr(65+i),
-                "Normal Time": nt,
-                "Crash Time": ct,
-                "Normal Cost": nc,
-                "Crash Cost": cc,
-                "Max Crash Days": max_crash,
-                "Cost/Day": cpd if cpd != float('inf') else None
-            })
-        
-        # Summary
-        st.markdown("---")
-        st.markdown("#### Summary")
-        
-        total_normal_time = sum(a["Normal Time"] for a in activities)
-        total_crash_time = sum(a["Crash Time"] for a in activities)
-        total_normal_cost = sum(a["Normal Cost"] for a in activities)
-        total_crash_cost = sum(a["Crash Cost"] for a in activities)
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            display_metric_card(f"{total_normal_time}", "Normal Duration", "normal")
-        with col2:
-            display_metric_card(f"{total_crash_time}", "Crash Duration", "highlight")
-        with col3:
-            display_metric_card(f"${total_normal_cost:,}", "Normal Cost", "normal")
-        with col4:
-            display_metric_card(f"${total_crash_cost:,}", "Full Crash Cost", "danger")
-        
-        # Crashing priority
-        crashable = [a for a in activities if a["Cost/Day"] is not None and a["Max Crash Days"] > 0]
-        if crashable:
-            crashable_sorted = sorted(crashable, key=lambda x: x["Cost/Day"])
-            
-            st.markdown("#### Crashing Priority (Lowest Cost First)")
-            for i, a in enumerate(crashable_sorted):
-                st.write(f"{i+1}. **Activity {a['Activity']}**: ${a['Cost/Day']:.0f}/day (can crash {a['Max Crash Days']} days)")
-    
-    with tab3:
-        st.markdown("### Practice Problems")
-        
-        with st.expander("📝 Problem 1: Calculate Crash Cost per Day"):
-            st.markdown("""
-            **Given:** Activity X has:
-            - Normal Time = 10 days, Crash Time = 6 days
-            - Normal Cost = $5,000, Crash Cost = $9,000
-            
-            **Calculate:** Crash cost per day
-            """)
-            
-            ans = st.number_input("Crash Cost per Day ($):", key="crash_p1")
-            
-            if st.button("Check Answer", key="crash_p1_btn"):
-                correct = (9000 - 5000) / (10 - 6)
-                
-                display_solution_step(1, "Crash Cost per Day = (Crash Cost - Normal Cost) / (Normal Time - Crash Time)")
-                display_solution_step(2, f"= ($9,000 - $5,000) / (10 - 6)")
-                display_solution_step(3, f"= $4,000 / 4 days = <strong>${correct:.0f}/day</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
-                else:
-                    display_alert(f"❌ Incorrect. Correct answer: ${correct:.0f}/day", "danger")
-
-# ============================================================
-# MODULE 4: BREAK-EVEN ANALYSIS (Chapter 5)
-# ============================================================
-def module_breakeven():
-    display_header("📈", "Chapter 5", "Break-Even Analysis", "Cost-Volume-Profit (CVP) Analysis")
-    
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📚 Theory", "🔬 Simulator", "📊 Sensitivity", "⚖️ Comparison", "🎓 Practice"])
-    
-    with tab1:
-        st.markdown("### Cost-Volume-Profit Analysis")
-        
-        st.write("""
-        **Break-even analysis** determines the point at which total revenue equals total cost. 
-        It establishes the relationship between fixed costs, variable costs, selling price, 
-        and volume to identify the minimum output needed to cover all costs.
-        """)
-        
-        display_citation(
-            "Break-even analysis is a standard approach to determine the volume of output at which "
-            "total revenue equals total cost. It is useful for comparing capacity alternatives and "
-            "for determining the volume needed to achieve a target profit.",
-            "Jacobs & Chase (2024, p. 155)"
-        )
-        
-        st.markdown("#### Cost Structure Components")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_concept_card("🏢", "Fixed Costs (F)", 
-                "Costs that remain constant regardless of output: rent, depreciation, insurance, salaries")
-        with col2:
-            display_concept_card("📦", "Variable Costs (V)", 
-                "Costs that vary with output: raw materials, direct labor, packaging, shipping per unit")
-        with col3:
-            display_concept_card("💵", "Contribution Margin", 
-                "Price minus Variable Cost (P - V). Each unit contributes this toward covering fixed costs")
-        
-        st.markdown("#### Key Formulas")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("##### Break-Even Point (Units)")
-            st.latex(r"BEP_{units} = \frac{F}{P - V}")
-            
-            st.markdown("##### Break-Even Point (Revenue)")
-            st.latex(r"BEP_{\$} = \frac{F}{1 - \frac{V}{P}} = BEP_{units} \times P")
-        
-        with col2:
-            st.markdown("##### Volume for Target Profit")
-            st.latex(r"Q_{target} = \frac{F + \text{Target Profit}}{P - V}")
-            
-            st.markdown("##### Total Cost & Revenue")
-            st.latex(r"TC = F + V \cdot Q \quad ; \quad TR = P \cdot Q")
-        
-        display_key_insight(
-            "Comparing Capacity Alternatives",
-            "When comparing two process alternatives (e.g., manual vs. automated), the option with "
-            "higher fixed costs but lower variable costs will have a higher BEP but becomes more "
-            "profitable at higher volumes. The <strong>indifference point</strong> where both options "
-            "yield equal total cost is: Q* = (F₂ - F₁) / (V₁ - V₂)"
-        )
-        
-        st.markdown("#### Assumptions & Limitations")
-        st.write("""
-        - Revenue and costs are linear functions of volume
-        - Fixed costs remain constant within the relevant range
-        - All units produced are sold (no inventory buildup)
-        - Single product analysis (or constant product mix)
-        - Price and variable cost per unit are constant
-        """)
-    
-    with tab2:
-        st.markdown("### Break-Even Calculator")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Cost Parameters")
-            fixed_cost = st.slider("Fixed Costs ($)", 10000, 200000, 50000, 5000)
-            price = st.slider("Price per Unit ($)", 10, 500, 100, 5)
-            variable_cost = st.slider("Variable Cost per Unit ($)", 5, 400, 60, 5)
-            
-            if price <= variable_cost:
-                display_alert("⚠️ Price must be greater than Variable Cost!", "danger")
-        
-        with col2:
-            if price > variable_cost:
-                bep_units = fixed_cost / (price - variable_cost)
-                bep_revenue = bep_units * price
-                contribution_margin = price - variable_cost
-                cm_ratio = contribution_margin / price
-                
-                st.markdown("#### Results")
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    display_metric_card(f"{bep_units:,.0f}", "BEP (Units)", "highlight")
-                with col_b:
-                    display_metric_card(f"${bep_revenue:,.0f}", "BEP (Revenue)", "highlight")
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    display_metric_card(f"${contribution_margin:.2f}", "Contribution Margin", "normal")
-                with col_b:
-                    display_metric_card(f"{cm_ratio:.1%}", "CM Ratio", "normal")
-                
-                st.markdown("#### Calculation")
-                st.latex(rf"BEP = \frac{{{fixed_cost:,}}}{{{price} - {variable_cost}}} = \frac{{{fixed_cost:,}}}{{{contribution_margin}}} = {bep_units:,.0f} \text{{ units}}")
-        
-        # Target Profit Calculator
-        if price > variable_cost:
-            st.markdown("---")
-            st.markdown("### Target Profit Analysis")
-            
-            target_profit = st.number_input("Target Annual Profit ($)", value=25000, step=5000)
-            
-            target_units = (fixed_cost + target_profit) / (price - variable_cost)
-            target_revenue = target_units * price
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                display_metric_card(f"{target_units:,.0f}", "Required Units", "success")
-            with col2:
-                display_metric_card(f"${target_revenue:,.0f}", "Required Revenue", "success")
-            
-            st.latex(rf"Q_{{target}} = \frac{{{fixed_cost:,} + {target_profit:,}}}{{{price} - {variable_cost}}} = {target_units:,.0f} \text{{ units}}")
-    
-    with tab3:
-        st.markdown("### Sensitivity Analysis (What-If)")
-        
-        display_citation(
-            "Some companies call this 'what if' analysis. Answering these 'what if' questions can be "
-            "useful for understanding how sensitive an analysis is to cost and profit assumptions.",
-            "Jacobs & Chase (2024, p. 60)"
-        )
-        
-        st.markdown("#### Base Case")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            base_fc = st.number_input("Base Fixed Cost ($)", value=50000, key="sens_fc")
-        with col2:
-            base_price = st.number_input("Base Price ($)", value=100, key="sens_p")
-        with col3:
-            base_vc = st.number_input("Base Variable Cost ($)", value=60, key="sens_vc")
-        
-        if base_price > base_vc:
-            base_bep = base_fc / (base_price - base_vc)
-            
-            st.markdown("#### Sensitivity Scenarios")
-            
-            scenarios = [
-                ("Base Case", base_fc, base_price, base_vc),
-                ("+25% Fixed Costs", base_fc * 1.25, base_price, base_vc),
-                ("-25% Fixed Costs", base_fc * 0.75, base_price, base_vc),
-                ("+$10 Price", base_fc, base_price + 10, base_vc),
-                ("-$10 Price", base_fc, base_price - 10, base_vc),
-                ("+$5 Variable Cost", base_fc, base_price, base_vc + 5),
-                ("-$5 Variable Cost", base_fc, base_price, base_vc - 5),
-            ]
-            
-            results = []
-            for name, fc, p, vc in scenarios:
-                if p > vc:
-                    bep = fc / (p - vc)
-                    change = ((bep - base_bep) / base_bep) * 100
-                    results.append({
-                        "Scenario": name,
-                        "Fixed Cost": f"${fc:,.0f}",
-                        "Price": f"${p:.0f}",
-                        "Var Cost": f"${vc:.0f}",
-                        "BEP (units)": f"{bep:,.0f}",
-                        "Change": f"{change:+.1f}%"
-                    })
-            
-            st.dataframe(pd.DataFrame(results), use_container_width=True, hide_index=True)
-            
-            display_key_insight(
-                "Sensitivity Insights",
-                "Notice that BEP is most sensitive to changes in contribution margin (P - V). "
-                "A $10 price increase has a larger impact than a 25% change in fixed costs."
-            )
-    
-    with tab4:
-        st.markdown("### Scenario Comparison")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Scenario A (Current)")
-            fc_a = st.number_input("Fixed Costs A ($)", value=50000, key="be_fc_a")
-            p_a = st.number_input("Price A ($)", value=100, key="be_p_a")
-            vc_a = st.number_input("Variable Cost A ($)", value=60, key="be_vc_a")
-            
-            if p_a > vc_a:
-                bep_a = fc_a / (p_a - vc_a)
-                display_metric_card(f"{bep_a:,.0f}", "BEP A (units)", "highlight")
-        
-        with col2:
-            st.markdown("#### Scenario B (Alternative)")
-            fc_b = st.number_input("Fixed Costs B ($)", value=80000, key="be_fc_b")
-            p_b = st.number_input("Price B ($)", value=100, key="be_p_b")
-            vc_b = st.number_input("Variable Cost B ($)", value=45, key="be_vc_b")
-            
-            if p_b > vc_b:
-                bep_b = fc_b / (p_b - vc_b)
-                display_metric_card(f"{bep_b:,.0f}", "BEP B (units)", "highlight")
-        
-        # Indifference Point
-        if p_a > vc_a and p_b > vc_b and vc_a != vc_b:
-            st.markdown("---")
-            st.markdown("### Indifference Analysis")
-            
-            indiff_point = (fc_b - fc_a) / (vc_a - vc_b)
-            
-            if indiff_point > 0:
-                display_metric_card(f"{indiff_point:,.0f}", "Indifference Point (units)", "highlight")
-                
-                st.latex(rf"Q^* = \frac{{F_B - F_A}}{{V_A - V_B}} = \frac{{{fc_b:,} - {fc_a:,}}}{{{vc_a} - {vc_b}}} = {indiff_point:,.0f}")
-                
-                lower_fc = "A" if fc_a < fc_b else "B"
-                lower_vc = "A" if vc_a < vc_b else "B"
-                
-                display_alert(
-                    f"📊 <strong>Decision Rule:</strong><br>"
-                    f"• Below {indiff_point:,.0f} units: Choose Scenario {lower_fc} (lower fixed costs)<br>"
-                    f"• Above {indiff_point:,.0f} units: Choose Scenario {lower_vc} (lower variable costs)",
-                    "info"
-                )
-    
-    with tab5:
-        st.markdown("### Practice Problems")
-        
-        # Problem 1
-        with st.expander("📝 Problem 1: Basic BEP Calculation (Easy)", expanded=True):
-            st.markdown("""
-            **Given:**
-            - Fixed Costs = $40,000
-            - Selling Price = $120 per unit
-            - Variable Cost = $80 per unit
-            
-            **Calculate:** Break-even point in units
-            """)
-            
-            ans = st.number_input("BEP (units):", key="be_p1")
-            
-            if st.button("Check Answer", key="be_p1_btn"):
-                correct = 40000 / (120 - 80)
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, "Contribution Margin = Price - Variable Cost = $120 - $80 = $40")
-                display_solution_step(2, "BEP = Fixed Costs / Contribution Margin")
-                display_solution_step(3, f"BEP = $40,000 / $40 = <strong>{correct:,.0f} units</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
-                else:
-                    display_alert(f"❌ Incorrect. Correct answer: {correct:,.0f} units", "danger")
-        
-        # Problem 2
-        with st.expander("📝 Problem 2: Target Profit (Medium)"):
-            st.markdown("""
-            **Given:**
-            - Fixed Costs = $60,000
-            - Selling Price = $50 per unit
-            - Variable Cost = $30 per unit
-            - Target Profit = $20,000
-            
-            **Calculate:** Units needed to achieve target profit
-            """)
-            
-            ans = st.number_input("Required units:", key="be_p2")
-            
-            if st.button("Check Answer", key="be_p2_btn"):
-                correct = (60000 + 20000) / (50 - 30)
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, "Contribution Margin = $50 - $30 = $20")
-                display_solution_step(2, "Q = (Fixed Costs + Target Profit) / CM")
-                display_solution_step(3, f"Q = ($60,000 + $20,000) / $20 = $80,000 / $20 = <strong>{correct:,.0f} units</strong>")
-                
-                if check_answer(ans, correct):
-                    display_alert("✅ Correct!", "success")
-                else:
-                    display_alert(f"❌ Incorrect. Correct answer: {correct:,.0f} units", "danger")
-        
-        # Problem 3
-        with st.expander("📝 Problem 3: Indifference Point (Hard)"):
-            st.markdown("""
-            **Given:** Two manufacturing options:
-            
-            | Option | Fixed Costs | Variable Cost/Unit |
-            |--------|-------------|-------------------|
-            | Manual | $20,000 | $15 |
-            | Automated | $80,000 | $5 |
-            
-            **Calculate:**
-            1. Indifference point (where both options have equal total cost)
-            2. Which option is better at 5,000 units?
-            3. Which option is better at 8,000 units?
-            """)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                ans_indiff = st.number_input("Indifference point:", key="be_p3_1")
-            with col2:
-                ans_5000 = st.selectbox("Better at 5,000:", ["Manual", "Automated"], key="be_p3_2")
-            with col3:
-                ans_8000 = st.selectbox("Better at 8,000:", ["Manual", "Automated"], key="be_p3_3")
-            
-            if st.button("Check Answer", key="be_p3_btn"):
-                correct_indiff = (80000 - 20000) / (15 - 5)
-                
-                tc_manual_5000 = 20000 + 15 * 5000
-                tc_auto_5000 = 80000 + 5 * 5000
-                tc_manual_8000 = 20000 + 15 * 8000
-                tc_auto_8000 = 80000 + 5 * 8000
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"Indifference Point = (F₂ - F₁) / (V₁ - V₂) = ($80,000 - $20,000) / ($15 - $5) = $60,000 / $10 = <strong>{correct_indiff:,.0f} units</strong>")
-                
-                display_solution_step(2, f"At 5,000 units:<br>• Manual: $20,000 + $15×5,000 = ${tc_manual_5000:,}<br>• Automated: $80,000 + $5×5,000 = ${tc_auto_5000:,}<br><strong>Manual is better</strong>")
-                
-                display_solution_step(3, f"At 8,000 units:<br>• Manual: $20,000 + $15×8,000 = ${tc_manual_8000:,}<br>• Automated: $80,000 + $5×8,000 = ${tc_auto_8000:,}<br><strong>Automated is better</strong>")
-
-# ============================================================
-# MODULE 5: DECISION TREES (Chapter 5)
-# ============================================================
-def module_decision():
-    display_header("🌳", "Chapter 5", "Decision Trees & Expected Monetary Value", 
-                   "Structured decision-making under uncertainty")
-    
-    tab1, tab2, tab3 = st.tabs(["📚 Theory", "🔬 Simulator", "🎓 Practice Problems"])
-    
-    with tab1:
-        st.markdown("### Expected Monetary Value (EMV) Analysis")
-        
-        st.write("""
-        **Decision tree analysis** is a quantitative approach for evaluating alternatives that 
-        involve sequential decisions and chance events. It provides a visual framework for 
-        analyzing decisions under uncertainty.
-        """)
-        
-        display_citation(
-            "A decision tree is a schematic model of alternatives available to the decision maker, "
-            "along with their possible consequences. The term gets its name from the tree-like "
-            "appearance of the diagram.",
-            "Jacobs & Chase (2024, p. 148)"
-        )
-        
-        st.markdown("#### Decision Tree Components")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_concept_card("◻️", "Decision Node", 
-                "Point where decision maker chooses between alternatives (square symbol)")
-        with col2:
-            display_concept_card("⭕", "Chance Node", 
-                "Point where chance determines outcome - probabilities must sum to 1.0 (circle symbol)")
-        with col3:
-            display_concept_card("🔺", "Terminal Node", 
-                "Final payoff at end of branch - the monetary outcome (triangle symbol)")
-        
-        st.markdown("#### Key Formulas")
-        
-        st.markdown("##### Expected Monetary Value (EMV)")
-        st.latex(r"EMV = \sum_{i=1}^{n} (P_i \times V_i)")
-        st.write("Where Pᵢ = probability of outcome i, Vᵢ = monetary value of outcome i")
-        st.write("**Decision Rule:** Select the alternative with the highest EMV")
-        
-        st.markdown("##### Expected Value of Perfect Information (EVPI)")
-        st.latex(r"EVPI = EV_{with\ PI} - EV_{without\ PI}")
-        st.write("EVPI represents the maximum amount you should pay for perfect information")
-        
-        display_key_insight(
-            "Roll Back Method",
-            "Decision trees are solved from <strong>right to left</strong> (backward induction). "
-            "At each chance node, calculate the EMV. At each decision node, select the alternative "
-            "with the highest EMV. This process 'rolls back' the tree to determine the optimal initial decision."
-        )
-    
-    with tab2:
-        st.markdown("### EMV Calculator")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### 🏭 Large Facility Option")
-            st.write("Higher risk, higher potential reward")
-            
-            prob_high = st.slider("P(High Demand)", 0, 100, 60, help="Probability of high demand scenario") / 100
-            payoff_high_large = st.number_input("High Demand Payoff ($)", value=200000, key="dt_h_l")
-            payoff_low_large = st.number_input("Low Demand Payoff ($)", value=-50000, key="dt_l_l")
-            
-            emv_large = prob_high * payoff_high_large + (1 - prob_high) * payoff_low_large
-            
-            st.markdown("##### Calculation:")
-            st.latex(rf"EMV_{{Large}} = {prob_high:.2f} \times \${payoff_high_large:,} + {1-prob_high:.2f} \times \${payoff_low_large:,}")
-            display_metric_card(f"${emv_large:,.0f}", "EMV (Large Facility)", "highlight")
-        
-        with col2:
-            st.markdown("#### 🏠 Small Facility Option")
-            st.write("Lower risk, more conservative")
-            
-            st.write(f"P(High Demand) = {prob_high:.0%} (same as above)")
-            payoff_high_small = st.number_input("High Demand Payoff ($)", value=90000, key="dt_h_s")
-            payoff_low_small = st.number_input("Low Demand Payoff ($)", value=25000, key="dt_l_s")
-            
-            emv_small = prob_high * payoff_high_small + (1 - prob_high) * payoff_low_small
-            
-            st.markdown("##### Calculation:")
-            st.latex(rf"EMV_{{Small}} = {prob_high:.2f} \times \${payoff_high_small:,} + {1-prob_high:.2f} \times \${payoff_low_small:,}")
-            display_metric_card(f"${emv_small:,.0f}", "EMV (Small Facility)", "normal")
-        
-        st.markdown("---")
-        st.markdown("### Decision Recommendation")
-        
-        if emv_large > emv_small:
-            display_alert(f"✅ <strong>Choose Large Facility</strong><br>EMV = ${emv_large:,.0f} > ${emv_small:,.0f}", "success")
-        elif emv_small > emv_large:
-            display_alert(f"✅ <strong>Choose Small Facility</strong><br>EMV = ${emv_small:,.0f} > ${emv_large:,.0f}", "success")
-        else:
-            display_alert(f"⚖️ <strong>Indifferent</strong><br>Both options have EMV = ${emv_large:,.0f}", "info")
-        
-        # EVPI Calculation
-        st.markdown("---")
-        st.markdown("### Expected Value of Perfect Information (EVPI)")
-        
-        # EV with perfect information = weighted average of best outcomes in each state
-        best_high = max(payoff_high_large, payoff_high_small)
-        best_low = max(payoff_low_large, payoff_low_small)
-        ev_with_pi = prob_high * best_high + (1 - prob_high) * best_low
-        ev_without_pi = max(emv_large, emv_small)
-        evpi = ev_with_pi - ev_without_pi
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            display_metric_card(f"${ev_with_pi:,.0f}", "EV with Perfect Info", "normal")
-        with col2:
-            display_metric_card(f"${ev_without_pi:,.0f}", "EV without Perfect Info", "normal")
-        with col3:
-            display_metric_card(f"${evpi:,.0f}", "EVPI", "highlight")
-        
-        display_alert(
-            f"💡 <strong>Interpretation:</strong> You should pay at most <strong>${evpi:,.0f}</strong> for perfect "
-            f"market information (e.g., a market research study that perfectly predicts demand).",
-            "info"
-        )
-    
-    with tab3:
-        st.markdown("### Practice Problems")
-        
-        with st.expander("📝 Problem 1: Calculate EMV (Easy)", expanded=True):
-            st.markdown("""
-            **Given:** A company is deciding between two options:
-            - **Option A:** 40% chance of $100,000, 60% chance of $20,000
-            - **Option B:** 50% chance of $80,000, 50% chance of $30,000
-            
-            **Calculate:** EMV for each option and determine which to choose
-            """)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                ans_a = st.number_input("EMV(A) ($):", key="dt_p1_a")
-            with col2:
-                ans_b = st.number_input("EMV(B) ($):", key="dt_p1_b")
-            
-            if st.button("Check Answer", key="dt_p1_btn"):
-                emv_a = 0.4 * 100000 + 0.6 * 20000
-                emv_b = 0.5 * 80000 + 0.5 * 30000
-                
-                st.markdown("#### Solution:")
-                display_solution_step(1, f"EMV(A) = 0.40 × $100,000 + 0.60 × $20,000 = $40,000 + $12,000 = <strong>${emv_a:,.0f}</strong>")
-                display_solution_step(2, f"EMV(B) = 0.50 × $80,000 + 0.50 × $30,000 = $40,000 + $15,000 = <strong>${emv_b:,.0f}</strong>")
-                display_solution_step(3, f"<strong>Choose Option {'A' if emv_a > emv_b else 'B'}</strong> (higher EMV)")
-                
-                if check_answer(ans_a, emv_a) and check_answer(ans_b, emv_b):
-                    display_alert("✅ Both answers correct!", "success")
-
-# ============================================================
-# MODULE 36: PRACTICE PROBLEMS (General)
+# MODULE 36: PRACTICE PROBLEMS (General) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_practice():
     display_header("🎓", "Exam Prep", "Practice Problems", "Comprehensive review questions")
@@ -5301,20 +3930,28 @@ def module_practice():
     
     for i, (title, question, answer) in enumerate(problems):
         with st.expander(f"{title}"):
-            st.write(question)
+            display_practice_problem(i+1, "Medium", f"**{title}**: {question}")
             if st.button(f"Show Solution", key=f"prac_{i}"):
-                st.success(answer)
+                display_solution(answer)
 
 # ============================================================
-# SIDEBAR NAVIGATION
+# SIDEBAR NAVIGATION & MAIN APP RUNNER (V4.0 Structure)
 # ============================================================
 def main():
+    # Theme toggle in sidebar
     st.sidebar.markdown("""
     <div style="text-align: center; padding: 1rem;">
         <div style="font-size: 2rem;">📊</div>
         <div style="font-weight: 700; font-size: 1.2rem;">OSCM Simulator</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">v4.0 Enhanced Edition</div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Theme toggle button
+    theme_label = "🌙 Dark Mode" if not st.session_state.dark_mode else "☀️ Light Mode"
+    if st.sidebar.button(theme_label, key="theme_toggle", use_container_width=True):
+        toggle_theme()
+        st.rerun()
     
     st.sidebar.markdown("---")
     
@@ -5326,7 +3963,7 @@ def main():
         st.metric("Formulas", "75+")
     
     st.sidebar.markdown("""
-    <div style="font-size: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 6px; margin: 0.5rem 0;">
+    <div style="font-size: 0.75rem; padding: 0.5rem; border-radius: 6px; margin: 0.5rem 0;">
         Based on Jacobs & Chase (2024). <em>Operations and Supply Chain Management</em>, 17th ed. McGraw-Hill.
     </div>
     """, unsafe_allow_html=True)
@@ -5414,8 +4051,6 @@ def main():
     }
     
     # Create navigation
-    selected_module = None
-    
     for section, section_modules in modules.items():
         with st.sidebar.expander(section, expanded=False):
             for name, key in section_modules.items():
