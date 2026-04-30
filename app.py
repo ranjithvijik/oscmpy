@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from scipy import stats
+from scipy.special import factorial
 import math
 
 # ============================================================
@@ -27,6 +28,15 @@ def toggle_theme():
     st.session_state.dark_mode = not st.session_state.dark_mode
 
 init_theme()
+
+def render_theme_toggle():
+    """Render theme toggle button."""
+    theme_icon = "🌙" if not st.session_state.dark_mode else "☀️"
+    theme_text = "Dark Mode" if not st.session_state.dark_mode else "Light Mode"
+    
+    if st.sidebar.button(f"{theme_icon} {theme_text}", key="theme_toggle", use_container_width=True):
+        toggle_theme()
+        st.rerun()
 
 # ============================================================
 # DYNAMIC CSS STYLING (Merged Dark/Light Mode)
@@ -506,9 +516,9 @@ def module_risk():
                 with st.expander(f"📌 {name}", expanded=(i < 3)):
                     c1, c2 = st.columns(2)
                     with c1:
-                        prob = st.slider(f"Probability", 1, 5, 3, key=f"risk_p_{i}")
+                        prob = st.slider(f"Probability", 1, 5, 3, key=f"risk_p_{i}", help="1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain")
                     with c2:
-                        impact = st.slider(f"Impact", 1, 5, 4, key=f"risk_i_{i}")
+                        impact = st.slider(f"Impact", 1, 5, 4, key=f"risk_i_{i}", help="1=Negligible, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic")
                     risks.append({"name": name, "prob": prob, "impact": impact, "score": prob * impact})
         
         with col2:
@@ -791,9 +801,9 @@ def module_pert():
         col1, col2 = st.columns(2)
         
         with col1:
-            a = st.slider("Optimistic Time (a)", 1, 20, 4)
-            m = st.slider("Most Likely Time (m)", 1, 30, 8)
-            b = st.slider("Pessimistic Time (b)", 1, 40, 16)
+            a = st.slider("Optimistic Time (a)", 1, 20, 4, help="Best-case duration")
+            m = st.slider("Most Likely Time (m)", 1, 30, 8, help="Most probable duration")
+            b = st.slider("Pessimistic Time (b)", 1, 40, 16, help="Worst-case duration")
             
             if not (a <= m <= b):
                 st.warning("⚠️ PERT estimates should satisfy a ≤ m ≤ b")
@@ -822,9 +832,9 @@ def module_pert():
         col1, col2 = st.columns(2)
         
         with col1:
-            te_project = st.number_input("Expected Project Duration (Tₑ)", value=38.0, step=0.5)
-            d_target = st.number_input("Desired Completion (D)", value=35.0, step=0.5)
-            sum_variance = st.number_input("Sum of CP Variances (Σσ²)", value=11.89, step=0.1)
+            te_project = st.number_input("Expected Project Duration (Tₑ)", value=38.0, step=0.5, help="Sum of expected times on critical path")
+            d_target = st.number_input("Desired Completion (D)", value=35.0, step=0.5, help="Target completion date")
+            sum_variance = st.number_input("Sum of CP Variances (Σσ²)", value=11.89, step=0.1, help="Sum of variances for all critical path activities")
         
         with col2:
             if sum_variance > 0:
@@ -856,17 +866,19 @@ def module_pert():
         num_activities = st.number_input("Number of CP Activities", 1, 10, 3, key="pert_cp_num")
         
         activities = []
-        cols = st.columns(4)
-        cols[0].write("**Activity**")
-        cols[1].write("**a**")
-        cols[2].write("**m**")
-        cols[3].write("**b**")
+        cols_header = st.columns([1, 1, 1, 1, 1, 1])
+        cols_header[0].write("**Activity**")
+        cols_header[1].write("**a**")
+        cols_header[2].write("**m**")
+        cols_header[3].write("**b**")
+        cols_header[4].write("**Tₑ**")
+        cols_header[5].write("**σ²**")
         
         total_te = 0
         total_var = 0
         
         for i in range(int(num_activities)):
-            cols = st.columns(4)
+            cols = st.columns([1, 1, 1, 1, 1, 1])
             with cols[0]:
                 st.write(f"Activity {chr(65+i)}")
             with cols[1]:
@@ -880,11 +892,15 @@ def module_pert():
             var_i = ((b_i - a_i) / 6) ** 2
             total_te += te_i
             total_var += var_i
+            
+            with cols[4]:
+                st.write(f"{te_i:.2f}")
+            with cols[5]:
+                st.write(f"{var_i:.3f}")
+                
             activities.append({"Activity": chr(65+i), "a": a_i, "m": m_i, "b": b_i, "Tₑ": round(te_i, 2), "σ²": round(var_i, 3)})
         
-        df = pd.DataFrame(activities)
-        st.dataframe(df, use_container_width=True)
-        
+        st.markdown("---")
         col1, col2, col3 = st.columns(3)
         with col1:
             display_metric_card(f"{total_te:.2f}", "Total Path Duration", "highlight")
@@ -1115,24 +1131,37 @@ def module_crashing():
         num_activities = st.number_input("Number of Activities", 2, 10, 3)
         
         activities = []
+        cols_header = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
+        headers = ["Activity", "Normal Time", "Crash Time", "Normal Cost", "Crash Cost", "Max Crash", "Cost/Day"]
+        for i, h in enumerate(headers):
+            cols_header[i].write(f"**{h}**")
+            
         for i in range(int(num_activities)):
-            st.markdown(f"**Activity {chr(65+i)}**")
-            cols = st.columns(5)
+            cols = st.columns([1, 1.2, 1.2, 1.2, 1.2, 1.2, 1])
             with cols[0]:
-                nt = st.number_input("Normal Time", value=5+i, key=f"crash_nt_{i}")
+                st.write(f"**{chr(65+i)}**")
             with cols[1]:
-                ct = st.number_input("Crash Time", value=3+i, key=f"crash_ct_{i}")
+                nt = st.number_input(f"NT_{i}", value=5+i, key=f"crash_nt_{i}", label_visibility="collapsed")
             with cols[2]:
-                nc = st.number_input("Normal Cost ($)", value=1000+i*200, key=f"crash_nc_{i}")
+                ct = st.number_input(f"CT_{i}", value=3+i//2, key=f"crash_ct_{i}", label_visibility="collapsed")
             with cols[3]:
-                cc = st.number_input("Crash Cost ($)", value=1800+i*300, key=f"crash_cc_{i}")
+                nc = st.number_input(f"NC_{i}", value=1000+i*200, key=f"crash_nc_{i}", label_visibility="collapsed")
             with cols[4]:
-                if nt > ct:
-                    cpd = (cc - nc) / (nt - ct)
-                    st.metric("Cost/Day", f"${cpd:.0f}")
+                cc = st.number_input(f"CC_{i}", value=1800+i*400, key=f"crash_cc_{i}", label_visibility="collapsed")
+            
+            max_crash = nt - ct
+            if max_crash > 0:
+                cpd = (cc - nc) / max_crash
+            else:
+                cpd = float('inf')
+                
+            with cols[5]:
+                st.write(f"{max_crash} days")
+            with cols[6]:
+                if cpd != float('inf'):
+                    st.write(f"${cpd:.0f}")
                 else:
-                    cpd = float('inf')
-                    st.metric("Cost/Day", "N/A")
+                    st.write("N/A")
             
             activities.append({
                 "Activity": chr(65+i),
@@ -1144,27 +1173,32 @@ def module_crashing():
                 "Cost/Day": cpd if nt > ct else None
             })
         
-        df = pd.DataFrame(activities)
-        st.dataframe(df, use_container_width=True)
-        
         # Summary
+        st.markdown("---")
+        st.markdown("#### Summary")
         total_normal_time = sum(a["Normal Time"] for a in activities)
         total_crash_time = sum(a["Crash Time"] for a in activities)
-        total_crash_cost = sum(a["Crash Cost"] - a["Normal Cost"] for a in activities)
+        total_normal_cost = sum(a["Normal Cost"] for a in activities)
+        total_crash_cost = sum(a["Crash Cost"] for a in activities)
         
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            display_metric_card(f"{total_normal_time} days", "Normal Duration", "normal")
+            display_metric_card(f"{total_normal_time}", "Normal Duration", "normal")
         with col2:
-            display_metric_card(f"{total_crash_time} days", "Minimum Duration", "highlight")
+            display_metric_card(f"{total_crash_time}", "Crash Duration", "highlight")
         with col3:
-            display_metric_card(f"${total_crash_cost:,.0f}", "Full Crash Cost", "danger")
+            display_metric_card(f"${total_normal_cost:,}", "Normal Cost", "normal")
+        with col4:
+            display_metric_card(f"${total_crash_cost:,}", "Full Crash Cost", "danger")
         
-        # Crashing recommendation
-        valid_activities = [a for a in activities if a["Cost/Day"] and a["Cost/Day"] != float('inf')]
-        if valid_activities:
-            cheapest = min(valid_activities, key=lambda x: x["Cost/Day"])
-            st.success(f"💡 **Recommendation:** Crash Activity {cheapest['Activity']} first (${cheapest['Cost/Day']:.0f}/day)")
+        # Crashing priority
+        crashable = [a for a in activities if a["Cost/Day"] is not None and a["Max Crash Days"] > 0]
+        if crashable:
+            crashable_sorted = sorted(crashable, key=lambda x: x["Cost/Day"])
+            
+            st.markdown("#### Crashing Priority (Lowest Cost First)")
+            for i, a in enumerate(crashable_sorted):
+                st.write(f"{i+1}. **Activity {a['Activity']}**: ${a['Cost/Day']:.0f}/day (can crash {a['Max Crash Days']} days)")
     
     with tab3:
         st.markdown("### 📝 Enhanced Practice Problems")
@@ -1278,6 +1312,15 @@ def module_breakeven():
         )
         
         display_formula_card("Indifference Point (Two Alternatives)", r"Q^* = \frac{F_2 - F_1}{V_1 - V_2}")
+        
+        st.markdown("#### Assumptions & Limitations")
+        st.write("""
+        - Revenue and costs are linear functions of volume
+        - Fixed costs remain constant within the relevant range
+        - All units produced are sold (no inventory buildup)
+        - Single product analysis (or constant product mix)
+        - Price and variable cost per unit are constant
+        """)
     
     with tab2:
         st.markdown("### Break-Even Calculator")
@@ -1613,7 +1656,7 @@ def module_decision():
         
         with col1:
             st.markdown("#### Large Facility Option")
-            prob_high = st.slider("P(High Demand)", 0, 100, 60) / 100
+            prob_high = st.slider("P(High Demand)", 0, 100, 60, help="Probability of high demand scenario") / 100
             payoff_high_large = st.number_input("High Demand Payoff ($)", value=200000, key="dt_h_l")
             payoff_low_large = st.number_input("Low Demand Payoff ($)", value=-50000, key="dt_l_l")
             
@@ -1720,6 +1763,9 @@ def module_decision():
             user_evpi = st.number_input("EVPI ($):", key="dt_p3")
             
             if st.button("Check Answer", key="dt_p3_btn"):
+                # With perfect info: choose best option for each state
+                # High demand (40%): max(100000, 80000) = 100000
+                # Low demand (60%): max(20000, 30000) = 30000
                 ev_with_pi = 0.4 * 100000 + 0.6 * 30000
                 ev_without_pi = max(0.4*100000 + 0.6*20000, 0.5*80000 + 0.5*30000)
                 correct_evpi = ev_with_pi - ev_without_pi
@@ -3046,61 +3092,10 @@ def module_factor():
 # ============================================================
 def module_transportation():
     display_header("🚚", "Chapter 15", "Transportation Method", "Optimal allocation of supply to demand")
-    
-    tab1, tab2 = st.tabs(["📚 Theory", "🔬 Calculator"])
-    
-    with tab1:
-        st.markdown("### Transportation Problem")
-        st.write("""
-        The **transportation method** finds the minimum-cost allocation of goods from multiple 
-        sources to multiple destinations. It can be solved using the Northwest Corner Method 
-        for an initial solution, then optimized.
-        """)
-        
-        display_formula_card("Objective Function", r"\text{Minimize } Z = \sum_{i}\sum_{j} c_{ij} \cdot x_{ij}")
-        
-        st.write("""
-        Subject to:
-        - Supply constraints: Σⱼ xᵢⱼ = Sᵢ
-        - Demand constraints: Σᵢ xᵢⱼ = Dⱼ
-        - Non-negativity: xᵢⱼ ≥ 0
-        """)
-    
-    with tab2:
-        st.markdown("### Transportation Tableau (3×3)")
-        
-        st.markdown("#### Unit Costs")
-        costs = []
-        for i in range(3):
-            cols = st.columns(4)
-            with cols[0]:
-                st.write(f"Source {chr(65+i)}")
-            row = []
-            for j in range(3):
-                with cols[j+1]:
-                    c = st.number_input(f"C{i}{j}", value=25+i*10+j*5, key=f"tr_c_{i}_{j}", label_visibility="collapsed")
-                    row.append(c)
-            costs.append(row)
-        
-        st.markdown("#### Allocations")
-        allocs = []
-        for i in range(3):
-            cols = st.columns(4)
-            with cols[0]:
-                st.write(f"Source {chr(65+i)}")
-            row = []
-            for j in range(3):
-                with cols[j+1]:
-                    a = st.number_input(f"A{i}{j}", value=0, key=f"tr_a_{i}_{j}", label_visibility="collapsed")
-                    row.append(a)
-            allocs.append(row)
-        
-        # Calculate total cost
-        total_cost = sum(costs[i][j] * allocs[i][j] for i in range(3) for j in range(3))
-        st.metric("Total Transportation Cost", f"${total_cost:,}")
+    display_formula_card("Objective Function", r"\text{Minimize } Z = \sum_{i}\sum_{j} c_{ij} \cdot x_{ij}")
 
 # ============================================================
-# MODULE 24: GLOBAL SOURCING (Chapter 16) - FULL V3.5 RESTORE
+# MODULE 24: GLOBAL SOURCING (Chapter 16) - FULL V3.5 RESTORE + V4.0
 # ============================================================
 def module_sourcing():
     display_header("🌐", "Chapter 16", "Global Sourcing", "Total cost of ownership analysis")
@@ -3179,9 +3174,9 @@ def module_forecast():
     
     with tab2:
         st.markdown("### Holt's Trend-Adjusted Exponential Smoothing")
-        st.latex(r"L_t = \alpha A_t + (1-\alpha)(L_{t-1} + T_{t-1})")
-        st.latex(r"T_t = \beta(L_t - L_{t-1}) + (1-\beta)T_{t-1}")
-        st.latex(r"F_{t+m} = L_t + m \cdot T_t")
+        display_formula_card("Level Update", r"L_t = \alpha A_t + (1-\alpha)(L_{t-1} + T_{t-1})")
+        display_formula_card("Trend Update", r"T_t = \beta(L_t - L_{t-1}) + (1-\beta)T_{t-1}")
+        display_formula_card("Forecast", r"F_{t+m} = L_t + m \cdot T_t")
         
         col1, col2 = st.columns(2)
         
@@ -3203,7 +3198,7 @@ def module_forecast():
     
     with tab3:
         st.markdown("### Seasonal Index Calculator")
-        st.latex(r"SI_i = \frac{\text{Average demand in season } i}{\text{Overall average demand}}")
+        display_formula_card("Seasonal Index", r"SI_i = \frac{\text{Average demand in season } i}{\text{Overall average demand}}")
         
         st.markdown("Enter quarterly demand for 3 years:")
         
@@ -3286,8 +3281,8 @@ def module_regression():
         """)
         
         display_formula_card("Regression Line", r"Y = a + bx")
-        display_formula_card("Slope", r"b = \frac{n\sum xy - \sum x \sum y}{n\sum x^2 - (\sum x)^2}")
-        st.latex(r"a = \bar{y} - b\bar{x}")
+        display_formula_card("Slope (b)", r"b = \frac{n\sum xy - \sum x \sum y}{n\sum x^2 - (\sum x)^2}")
+        display_formula_card("Intercept (a)", r"a = \bar{y} - b\bar{x}")
     
     with tab2:
         st.markdown("### Regression Calculator")
@@ -3341,14 +3336,11 @@ def module_aggregate():
         st.markdown("#### Pure Planning Strategies")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown("**🏃 Chase Strategy**")
-            st.write("Match production to demand by hiring/firing. Low inventory, high workforce instability.")
+            display_concept_card("🏃", "Chase Strategy", "Match production to demand by hiring/firing. Low inventory, high workforce instability.")
         with col2:
-            st.markdown("**📏 Level Strategy**")
-            st.write("Constant workforce and production. Inventory absorbs demand fluctuations.")
+            display_concept_card("📏", "Level Strategy", "Constant workforce and production. Inventory absorbs demand fluctuations.")
         with col3:
-            st.markdown("**🔀 Mixed Strategy**")
-            st.write("Combination using overtime, subcontracting, or part-time workers.")
+            display_concept_card("🔀", "Mixed Strategy", "Combination using overtime, subcontracting, or part-time workers.")
     
     with tab2:
         st.markdown("### Aggregate Planning Calculator")
@@ -3619,14 +3611,11 @@ def module_mrp():
         st.markdown("#### MRP Inputs")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.markdown("**📅 Master Schedule**")
-            st.write("What to make and when")
+            display_concept_card("📅", "Master Schedule", "What to make and when")
         with col2:
-            st.markdown("**🌳 Bill of Materials**")
-            st.write("Product structure")
+            display_concept_card("🌳", "Bill of Materials", "Product structure")
         with col3:
-            st.markdown("**📦 Inventory Records**")
-            st.write("On-hand and scheduled receipts")
+            display_concept_card("📦", "Inventory Records", "On-hand and scheduled receipts")
     
     with tab2:
         st.markdown("### MRP Record Calculator")
@@ -3723,14 +3712,11 @@ def module_mrp_lotsizing():
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown("**Lot-for-Lot (L4L)**")
-        st.write("Order exactly what's needed. Minimizes holding cost, maximizes setup cost.")
+        display_concept_card("📦", "Lot-for-Lot (L4L)", "Order exactly what's needed. Minimizes holding cost, maximizes setup cost.")
     with col2:
-        st.markdown("**EOQ**")
-        st.write("Fixed quantity based on EOQ formula. May not align with requirements.")
+        display_concept_card("⚖️", "EOQ", "Fixed quantity based on EOQ formula. May not align with requirements.")
     with col3:
-        st.markdown("**POQ**")
-        st.write("Order for fixed number of periods. T = EOQ / Avg Demand.")
+        display_concept_card("⏱️", "POQ", "Order for fixed number of periods. T = EOQ / Avg Demand.")
     
     st.markdown("### Case Study (Exhibit 21.16)")
     st.write("Parameters: S = $47, H = $2/unit/week")
@@ -3772,14 +3758,13 @@ def module_scheduling():
         )
         
         st.markdown("#### Common Rules")
-        rules = {
-            "FCFS": "First Come, First Served - Process in order of arrival",
-            "SPT": "Shortest Processing Time - Minimizes average flow time",
-            "EDD": "Earliest Due Date - Minimizes maximum tardiness",
-            "CR": "Critical Ratio - (Due Date - Today) / Processing Time"
-        }
-        for rule, desc in rules.items():
-            st.write(f"**{rule}:** {desc}")
+        col1, col2 = st.columns(2)
+        with col1:
+            display_concept_card("1️⃣", "FCFS", "First Come, First Served - Process in order of arrival")
+            display_concept_card("⏱️", "SPT", "Shortest Processing Time - Minimizes average flow time")
+        with col2:
+            display_concept_card("📅", "EDD", "Earliest Due Date - Minimizes maximum tardiness")
+            display_concept_card("➗", "CR", "Critical Ratio - (Due Date - Today) / Processing Time")
         
         display_formula_card("Critical Ratio", r"CR = \frac{\text{Due Date} - \text{Today}}{\text{Processing Time}}")
         
@@ -3881,11 +3866,9 @@ def module_pokayoke():
     st.markdown("### Types of Poka-yoke")
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**Prevention**")
-        st.write("Makes errors impossible (e.g., USB connector shape)")
+        display_concept_card("🚧", "Prevention", "Makes errors impossible (e.g., USB connector shape)")
     with col2:
-        st.markdown("**Detection**")
-        st.write("Alerts when error occurs (e.g., car door ajar warning)")
+        display_concept_card("🔔", "Detection", "Alerts when error occurs (e.g., car door ajar warning)")
 
 # ============================================================
 # MODULE 35: SQC PRACTICE (Chapter 13) - FULL V3.5 RESTORE + V4.0
@@ -3947,11 +3930,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Theme toggle button
-    theme_label = "🌙 Dark Mode" if not st.session_state.dark_mode else "☀️ Light Mode"
-    if st.sidebar.button(theme_label, key="theme_toggle", use_container_width=True):
-        toggle_theme()
-        st.rerun()
+    render_theme_toggle()
     
     st.sidebar.markdown("---")
     
@@ -4051,6 +4030,7 @@ def main():
     }
     
     # Create navigation
+    selected_module = None
     for section, section_modules in modules.items():
         with st.sidebar.expander(section, expanded=False):
             for name, key in section_modules.items():
