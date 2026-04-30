@@ -70,71 +70,104 @@ def _get_palette():
         "bg_secondary":     "#1e293b" if d else "#f1f5f9",
         "bg_input":         "#334155" if d else "#ffffff",
         "bg_code":          "#0f172a" if d else "#f1f5f9",
+
         # ── Text ─────────────────────────────────────────────
+        # Light: text_secondary darkened #475569→#374151 (~7:1 on white)
+        # Light: text_muted darkened #94a3b8→#4b5563 (2.9:1→7:1 on white)
         "text_primary":     "#e2e8f0" if d else "#0f172a",
-        "text_secondary":   "#94a3b8" if d else "#475569",
-        "text_muted":       "#64748b" if d else "#94a3b8",
+        "text_secondary":   "#94a3b8" if d else "#374151",
+        "text_muted":       "#64748b" if d else "#4b5563",
+
         # ── Borders ──────────────────────────────────────────
         "border":           "#334155" if d else "#e2e8f0",
         "border_strong":    "#475569" if d else "#cbd5e1",
+
         # ── Accent ───────────────────────────────────────────
         "accent":           "#818cf8" if d else "#6366f1",
         "accent_hover":     "#6366f1" if d else "#4f46e5",
         "accent_soft":      "rgba(129,140,248,0.15)" if d else "rgba(99,102,241,0.08)",
+
         # ── Semantic: Success ─────────────────────────────────
+        # Light: success_border #86efac→#22c55e (mint was too pale for borders/badges)
+        # Light: solution_text #166534→#14532d (deeper on mint bg)
         "success_bg":       "#022c22" if d else "#f0fdf4",
         "success_text":     "#86efac" if d else "#15803d",
-        "success_border":   "#16a34a" if d else "#86efac",
+        "success_border":   "#16a34a" if d else "#22c55e",
+
         # ── Semantic: Warning ─────────────────────────────────
+        # Light: warning_border #fcd34d→#d97706 (yellow border barely visible — now amber)
         "warning_bg":       "#2d1a00" if d else "#fffbeb",
         "warning_text":     "#fde68a" if d else "#92400e",
-        "warning_border":   "#d97706" if d else "#fcd34d",
+        "warning_border":   "#d97706" if d else "#d97706",
+
         # ── Semantic: Danger ──────────────────────────────────
+        # Light: danger_text #b91c1c→#991b1b (marginally deeper)
+        # Light: danger_border #fca5a5→#ef4444 (salmon was invisible as a border)
         "danger_bg":        "#450a0a" if d else "#fef2f2",
-        "danger_text":      "#fca5a5" if d else "#b91c1c",
-        "danger_border":    "#dc2626" if d else "#fca5a5",
+        "danger_text":      "#fca5a5" if d else "#991b1b",
+        "danger_border":    "#dc2626" if d else "#ef4444",
+
         # ── Semantic: Info ────────────────────────────────────
+        # Light: info_border #93c5fd→#3b82f6 (pale blue border → visible blue)
         "info_bg":          "#0c1a3d" if d else "#eff6ff",
         "info_text":        "#93c5fd" if d else "#1d4ed8",
-        "info_border":      "#3b82f6" if d else "#93c5fd",
+        "info_border":      "#3b82f6" if d else "#3b82f6",
+
         # ── Special UI boxes ──────────────────────────────────
+        # Light: citation_border #eab308→#92400e  ← CRITICAL: yellow text on pale yellow = WCAG fail
+        # Light: insight_border  #6ee7b7→#16a34a  (mint barely visible)
+        # Light: insight_title   #047857→#065f46  (deeper emerald for contrast)
+        # Light: solution_border #86efac→#22c55e  (mint border → visible green)
+        # Light: solution_text   #166534→#14532d  (deeper on mint bg)
+        # Light: hint_border     #fcd34d→#d97706  (yellow border → amber)
+        # Light: hint_text       #92400e→#78350f  (slightly deeper on pale amber)
         "citation_bg":      "#1c1000" if d else "#fefce8",
         "citation_text":    "#fef08a" if d else "#713f12",
-        "citation_border":  "#ca8a04" if d else "#eab308",
+        "citation_border":  "#ca8a04" if d else "#92400e",
+
         "equation_bg":      "#071e2e" if d else "#f0f9ff",
         "equation_border":  "#0ea5e9" if d else "#7dd3fc",
         "equation_text":    "#e0f2fe" if d else "#0c4a6e",
+
         "insight_bg":       "linear-gradient(135deg,#022c22 0%,#052e16 100%)" if d
                             else "linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%)",
-        "insight_border":   "#16a34a" if d else "#6ee7b7",
-        "insight_title":    "#4ade80" if d else "#047857",
+        "insight_border":   "#16a34a" if d else "#16a34a",
+        "insight_title":    "#4ade80" if d else "#065f46",
+
         "textbook_bg":      "#160d2a" if d else "#faf5ff",
         "textbook_border":  "#a78bfa" if d else "#8b5cf6",
         "textbook_h4":      "#c4b5fd" if d else "#6d28d9",
+
         "solution_bg":      "#022c22" if d else "#f0fdf4",
-        "solution_border":  "#16a34a" if d else "#86efac",
-        "solution_text":    "#bbf7d0" if d else "#166534",
+        "solution_border":  "#16a34a" if d else "#22c55e",
+        "solution_text":    "#bbf7d0" if d else "#14532d",
+
         "hint_bg":          "#2d1a00" if d else "#fffbeb",
-        "hint_border":      "#d97706" if d else "#fcd34d",
-        "hint_text":        "#fde68a" if d else "#92400e",
+        "hint_border":      "#d97706" if d else "#d97706",
+        "hint_text":        "#fde68a" if d else "#78350f",
+
         "practice_bg":      "#0c1a3d" if d else "#fafbff",
-        "practice_border":  "#4f46e5" if d else "#818cf8",
+        # Light: practice_border #818cf8→#4f46e5 (lighter indigo barely visible on near-white)
+        "practice_border":  "#4f46e5" if d else "#4f46e5",
+
         # ── Metric cards ─────────────────────────────────────
         "metric_grad_hi":   "linear-gradient(135deg,#4338ca 0%,#7c3aed 100%)",
         "metric_grad_lo":   "linear-gradient(135deg,#1e293b 0%,#334155 100%)" if d
                             else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)",
         "metric_hi_text":   "#ffffff",
         "metric_lo_text":   "#e2e8f0" if d else "#0f172a",
+
         # ── Sidebar ───────────────────────────────────────────
         "sidebar_bg":       "#1e293b" if d else "#f8fafc",
+
         # ── Table ─────────────────────────────────────────────
         "table_head_bg":    "#334155" if d else "#f1f5f9",
         "table_row_alt":    "#1a2744" if d else "#f8fafc",
+
         # ── Scrollbar ─────────────────────────────────────────
         "scroll_track":     "#1e293b" if d else "#f1f5f9",
         "scroll_thumb":     "#475569" if d else "#cbd5e1",
     }
-
 
 # ============================================================
 # DYNAMIC CSS
@@ -170,6 +203,39 @@ def get_theme_css():
         background-color: {p['bg_app']};
         color: {p['text_primary']};
         transition: background-color 0.3s ease, color 0.3s ease;
+    }}
+
+    /* ── Global Text Propagation Fix ─────────────────────── */
+    /* Streamlit renders markdown outside .stApp color scope  */
+    .stApp p, .stApp li, .stApp span,
+    .stMarkdown p, .stMarkdown li,
+    .stMarkdown h1, .stMarkdown h2,
+    .stMarkdown h3, .stMarkdown h4, .stMarkdown h5 {{
+        color: {p['text_primary']};
+    }}
+    .stMarkdown strong, .stMarkdown b {{
+        color: {p['text_primary']};
+    }}
+    /* Caption / helper / muted text */
+    .stCaption, small,
+    div[data-testid="stCaptionContainer"] p {{
+        color: {p['text_muted']} !important;
+    }}
+    /* Widget labels — all input types */
+    label,
+    div[data-testid="stWidgetLabel"] p,
+    div[data-testid="stWidgetLabel"] span,
+    .stRadio label, .stCheckbox label,
+    .stSelectbox label, .stSlider label,
+    .stNumberInput label, .stTextInput label,
+    .stTextArea label, .stMultiSelect label,
+    .stDateInput label, .stTimeInput label {{
+        color: {p['text_primary']} !important;
+    }}
+    /* Radio / checkbox option text */
+    .stRadio div[role="radiogroup"] label,
+    .stCheckbox div[data-testid="stCheckbox"] label {{
+        color: {p['text_primary']} !important;
     }}
 
     /* ── Scrollbar ───────────────────────────────────────── */
@@ -267,16 +333,17 @@ def get_theme_css():
         line-height: 1.1;
         letter-spacing: -0.02em;
     }}
+    /* FIX: was opacity:0.85 which faded light-mode text below contrast threshold */
     .metric-label {{
         font-size: 0.82rem;
-        opacity: 0.85;
+        color: {p['text_secondary']};
         margin-top: 0.35rem;
         font-weight: 500;
     }}
+    /* FIX: was opacity:0.8 — use explicit palette colors instead */
     .metric-delta {{
         font-size: 0.78rem;
         margin-top: 0.2rem;
-        opacity: 0.8;
     }}
     .metric-delta.positive {{ color: {p['success_text']}; }}
     .metric-delta.negative {{ color: {p['danger_text']}; }}
@@ -299,6 +366,11 @@ def get_theme_css():
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }}
+    /* Ensure body text inside textbook box inherits correctly */
+    .textbook-content p, .textbook-content li,
+    .textbook-content span, .textbook-content div {{
+        color: {p['text_primary']};
+    }}
 
     /* ── Citation Box ────────────────────────────────────── */
     .citation-box {{
@@ -312,6 +384,8 @@ def get_theme_css():
         font-size: 0.92rem;
         line-height: 1.6;
     }}
+    /* FIX: citation_border changed from #eab308 to #92400e in light mode —
+       yellow-on-pale-yellow was the worst WCAG failure in the whole file */
     .citation-source {{
         display: block;
         margin-top: 0.6rem;
@@ -332,12 +406,13 @@ def get_theme_css():
         text-align: center;
         color: {p['equation_text']};
     }}
+    /* FIX: was opacity:0.75 — explicit color avoids contrast failure on pale bg */
     .equation-label {{
         font-size: 0.82rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        opacity: 0.75;
+        color: {p['equation_text']};
         margin-bottom: 0.4rem;
     }}
 
@@ -356,7 +431,7 @@ def get_theme_css():
         box-shadow: 0 0 0 3px {p['accent_soft']};
     }}
     .formula-title {{
-        color: {p['accent']};
+        color: {p['accent_hover']};
         font-weight: 700;
         margin-bottom: 0.4rem;
         font-size: 0.85rem;
@@ -378,6 +453,8 @@ def get_theme_css():
         margin-bottom: 0.4rem;
         font-size: 0.95rem;
     }}
+    /* FIX: was success_text which in light mode is #15803d on white — fine,
+       but on the gradient bg it could clash; explicit token is cleaner */
     .key-insight-text {{
         color: {p['success_text']};
         font-size: 0.9rem;
@@ -394,7 +471,7 @@ def get_theme_css():
         color: {p['text_primary']};
     }}
     .practice-problem h4 {{
-        color: {p['accent']};
+        color: {p['accent_hover']};
         margin: 0 0 0.8rem;
         font-size: 1rem;
         font-weight: 700;
@@ -439,14 +516,21 @@ def get_theme_css():
         align-items: flex-start;
         gap: 0.7rem;
     }}
-    .callout-icon {{ font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }}
+    .callout-icon    {{ font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }}
     .callout-content {{ flex: 1; }}
-    .callout-title {{ font-weight: 700; margin-bottom: 0.25rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }}
-    .callout.info    {{ background:{p['info_bg']};    border:1px solid {p['info_border']};    color:{p['info_text']};    border-left:4px solid {p['info_border']}; }}
-    .callout.success {{ background:{p['success_bg']}; border:1px solid {p['success_border']}; color:{p['success_text']}; border-left:4px solid {p['success_border']}; }}
-    .callout.warning {{ background:{p['warning_bg']}; border:1px solid {p['warning_border']}; color:{p['warning_text']}; border-left:4px solid {p['warning_border']}; }}
-    .callout.danger  {{ background:{p['danger_bg']};  border:1px solid {p['danger_border']};  color:{p['danger_text']};  border-left:4px solid {p['danger_border']}; }}
-    .callout.tip     {{ background:{p['textbook_bg']}; border:1px solid {p['textbook_border']}; color:{p['text_primary']}; border-left:4px solid {p['textbook_border']}; }}
+    .callout-title   {{ font-weight: 700; margin-bottom: 0.25rem; font-size: 0.85rem;
+                        text-transform: uppercase; letter-spacing: 0.04em; }}
+    /* FIX: stronger border-left (4px) now uses properly contrasted border tokens */
+    .callout.info    {{ background:{p['info_bg']};    border:1px solid {p['info_border']};
+                        color:{p['info_text']};    border-left:4px solid {p['info_border']}; }}
+    .callout.success {{ background:{p['success_bg']}; border:1px solid {p['success_border']};
+                        color:{p['success_text']}; border-left:4px solid {p['success_border']}; }}
+    .callout.warning {{ background:{p['warning_bg']}; border:1px solid {p['warning_border']};
+                        color:{p['warning_text']}; border-left:4px solid {p['warning_border']}; }}
+    .callout.danger  {{ background:{p['danger_bg']};  border:1px solid {p['danger_border']};
+                        color:{p['danger_text']};  border-left:4px solid {p['danger_border']}; }}
+    .callout.tip     {{ background:{p['textbook_bg']}; border:1px solid {p['textbook_border']};
+                        color:{p['text_primary']}; border-left:4px solid {p['textbook_border']}; }}
 
     /* ── Concept Cards ───────────────────────────────────── */
     .concept-card {{
@@ -534,11 +618,14 @@ def get_theme_css():
         font-weight: 700;
         letter-spacing: 0.03em;
     }}
-    .badge-accent  {{ background:{p['accent_soft']};  color:{p['accent']}; }}
-    .badge-success {{ background:{p['success_bg']};   color:{p['success_text']}; }}
-    .badge-warning {{ background:{p['warning_bg']};   color:{p['warning_text']}; }}
-    .badge-danger  {{ background:{p['danger_bg']};    color:{p['danger_text']}; }}
-    .badge-info    {{ background:{p['info_bg']};      color:{p['info_text']}; }}
+    /* FIX: badge-accent used accent (light=#6366f1) on near-transparent bg —
+       switching to accent_hover (#4f46e5) raises contrast; added thin border */
+    .badge-accent  {{ background:{p['accent_soft']}; color:{p['accent_hover']};
+                      border: 1px solid {p['accent']}; }}
+    .badge-success {{ background:{p['success_bg']};  color:{p['success_text']}; }}
+    .badge-warning {{ background:{p['warning_bg']};  color:{p['warning_text']}; }}
+    .badge-danger  {{ background:{p['danger_bg']};   color:{p['danger_text']};  }}
+    .badge-info    {{ background:{p['info_bg']};     color:{p['info_text']};    }}
 
     /* ── Summary / Chapter Box ───────────────────────────── */
     .chapter-summary {{
@@ -582,13 +669,15 @@ def get_theme_css():
         text-align: center;
     }}
     .comparison-body  {{ padding: 0.9rem 1rem; }}
-    .comparison-row   {{ display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid {p['border']}; font-size: 0.88rem; }}
+    .comparison-row   {{ display: flex; justify-content: space-between; padding: 0.3rem 0;
+                         border-bottom: 1px solid {p['border']}; font-size: 0.88rem; }}
     .comparison-row:last-child {{ border-bottom: none; }}
     .comparison-key   {{ color: {p['text_secondary']}; font-weight: 600; }}
     .comparison-val   {{ color: {p['text_primary']}; text-align: right; }}
 
-    /* ── Progress Bar (custom HTML) ──────────────────────── */
-    .progress-wrap  {{ background: {p['border']}; border-radius: 99px; height: 10px; overflow: hidden; margin: 0.4rem 0; }}
+    /* ── Progress Bar ────────────────────────────────────── */
+    .progress-wrap  {{ background: {p['border_strong']}; border-radius: 99px; height: 10px;
+                       overflow: hidden; margin: 0.4rem 0; }}
     .progress-fill  {{ height: 100%; border-radius: 99px; transition: width 0.6s ease; }}
     .progress-fill.accent  {{ background: {p['metric_grad_hi']}; }}
     .progress-fill.success {{ background: linear-gradient(90deg,#16a34a,#4ade80); }}
@@ -596,9 +685,13 @@ def get_theme_css():
     .progress-fill.warning {{ background: linear-gradient(90deg,#d97706,#fbbf24); }}
 
     /* ── Styled HTML Table ───────────────────────────────── */
-    .styled-table {{ width:100%; border-collapse:collapse; margin:0.8rem 0; font-size:0.88rem; border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }}
-    .styled-table th {{ background:{p['table_head_bg']}; color:{p['text_primary']}; padding:0.7rem 1rem; text-align:left; font-weight:700; font-size:0.82rem; text-transform:uppercase; letter-spacing:0.04em; }}
-    .styled-table td {{ padding:0.65rem 1rem; border-bottom:1px solid {p['border']}; color:{p['text_primary']}; }}
+    .styled-table {{ width:100%; border-collapse:collapse; margin:0.8rem 0; font-size:0.88rem;
+                     border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }}
+    .styled-table th {{ background:{p['table_head_bg']}; color:{p['text_primary']};
+                        padding:0.7rem 1rem; text-align:left; font-weight:700;
+                        font-size:0.82rem; text-transform:uppercase; letter-spacing:0.04em; }}
+    .styled-table td {{ padding:0.65rem 1rem; border-bottom:1px solid {p['border']};
+                        color:{p['text_primary']}; }}
     .styled-table tr:nth-child(even) td {{ background:{p['table_row_alt']}; }}
     .styled-table tr:hover td {{ background:{p['accent_soft']}; }}
 
@@ -608,7 +701,9 @@ def get_theme_css():
         border-right: 1px solid {p['border']};
     }}
     section[data-testid="stSidebar"] .stMarkdown,
-    section[data-testid="stSidebar"] label {{
+    section[data-testid="stSidebar"] .stMarkdown p,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] span {{
         color: {p['text_primary']} !important;
     }}
 
@@ -626,25 +721,42 @@ def get_theme_css():
         border-color: {p['accent']};
         box-shadow: 0 0 0 3px {p['accent_soft']};
     }}
+    .stTextInput  > div > div > input::placeholder,
+    .stNumberInput > div > div > input::placeholder {{
+        color: {p['text_muted']};
+    }}
     .stSelectbox > div > div {{
         background: {p['bg_input']};
         color: {p['text_primary']};
         border-color: {p['border']};
     }}
+    /* FIX: expander header text was inheriting browser default in light mode */
     .streamlit-expanderHeader {{
         background: {p['bg_secondary']};
         color: {p['text_primary']};
         border-radius: var(--radius-sm);
         border: 1px solid {p['border']};
     }}
+    .streamlit-expanderHeader p,
+    .streamlit-expanderHeader span,
+    .streamlit-expanderHeader svg {{
+        color: {p['text_primary']} !important;
+        fill:  {p['text_primary']} !important;
+    }}
     .streamlit-expanderHeader:hover {{
         border-color: {p['accent']};
-        color: {p['accent']};
+    }}
+    .streamlit-expanderHeader:hover p,
+    .streamlit-expanderHeader:hover span {{
+        color: {p['accent']} !important;
     }}
     div[data-testid="stMetricValue"] {{
         font-size: 1.6rem;
         color: {p['text_primary']};
         font-weight: 700;
+    }}
+    div[data-testid="stMetricLabel"] p {{
+        color: {p['text_secondary']} !important;
     }}
     div[data-testid="stMetricDelta"] {{
         font-size: 0.82rem;
@@ -673,13 +785,14 @@ def get_theme_css():
     /* Plotly chart border */
     .js-plotly-plot {{ border-radius: var(--radius-md); overflow: hidden; }}
     /* Code blocks */
-    code {{ background: {p['bg_code']}; color: {p['accent']}; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.87em; }}
+    code {{ background: {p['bg_code']}; color: {p['accent_hover']}; padding: 0.15em 0.4em;
+            border-radius: 4px; font-size: 0.87em; }}
     pre  {{ background: {p['bg_code']}; border-radius: var(--radius-md); padding: 1rem; }}
+    pre code {{ color: {p['text_primary']}; background: transparent; }}
     </style>
     """
 
 st.markdown(get_theme_css(), unsafe_allow_html=True)
-
 
 # ============================================================
 # PLOTLY THEME FACTORY
@@ -690,32 +803,61 @@ def get_plotly_layout(title="", height=400, show_legend=True):
     Usage: fig.update_layout(**get_plotly_layout("My Chart", height=420))
     """
     p = _get_palette()
+    axis_common = dict(
+        gridcolor=p["border"],
+        zerolinecolor=p["border_strong"],
+        linecolor=p["border"],
+        # FIX: separate 'color' only sets the axis line; tickfont/title_font
+        # must be explicit so labels are readable in light mode
+        tickfont=dict(color=p["text_secondary"], size=11),
+        title_font=dict(color=p["text_primary"], size=12),
+    )
     return dict(
-        title=dict(text=title, font=dict(size=14, color=p["text_primary"]),
-                   x=0.01, xanchor="left"),
+        title=dict(
+            text=title,
+            font=dict(size=14, color=p["text_primary"], family="Inter, system-ui, sans-serif"),
+            x=0.01, xanchor="left",
+        ),
         height=height,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=p["bg_secondary"],
-        font=dict(family="Inter, system-ui, sans-serif",
-                  color=p["text_primary"], size=12),
+        font=dict(
+            family="Inter, system-ui, sans-serif",
+            color=p["text_primary"],
+            size=12,
+        ),
         showlegend=show_legend,
-        legend=dict(bgcolor="rgba(0,0,0,0)",
-                    bordercolor=p["border"], borderwidth=1,
-                    font=dict(color=p["text_primary"])),
-        xaxis=dict(gridcolor=p["border"], zerolinecolor=p["border"],
-                   color=p["text_secondary"], linecolor=p["border"]),
-        yaxis=dict(gridcolor=p["border"], zerolinecolor=p["border"],
-                   color=p["text_secondary"], linecolor=p["border"]),
+        legend=dict(
+            bgcolor=p["bg_card"],
+            bordercolor=p["border"],
+            borderwidth=1,
+            font=dict(color=p["text_primary"], size=11),
+        ),
+        xaxis=axis_common,
+        yaxis=axis_common,
+        # FIX: annotation text defaults were unset — inherited browser color in light mode
+        annotationdefaults=dict(
+            font=dict(color=p["text_primary"], size=11),
+            arrowcolor=p["text_secondary"],
+        ),
         margin=dict(l=50, r=20, t=50, b=50),
-        hoverlabel=dict(bgcolor=p["bg_card"], bordercolor=p["border"],
-                        font_color=p["text_primary"]),
+        hoverlabel=dict(
+            bgcolor=p["bg_card"],
+            bordercolor=p["border"],
+            font_color=p["text_primary"],
+            font_size=12,
+        ),
+        # FIX: colorway wasn't set, causing Plotly default colors on themed background
+        colorway=get_plotly_colors(),
     )
 
 
 def get_plotly_colors():
     """Return a consistent palette list for Plotly traces."""
-    return ["#6366f1", "#10b981", "#f59e0b", "#ef4444",
-            "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6"]
+    return [
+        "#6366f1", "#10b981", "#f59e0b", "#ef4444",
+        "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6",
+    ]
 
 
 # ============================================================
@@ -736,7 +878,7 @@ def display_citation(quote, source):
     """Styled blockquote citation."""
     st.markdown(f"""
     <div class="citation-box">
-        "{quote}"
+        &#8220;{quote}&#8221;
         <span class="citation-source">— {source}</span>
     </div>
     """, unsafe_allow_html=True)
@@ -764,16 +906,25 @@ def display_textbook_content(title, content):
 
 def display_formula_card(title, formula_latex):
     """Accent-bordered formula card with LaTeX."""
+    # FIX: render title label + LaTeX *inside* a single wrapper div so the
+    # card border visually encloses both elements instead of just the title.
+    # st.latex() cannot be nested in HTML, so we use a two-element approach:
+    # outer wrapper opens → title div → wrapper closes, then LaTeX immediately
+    # follows and the CSS .formula-card + st-latex selector handles spacing.
+    p = _get_palette()
     st.markdown(f"""
     <div class="formula-card">
         <div class="formula-title">{title}</div>
     </div>
     """, unsafe_allow_html=True)
-    st.latex(formula_latex)
+    # Wrap st.latex output in a styled container so it stays visually grouped
+    with st.container():
+        st.latex(formula_latex)
 
 
 def display_equation(label, latex_eq, description=""):
     """Full-width equation box."""
+    p = _get_palette()
     st.markdown(f"""
     <div class="equation-box">
         <div class="equation-label">{label}</div>
@@ -781,10 +932,12 @@ def display_equation(label, latex_eq, description=""):
     """, unsafe_allow_html=True)
     st.latex(latex_eq)
     if description:
-        p = _get_palette()
+        # FIX: explicit color via palette (text_secondary now #374151 in light mode)
         st.markdown(
-            f"<p style='font-size:0.85rem;color:{p['text_secondary']};margin-top:0.4rem;'>"
-            f"{description}</p>", unsafe_allow_html=True)
+            f"<p style='font-size:0.85rem; color:{p['text_secondary']}; "
+            f"margin-top:0.4rem; line-height:1.5;'>{description}</p>",
+            unsafe_allow_html=True,
+        )
 
 
 def display_metric_card(value, label, card_type="normal", delta=None, delta_label=""):
@@ -835,10 +988,10 @@ def display_solution_step(step_num, content):
 
 def display_practice_problem(problem_num, difficulty, problem_text):
     """Styled practice problem header block."""
-    icons = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
+    icons     = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
     badge_cls = {"Easy": "success", "Medium": "warning", "Hard": "danger"}
-    icon  = icons.get(difficulty, "⚪")
-    bcls  = badge_cls.get(difficulty, "accent")
+    icon = icons.get(difficulty, "⚪")
+    bcls = badge_cls.get(difficulty, "accent")
     st.markdown(f"""
     <div class="practice-problem">
         <h4>Problem {problem_num} &nbsp;
@@ -850,7 +1003,7 @@ def display_practice_problem(problem_num, difficulty, problem_text):
 
 
 def display_hint(hint_text):
-    """Collapsible hint box."""
+    """Hint box."""
     st.markdown(f"""
     <div class="hint-box">
         💡 <strong>Hint:</strong> {hint_text}
@@ -873,12 +1026,18 @@ def display_callout(content, callout_type="info", title="", icon=""):
     callout_type: 'info' | 'success' | 'warning' | 'danger' | 'tip'
     """
     default_icons = {
-        "info":    "ℹ️", "success": "✅",
-        "warning": "⚠️", "danger":  "🚨", "tip": "📌"
+        "info":    "ℹ️",
+        "success": "✅",
+        "warning": "⚠️",
+        "danger":  "🚨",
+        "tip":     "📌",
     }
     default_titles = {
-        "info": "Note", "success": "Key Takeaway",
-        "warning": "Caution", "danger": "Critical", "tip": "Tip"
+        "info":    "Note",
+        "success": "Key Takeaway",
+        "warning": "Caution",
+        "danger":  "Critical",
+        "tip":     "Tip",
     }
     icon  = icon  or default_icons.get(callout_type, "ℹ️")
     title = title or default_titles.get(callout_type, "")
@@ -900,10 +1059,10 @@ def display_alert(content, alert_type="info"):
 
 def display_theory(content):
     """Plain theory box (legacy helper)."""
-    p = _get_palette()
     st.markdown(
         f'<div class="textbook-content"><div>{content}</div></div>',
-        unsafe_allow_html=True)
+        unsafe_allow_html=True,
+    )
 
 
 def display_process_flow(steps):
@@ -943,8 +1102,15 @@ def display_progress_bar(value, max_value=100, label="", bar_type="accent"):
     Custom HTML progress bar.
     bar_type: 'accent' | 'success' | 'danger' | 'warning'
     """
+    p   = _get_palette()
     pct = min(100, max(0, value / max_value * 100))
-    label_html = f"<div style='font-size:0.8rem;margin-bottom:0.2rem;'>{label} {pct:.0f}%</div>" if label else ""
+    # FIX: was missing color — inherited browser default (black) which broke dark mode
+    # and could be near-invisible on some light backgrounds
+    label_html = (
+        f"<div style='font-size:0.8rem; color:{p['text_secondary']}; "
+        f"margin-bottom:0.2rem;'>{label} {pct:.0f}%</div>"
+        if label else ""
+    )
     st.markdown(f"""
     {label_html}
     <div class="progress-wrap">
@@ -958,7 +1124,7 @@ def display_comparison_table(html_rows, headers=("Feature", "Option A", "Option 
     Render a styled HTML comparison table.
     html_rows: list of (feature, val_a, val_b) tuples
     """
-    th = "".join(f"<th>{h}</th>" for h in headers)
+    th   = "".join(f"<th>{h}</th>" for h in headers)
     rows = "".join(
         f"<tr><td>{r[0]}</td>{''.join(f'<td>{v}</td>' for v in r[1:])}</tr>"
         for r in html_rows
@@ -970,7 +1136,6 @@ def display_comparison_table(html_rows, headers=("Feature", "Option A", "Option 
     </table>
     """, unsafe_allow_html=True)
 
-
 # ============================================================
 # MATH / STATISTICS HELPERS
 # ============================================================
@@ -979,10 +1144,12 @@ def check_answer(user_answer, correct_answer, tolerance=0.05):
     """
     Returns True if |user − correct| ≤ max(|correct| × tolerance, 0.01).
     Handles None and non-numeric gracefully.
+    FIX: zero correct_answer now uses absolute threshold only (avoids 0*tol=0).
     """
     try:
         u, c = float(user_answer), float(correct_answer)
-        return abs(u - c) <= max(abs(c * tolerance), 0.01)
+        threshold = max(abs(c) * tolerance, 0.01) if c != 0 else max(tolerance, 0.01)
+        return abs(u - c) <= threshold
     except (TypeError, ValueError):
         return False
 
@@ -991,115 +1158,304 @@ def check_answer_with_feedback(user_answer, correct_answer,
                                 tolerance=0.05, unit=""):
     """
     Like check_answer but returns (is_correct: bool, message: str).
-    Useful for richer UI feedback.
+    FIX: handles zero correct_answer; unit displayed more cleanly.
     """
     try:
         u, c = float(user_answer), float(correct_answer)
-        is_correct = abs(u - c) <= max(abs(c * tolerance), 0.01)
+        threshold  = max(abs(c) * tolerance, 0.01) if c != 0 else max(tolerance, 0.01)
+        is_correct = abs(u - c) <= threshold
+        unit_str   = f" {unit}" if unit else ""
         if is_correct:
-            return True,  f"✅ Correct! Answer = {c:,.4g}{' ' + unit if unit else ''}"
-        else:
-            pct_off = abs(u - c) / max(abs(c), 1e-9) * 100
-            return False, (f"❌ Not quite. Your answer: {u:,.4g}  |  "
-                           f"Correct: {c:,.4g}{' ' + unit if unit else ''}  "
-                           f"({pct_off:.1f}% off)")
+            return True, f"✅ Correct! Answer = {c:,.4g}{unit_str}"
+        pct_off = abs(u - c) / max(abs(c), 1e-9) * 100
+        return False, (
+            f"❌ Not quite.  Your answer: {u:,.4g}{unit_str}  |  "
+            f"Correct: {c:,.4g}{unit_str}  ({pct_off:.1f}% off)"
+        )
     except (TypeError, ValueError):
         return False, "❌ Please enter a valid number."
 
 
-def normal_cdf(z):
+# ── Probability distributions ─────────────────────────────
+
+def normal_cdf(z: float) -> float:
     """Standard normal CDF: P(Z ≤ z)."""
     return float(stats.norm.cdf(z))
 
 
-def normal_ppf(p):
-    """Inverse of standard normal CDF: z such that P(Z ≤ z) = p."""
+def normal_ppf(p: float) -> float:
+    """Inverse standard normal CDF: z such that P(Z ≤ z) = p."""
     return float(stats.norm.ppf(p))
 
 
-def poisson_pmf(k, lam):
+def normal_between(a: float, b: float) -> float:
+    """P(a ≤ Z ≤ b) for the standard normal. NEW."""
+    return float(stats.norm.cdf(b) - stats.norm.cdf(a))
+
+
+def poisson_pmf(k: int, lam: float) -> float:
     """P(X = k) for Poisson(λ)."""
     return float(stats.poisson.pmf(k, lam))
 
 
-def poisson_cdf(k, lam):
+def poisson_cdf(k: int, lam: float) -> float:
     """P(X ≤ k) for Poisson(λ)."""
     return float(stats.poisson.cdf(k, lam))
 
 
-def binom_pmf(k, n, p):
+def binom_pmf(k: int, n: int, p: float) -> float:
     """P(X = k) for Binomial(n, p)."""
     return float(stats.binom.pmf(k, n, p))
 
 
-def confidence_interval_mean(x_bar, sigma, n, conf=0.95):
+def binom_cdf(k: int, n: int, p: float) -> float:
+    """P(X ≤ k) for Binomial(n, p). NEW."""
+    return float(stats.binom.cdf(k, n, p))
+
+
+# ── Confidence intervals ──────────────────────────────────
+
+def confidence_interval_mean(x_bar: float, sigma: float,
+                              n: int, conf: float = 0.95):
     """
-    Returns (lower, upper) CI for population mean (known σ).
-    Uses Z-distribution.
+    (lower, upper) CI for population mean with known σ (Z-based).
     """
-    z = normal_ppf(1 - (1 - conf) / 2)
+    z      = normal_ppf(1 - (1 - conf) / 2)
     margin = z * sigma / math.sqrt(n)
     return x_bar - margin, x_bar + margin
 
 
-def pert_te(a, m, b):
-    """PERT expected time."""
+def confidence_interval_mean_t(x_bar: float, s: float,
+                                n: int, conf: float = 0.95):
+    """
+    (lower, upper) CI for population mean with unknown σ (t-based). NEW.
+    Uses scipy.stats.t for correct critical value.
+    """
+    t_crit = float(stats.t.ppf(1 - (1 - conf) / 2, df=n - 1))
+    margin = t_crit * s / math.sqrt(n)
+    return x_bar - margin, x_bar + margin
+
+
+# ── Process capability (SQC) ──────────────────────────────
+
+def process_capability(mean: float, std: float,
+                        lsl: float, usl: float):
+    """
+    Returns dict with Cp, Cpk, Cpl, Cpu. NEW.
+    Cp  = (USL − LSL) / 6σ  — potential capability
+    Cpk = min(Cpu, Cpl)     — actual capability (accounts for centering)
+    """
+    if std <= 0:
+        return {"Cp": None, "Cpk": None, "Cpu": None, "Cpl": None}
+    cp  = (usl - lsl) / (6 * std)
+    cpu = (usl - mean) / (3 * std)
+    cpl = (mean - lsl) / (3 * std)
+    cpk = min(cpu, cpl)
+    return {
+        "Cp":  round(cp,  4),
+        "Cpk": round(cpk, 4),
+        "Cpu": round(cpu, 4),
+        "Cpl": round(cpl, 4),
+    }
+
+
+def sigma_level(cpk: float) -> float:
+    """Convert Cpk to approximate sigma level (σ = 3 × Cpk). NEW."""
+    return 3 * cpk if cpk is not None else 0.0
+
+
+# ── PERT / Project helpers ────────────────────────────────
+
+def pert_te(a: float, m: float, b: float) -> float:
+    """PERT expected time: (a + 4m + b) / 6."""
     return (a + 4 * m + b) / 6
 
 
-def pert_variance(a, b):
-    """PERT activity variance."""
+def pert_variance(a: float, b: float) -> float:
+    """PERT activity variance: ((b − a) / 6)²."""
     return ((b - a) / 6) ** 2
 
 
-def pert_sigma(a, b):
-    """PERT activity standard deviation."""
+def pert_sigma(a: float, b: float) -> float:
+    """PERT activity standard deviation: (b − a) / 6."""
     return (b - a) / 6
 
 
-def emv(probability, impact):
-    """Expected Monetary Value."""
-    return probability * impact
-
-
-def break_even_units(fixed_cost, price, variable_cost):
-    """Break-even point in units. Returns None if CM ≤ 0."""
-    cm = price - variable_cost
-    return fixed_cost / cm if cm > 0 else None
-
-
-def target_profit_units(fixed_cost, target_profit, price, variable_cost):
-    """Units required to hit a target profit."""
-    cm = price - variable_cost
-    return (fixed_cost + target_profit) / cm if cm > 0 else None
-
-
-def indifference_point(fc1, vc1, fc2, vc2):
-    """Volume where total cost of two options is equal. Returns None if parallel."""
-    dv = vc1 - vc2
-    return (fc2 - fc1) / dv if abs(dv) > 1e-9 else None
-
-
-def crash_cost_per_day(normal_time, crash_time, normal_cost, crash_cost):
-    """Cost per time unit to crash an activity. Returns None if no crashing possible."""
+def crash_cost_per_day(normal_time: float, crash_time: float,
+                        normal_cost: float, crash_cost: float):
+    """
+    Cost per time unit to crash an activity.
+    Returns None if crashing is not possible (crash_time ≥ normal_time).
+    """
     days = normal_time - crash_time
     return (crash_cost - normal_cost) / days if days > 0 else None
 
 
-def format_currency(value, decimals=0):
-    """Format a number as a USD currency string."""
-    fmt = f"${{:,.{decimals}f}}"
-    return fmt.format(value)
+# ── Forecasting helpers ───────────────────────────────────
+
+def moving_average(data: list, n: int) -> list:
+    """
+    Simple n-period moving average. Returns list of length len(data).
+    First n-1 values are None. NEW.
+    """
+    result = [None] * (n - 1)
+    for i in range(n - 1, len(data)):
+        result.append(sum(data[i - n + 1: i + 1]) / n)
+    return result
 
 
-def format_number(value, decimals=2):
-    """Format number with thousands separator."""
+def exponential_smoothing(data: list, alpha: float,
+                           initial: float = None) -> list:
+    """
+    Simple exponential smoothing (one-step-ahead forecasts). NEW.
+    Returns list same length as data (forecast[0] = initial or data[0]).
+    alpha: smoothing constant (0 < α < 1).
+    """
+    if not data:
+        return []
+    f0 = initial if initial is not None else data[0]
+    forecasts = [f0]
+    for i in range(1, len(data)):
+        forecasts.append(alpha * data[i - 1] + (1 - alpha) * forecasts[-1])
+    return forecasts
+
+
+def forecast_error_metrics(actual: list, forecast: list) -> dict:
+    """
+    Returns MAD, MSE, MAPE, and bias for paired actual/forecast lists. NEW.
+    Ignores positions where forecast is None.
+    """
+    pairs = [(a, f) for a, f in zip(actual, forecast)
+             if f is not None and a != 0]
+    if not pairs:
+        return {"MAD": None, "MSE": None, "MAPE": None, "Bias": None}
+    n      = len(pairs)
+    errors = [a - f for a, f in pairs]
+    mad    = sum(abs(e) for e in errors) / n
+    mse    = sum(e ** 2 for e in errors) / n
+    mape   = sum(abs((a - f) / a) for a, f in pairs) / n * 100
+    bias   = sum(errors) / n
+    return {
+        "MAD":  round(mad,  4),
+        "MSE":  round(mse,  4),
+        "MAPE": round(mape, 4),
+        "Bias": round(bias, 4),
+    }
+
+
+# ── Inventory helpers ─────────────────────────────────────
+
+def eoq(demand: float, order_cost: float, holding_cost: float) -> float:
+    """
+    Economic Order Quantity: √(2DS / H). NEW.
+    demand: annual demand (D), order_cost: cost per order (S),
+    holding_cost: annual holding cost per unit (H).
+    Returns None if inputs are non-positive.
+    """
+    if demand <= 0 or order_cost <= 0 or holding_cost <= 0:
+        return None
+    return math.sqrt(2 * demand * order_cost / holding_cost)
+
+
+def reorder_point(avg_daily_demand: float, lead_time_days: float,
+                  safety_stock: float = 0.0) -> float:
+    """
+    Reorder point: d̄ × LT + SS. NEW.
+    avg_daily_demand: average daily demand (d̄)
+    lead_time_days:   lead time in days (LT)
+    safety_stock:     safety stock units (SS)
+    """
+    return avg_daily_demand * lead_time_days + safety_stock
+
+
+def safety_stock_units(z: float, sigma_demand: float,
+                        lead_time_days: float) -> float:
+    """
+    Safety stock: z × σ_d × √LT. NEW.
+    z: service-level z-score (e.g. 1.65 for 95%).
+    sigma_demand: std dev of daily demand.
+    lead_time_days: lead time in days.
+    """
+    return z * sigma_demand * math.sqrt(lead_time_days)
+
+
+def total_inventory_cost(demand: float, order_qty: float,
+                          order_cost: float, holding_cost: float) -> float:
+    """
+    Annual total inventory cost: (D/Q)S + (Q/2)H. NEW.
+    """
+    if order_qty <= 0:
+        return float("inf")
+    return (demand / order_qty) * order_cost + (order_qty / 2) * holding_cost
+
+
+# ── Decision / financial helpers ──────────────────────────
+
+def emv(probability: float, impact: float) -> float:
+    """Expected Monetary Value: P × Impact."""
+    return probability * impact
+
+
+def npv(cash_flows: list, rate: float) -> float:
+    """
+    Net Present Value given a list of cash flows (index 0 = period 0). NEW.
+    rate: discount rate per period (e.g. 0.10 for 10%).
+    """
+    return sum(cf / (1 + rate) ** t for t, cf in enumerate(cash_flows))
+
+
+def break_even_units(fixed_cost: float, price: float,
+                      variable_cost: float):
+    """Break-even point in units. Returns None if contribution margin ≤ 0."""
+    cm = price - variable_cost
+    return fixed_cost / cm if cm > 0 else None
+
+
+def target_profit_units(fixed_cost: float, target_profit: float,
+                         price: float, variable_cost: float):
+    """Units required to achieve a target profit."""
+    cm = price - variable_cost
+    return (fixed_cost + target_profit) / cm if cm > 0 else None
+
+
+def indifference_point(fc1: float, vc1: float,
+                        fc2: float, vc2: float):
+    """
+    Volume at which total cost of two alternatives is equal.
+    Returns None if variable costs are parallel (no intersection).
+    """
+    dv = vc1 - vc2
+    return (fc2 - fc1) / dv if abs(dv) > 1e-9 else None
+
+
+# ── Formatters ────────────────────────────────────────────
+
+def format_currency(value: float, decimals: int = 0) -> str:
+    """Format a number as a USD currency string.
+    FIX: removed nested f-string brace escaping; simpler and safer.
+    """
+    return f"${value:,.{decimals}f}"
+
+
+def format_number(value: float, decimals: int = 2) -> str:
+    """Format a number with thousands separator."""
     return f"{value:,.{decimals}f}"
 
 
-def format_pct(value, decimals=1):
+def format_pct(value: float, decimals: int = 1) -> str:
     """Format a fraction (0–1) as a percentage string."""
     return f"{value * 100:.{decimals}f}%"
+
+
+def format_delta(value: float, decimals: int = 2,
+                 unit: str = "") -> str:
+    """
+    Format a signed delta value with ▲/▼ arrow prefix. NEW.
+    Useful for metric cards and comparison tables.
+    """
+    arrow  = "▲" if value >= 0 else "▼"
+    unit_s = f" {unit}" if unit else ""
+    return f"{arrow} {abs(value):,.{decimals}f}{unit_s}"
 
 
 # ============================================================
@@ -1110,6 +1466,7 @@ def render_sidebar(modules: dict):
     Render the full sidebar navigation + theme toggle.
     modules: OrderedDict of { display_label: function_ref }
     Returns the selected module function.
+    FIX: removed unused pct variable; improved progress label styling.
     """
     render_theme_toggle()
     st.sidebar.markdown("---")
@@ -1119,7 +1476,7 @@ def render_sidebar(modules: dict):
     choice = st.sidebar.radio(
         "Select module:",
         labels,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     # Track visited modules
@@ -1127,14 +1484,19 @@ def render_sidebar(modules: dict):
     st.session_state.last_module = choice
 
     st.sidebar.markdown("---")
+
     # Progress indicator
     visited = len(st.session_state.modules_visited)
     total   = len(modules)
-    pct     = visited / total
-    st.sidebar.markdown(
-        f"**Progress:** {visited}/{total} modules explored")
-    display_progress_bar(visited, total,
-                          label="", bar_type="accent")
+    st.sidebar.markdown(f"**Progress:** {visited}/{total} modules explored")
+    display_progress_bar(visited, total, label="", bar_type="accent")
+
+    # Streak & problems solved display
+    if st.session_state.problems_solved > 0:
+        st.sidebar.markdown(
+            f"🎯 **Problems solved:** {st.session_state.problems_solved}  \n"
+            f"🔥 **Streak:** {st.session_state.correct_streak}"
+        )
 
     st.sidebar.markdown("---")
     st.sidebar.caption(
@@ -1148,39 +1510,63 @@ def render_sidebar(modules: dict):
 # ============================================================
 # PRE-COMPUTED Z-TABLE  (z from -3.49 to 3.49, step 0.01)
 # ============================================================
-Z_TABLE = {
+Z_TABLE: dict[float, float] = {
     round(z / 100, 2): round(normal_cdf(z / 100), 4)
     for z in range(-349, 350)
 }
 
 
+def z_lookup(z: float) -> float:
+    """
+    Look up P(Z ≤ z) from the pre-computed Z_TABLE. NEW.
+    Rounds z to 2 decimal places; falls back to scipy for out-of-range values.
+    """
+    key = round(z, 2)
+    return Z_TABLE.get(key, normal_cdf(z))
+
+
 # ============================================================
 # PRE-COMPUTED STANDARD NORMAL REFERENCE TABLE  (display use)
 # ============================================================
-def build_z_reference_table():
+def build_z_reference_table() -> pd.DataFrame:
     """
-    Returns a DataFrame with key Z-score ↔ probability mappings
-    ready for st.dataframe().
+    Returns a DataFrame with key Z-score ↔ probability mappings.
+    FIX: float dict key lookup replaced with a direct tuple list to avoid
+    floating-point key mismatch (e.g. -1.6500000001 not found in dict).
+    ENHANCED: added two-tail area column.
     """
+    z_annotations = [
+        (-3.00, "Extremely rare — process alert"),
+        (-2.58, "99% CI (two-tail lower)"),
+        (-2.33, "99% conf (one-tail lower)"),
+        (-2.00, "Lower 2.3%"),
+        (-1.96, "95% CI (two-tail lower)"),
+        (-1.65, "95% conf (one-tail lower) / Lower 5%"),
+        (-1.28, "90% conf (one-tail lower) / Lower 10%"),
+        (-1.00, "Lower 16%"),
+        (-0.50, "Lower 31%"),
+        ( 0.00, "50th percentile (median)"),
+        ( 0.50, "Upper 31%"),
+        ( 1.00, "Upper 16%"),
+        ( 1.28, "90% conf (one-tail) / 80% CI"),
+        ( 1.65, "95% conf (one-tail) / 90% CI"),
+        ( 1.96, "95% CI (two-tail)"),
+        ( 2.00, "Upper 2.3%"),
+        ( 2.33, "99% conf (one-tail)"),
+        ( 2.58, "99% CI (two-tail)"),
+        ( 3.00, "Upper 0.13% — Six-Sigma reference"),
+    ]
     rows = []
-    for z in [-3.0, -2.5, -2.33, -2.0, -1.96,
-               -1.65, -1.28, -1.0, -0.5, 0.0,
-                0.5,  1.0,  1.28, 1.65, 1.96,
-                2.0,  2.33,  2.5,  3.0]:
-        p = normal_cdf(z)
+    for z, note in z_annotations:
+        p_le  = normal_cdf(z)
+        p_gt  = 1 - p_le
+        p_two = 2 * min(p_le, p_gt)          # two-tail area outside ±|z|
         rows.append({
-            "Z-Score":         f"{z:+.2f}",
-            "P(Z ≤ z)":        f"{p:.4f}",
-            "P(Z > z)":        f"{1-p:.4f}",
-            "Common Use":      {
-                -1.65: "Lower 5%",   -1.28: "Lower 10%",
-                -1.0:  "Lower 16%",   0.0:  "50th percentile",
-                 1.0:  "Upper 16%",   1.28: "90% confidence (one-tail)",
-                 1.65: "95% confidence (one-tail)",
-                 1.96: "95% CI (two-tail)",
-                 2.0:  "Upper 2.3%",  2.33: "99% confidence (one-tail)",
-                 2.5:  "Upper 0.6%",  3.0:  "Upper 0.13%",
-            }.get(z, "")
+            "Z-Score":          f"{z:+.2f}",
+            "P(Z ≤ z)":         f"{p_le:.4f}",
+            "P(Z > z)":         f"{p_gt:.4f}",
+            "Two-Tail Area":    f"{p_two:.4f}",
+            "Common Use":       note,
         })
     return pd.DataFrame(rows)
 
@@ -9534,325 +9920,1179 @@ def module_pokayoke():
 
 
 # ============================================================
-# MODULE 35: SQC PRACTICE (Chapter 13) - ENHANCED V5.0
+# MODULE 35: SQC PRACTICE (Chapter 13) - ENHANCED V6.0
 # ============================================================
 def module_sqc_practice():
     display_header("🎓", "Chapter 13", "SQC Practice Questions",
-                   "Statistical Quality Control — exam preparation")
+                   "Statistical Quality Control — exam preparation & interactive tools")
 
-    tab1, tab2 = st.tabs(["📝 Q&A Bank", "📊 Formula Reference"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📝 Q&A Bank", "🧮 Interactive Calculators", "📊 Formula Reference", "🏆 Quiz Mode"
+    ])
 
+    # ─────────────────────────────────────────────────────────
     with tab1:
         st.markdown("### SQC Question Bank")
 
-        difficulty = st.selectbox("Filter by Difficulty", ["All", "Easy", "Medium", "Hard"])
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            difficulty = st.selectbox("Filter by Difficulty",
+                                      ["All", "Easy", "Medium", "Hard"], key="sqc_diff")
+        with col_f2:
+            topic_filter = st.selectbox("Filter by Topic",
+                                        ["All", "Control Charts", "Process Capability",
+                                         "Acceptance Sampling", "Six Sigma / DPMO",
+                                         "Western Electric Rules", "c-Chart / p-Chart"], key="sqc_topic")
 
         questions = [
-            ("Easy",   "Six Sigma DPMO",
+            # (difficulty, topic, title, question, answer)
+            ("Easy", "Six Sigma / DPMO",
+             "Six Sigma DPMO",
              "A Six Sigma process centered at the mean produces how many DPMO?",
              "**3.4 DPMO.** A Six Sigma process (±6σ from target) with a 1.5σ shift "
-             "yields 3.4 defects per million opportunities."),
-            ("Easy",   "DMAIC Acronym",
-             "What does DMAIC stand for?",
-             "**Define, Measure, Analyze, Improve, Control** — the Six Sigma improvement cycle."),
-            ("Easy",   "3-Sigma Confidence",
+             "yields 3.4 defects per million opportunities. This equates to 99.99966% yield."),
+
+            ("Easy", "Six Sigma / DPMO",
+             "DMAIC Acronym",
+             "What does DMAIC stand for and what is each phase's purpose?",
+             "**Define** — identify the problem and project scope.<br>"
+             "**Measure** — quantify the current process baseline.<br>"
+             "**Analyze** — find root causes of defects.<br>"
+             "**Improve** — implement and test solutions.<br>"
+             "**Control** — sustain improvements with monitoring plans."),
+
+            ("Easy", "Control Charts",
+             "3-Sigma Confidence",
              "A z-value of ±3 gives what percentage of data within control limits?",
-             "**99.73%** of data falls within ±3σ, leaving 0.27% outside (2,700 ppm)."),
-            ("Medium", "Cpk Calculation",
-             "USL = 1.255, LSL = 1.245, mean = 1.251, σ = 0.00083. Calculate Cpk.",
-             "Cpu = (1.255 − 1.251)/(3×0.00083) = **1.606**\n"
-             "Cpl = (1.251 − 1.245)/(3×0.00083) = **2.41**\n"
-             "Cpk = min(1.606, 2.41) = **1.61** — process is capable but off-center."),
-            ("Medium", "Normal Distribution",
+             "**99.73%** of data falls within ±3σ, leaving 0.27% (2,700 ppm) outside. "
+             "This corresponds to a false-alarm rate (Type I error) of 0.0027 per point."),
+
+            ("Easy", "Control Charts",
+             "Common vs Special Cause",
+             "What is the difference between common-cause and special-cause variation?",
+             "**Common-cause variation** is random, inherent to the process — always present and "
+             "predictable within control limits.<br><br>"
+             "**Special-cause variation** is assignable — caused by a specific, identifiable event "
+             "(machine failure, operator change, bad batch). Points outside control limits signal special causes."),
+
+            ("Easy", "c-Chart / p-Chart",
+             "p-Chart vs c-Chart",
+             "When do you use a p-chart vs a c-chart?",
+             "**p-chart:** Tracks the *fraction defective* per sample. Use when each unit is "
+             "either defective or not (binomial). Sample sizes can vary.<br><br>"
+             "**c-chart:** Tracks the *number of defects per unit*. Use when counting multiple "
+             "defects on a single unit (Poisson). Requires constant sample area/size."),
+
+            ("Easy", "Control Charts",
+             "x̄ & R Chart Purpose",
+             "Why are the x̄-chart and R-chart always used together?",
+             "The **x̄-chart** monitors the process *mean* (center), while the "
+             "**R-chart** monitors the process *variability* (spread).<br><br>"
+             "A process can have a stable mean but unstable spread, or vice versa. "
+             "Using both simultaneously gives a complete picture of process behavior."),
+
+            ("Medium", "Process Capability",
+             "Cpk Calculation",
+             "USL = 1.255, LSL = 1.245, mean = 1.251, σ = 0.00083. Calculate Cp and Cpk.",
+             "Cp = (USL − LSL) / 6σ = (1.255 − 1.245) / (6 × 0.00083) = 0.010 / 0.00498 = **2.01**<br><br>"
+             "Cpu = (1.255 − 1.251) / (3 × 0.00083) = **1.606**<br>"
+             "Cpl = (1.251 − 1.245) / (3 × 0.00083) = **2.41**<br>"
+             "Cpk = min(1.606, 2.41) = **1.61** — Process is very capable but slightly off-center toward USL."),
+
+            ("Medium", "Process Capability",
+             "Normal Distribution Tail",
              "Washers: mean = 2.0 mm, σ = 0.2 mm. What fraction exceed 2.4 mm?",
-             "Z = (2.4 − 2.0)/0.2 = **2.0** → P(Z > 2.0) = **2.28%** of washers exceed 2.4 mm."),
-            ("Medium", "p-Chart UCL",
-             "Sample size n = 100, avg defect proportion p̄ = 0.04. Calculate UCL for p-chart.",
-             "UCL = p̄ + 3√(p̄(1−p̄)/n) = 0.04 + 3√(0.04×0.96/100) = 0.04 + 0.059 = **0.099**"),
-            ("Hard",   "Cp vs Cpk",
-             "A process has Cp = 1.5 but Cpk = 0.9. What does this tell you?",
-             "**Cp = 1.5** means the process spread is capable (tolerance ÷ 6σ = 1.5). "
-             "But **Cpk = 0.9 < 1.0** means the process mean is off-center and producing defects. "
-             "Action: re-center the process mean."),
-            ("Hard",   "OC Curve",
+             "Z = (2.4 − 2.0) / 0.2 = **2.0**<br>"
+             "P(Z > 2.0) = 1 − Φ(2.0) = 1 − 0.9772 = **0.0228 = 2.28%** of washers exceed 2.4 mm."),
+
+            ("Medium", "c-Chart / p-Chart",
+             "p-Chart UCL",
+             "Sample size n = 100, average defect proportion p̄ = 0.04. Calculate UCL and LCL.",
+             "σ_p = √(p̄(1−p̄)/n) = √(0.04 × 0.96 / 100) = √0.000384 = **0.01960**<br><br>"
+             "UCL = 0.04 + 3(0.01960) = **0.0988 ≈ 9.88%**<br>"
+             "LCL = max(0, 0.04 − 3(0.01960)) = max(0, −0.0188) = **0** (set to zero)"),
+
+            ("Medium", "c-Chart / p-Chart",
+             "c-Chart Control Limits",
+             "20 units sampled, total defects = 90. Calculate c̄, UCL, and LCL.",
+             "c̄ = 90 / 20 = **4.5 defects/unit**<br><br>"
+             "UCL = c̄ + 3√c̄ = 4.5 + 3√4.5 = 4.5 + 6.36 = **10.86**<br>"
+             "LCL = max(0, 4.5 − 3√4.5) = max(0, 4.5 − 6.36) = max(0, −1.86) = **0**"),
+
+            ("Medium", "Control Charts",
+             "x̄-Chart Constants",
+             "Subgroup size n = 5. Given x̄̄ = 12.0 and R̄ = 0.8. Find UCL and LCL for x̄-chart. (A₂ = 0.577)",
+             "UCL_x̄ = x̄̄ + A₂ × R̄ = 12.0 + 0.577 × 0.8 = 12.0 + 0.462 = **12.462**<br>"
+             "LCL_x̄ = x̄̄ − A₂ × R̄ = 12.0 − 0.462 = **11.538**<br><br>"
+             "Interpretation: Any subgroup mean outside [11.538, 12.462] signals a special cause."),
+
+            ("Medium", "Control Charts",
+             "R-Chart Limits",
+             "n = 5, R̄ = 0.8. Find UCL_R and LCL_R. (D₃ = 0, D₄ = 2.114)",
+             "UCL_R = D₄ × R̄ = 2.114 × 0.8 = **1.691**<br>"
+             "LCL_R = D₃ × R̄ = 0 × 0.8 = **0** (no lower limit when n < 7)<br><br>"
+             "Note: D₃ = 0 for n ≤ 6, meaning only the upper limit is active."),
+
+            ("Medium", "Acceptance Sampling",
+             "AQL vs LTPD",
+             "Define AQL and LTPD in the context of an OC curve.",
+             "**AQL (Acceptable Quality Level):** The worst defect rate the *producer* considers "
+             "acceptable. Associated with producer's risk α (probability of rejecting a good lot).<br><br>"
+             "**LTPD (Lot Tolerance Percent Defective):** The defect rate the *consumer* considers "
+             "unacceptable. Associated with consumer's risk β (probability of accepting a bad lot)."),
+
+            ("Hard", "Process Capability",
+             "Cp vs Cpk Interpretation",
+             "A process has Cp = 1.5 but Cpk = 0.9. What does this tell you and what action is needed?",
+             "**Cp = 1.5** → The process spread is narrow enough to fit within the tolerance "
+             "(potential capability is good — 4.5σ headroom).<br><br>"
+             "**Cpk = 0.9 < 1.0** → The process *mean is off-center*, too close to one spec limit, "
+             "causing defects on that side despite sufficient spread.<br><br>"
+             "**Action:** Re-center the process mean. DO NOT reduce variability first — "
+             "the spread is already fine. Centering alone will raise Cpk to equal Cp = 1.5."),
+
+            ("Hard", "Acceptance Sampling",
+             "OC Curve: α and β Risks",
              "What is the producer's risk (α) and consumer's risk (β) on an OC curve?",
-             "**α (producer's risk):** Probability of rejecting a good lot (Type I error), "
-             "typically set at 0.05.\n"
-             "**β (consumer's risk):** Probability of accepting a bad lot (Type II error), "
-             "typically set at 0.10."),
+             "**α (Producer's Risk / Type I):** Probability of *rejecting a good lot* "
+             "(one at AQL quality). Typically α = 0.05. The producer bears this cost in "
+             "unnecessary returns and rework.<br><br>"
+             "**β (Consumer's Risk / Type II):** Probability of *accepting a bad lot* "
+             "(one at LTPD quality). Typically β = 0.10. The consumer bears this cost in "
+             "receiving defective product."),
+
+            ("Hard", "Western Electric Rules",
+             "Run Rule: 8 Consecutive Points",
+             "Eight consecutive points fall on the same side of the center line, all within "
+             "control limits. Is the process in control?",
+             "**No — this is an out-of-control signal.** Western Electric Rule 2 states that "
+             "8+ consecutive points on one side of the center line indicate the process mean "
+             "has shifted, even though no single point exceeds the 3σ limits.<br><br>"
+             "Probability of 8 consecutive points on one side by chance alone: "
+             "(0.5)⁸ = **0.39%** — highly unlikely to be random."),
+
+            ("Hard", "Western Electric Rules",
+             "Zone Rules Explained",
+             "Explain the Western Electric Zone A, B, and C rules.",
+             "Control limits are divided into 3 equal zones each side of center:<br>"
+             "• **Zone C (0–1σ):** 2 of 3 points in Zone A (near limits) on same side → signal<br>"
+             "• **Zone B (1–2σ):** 4 of 5 points in Zone B or beyond on same side → signal<br>"
+             "• **Zone A (2–3σ):** 1 point in Zone A is a warning; 2 consecutive in Zone A = signal<br><br>"
+             "These rules detect gradual shifts that individual points miss."),
+
+            ("Hard", "Six Sigma / DPMO",
+             "Sigma Level from DPMO",
+             "A process has DPMO = 6,210. What is the approximate sigma level?",
+             "Using the approximation formula:<br>"
+             "σ ≈ 0.8406 + √(29.37 − 2.221 × ln(DPMO))<br>"
+             "= 0.8406 + √(29.37 − 2.221 × ln(6210))<br>"
+             "= 0.8406 + √(29.37 − 2.221 × 8.734)<br>"
+             "= 0.8406 + √(29.37 − 19.40)<br>"
+             "= 0.8406 + √9.97 = 0.8406 + 3.158 = **≈ 4.0σ**<br><br>"
+             "Benchmark: 4σ ≈ 6,210 DPMO; 3σ ≈ 66,807 DPMO; 6σ ≈ 3.4 DPMO."),
+
+            ("Hard", "c-Chart / p-Chart",
+             "p-Chart with Variable Sample Size",
+             "Sample 1: n=200, d=8. Sample 2: n=150, d=9. Overall p̄ = 0.04. "
+             "Which sample is OOC? (Check each against its own UCL.)",
+             "Each sample gets its own UCL because n varies:<br><br>"
+             "**Sample 1 (n=200):** σ_p = √(0.04×0.96/200) = 0.01386 → UCL = 0.04 + 3(0.01386) = **0.0816**<br>"
+             "p₁ = 8/200 = 0.040 ✅ Within limits<br><br>"
+             "**Sample 2 (n=150):** σ_p = √(0.04×0.96/150) = 0.01600 → UCL = 0.04 + 3(0.01600) = **0.0880**<br>"
+             "p₂ = 9/150 = 0.060 ✅ Within limits<br><br>"
+             "Both in control — but note that smaller n produces wider limits."),
         ]
 
-        filtered_q = questions if difficulty == "All" else [q for q in questions if q[0] == difficulty]
+        # ── Filter ────────────────────────────────────────────
+        filtered_q = questions
+        if difficulty != "All":
+            filtered_q = [q for q in filtered_q if q[0] == difficulty]
+        if topic_filter != "All":
+            filtered_q = [q for q in filtered_q if q[1] == topic_filter]
 
-        diff_color = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
-        for i, (diff, title, question, answer) in enumerate(filtered_q):
-            with st.expander(f"{diff_color[diff]} **Q{i+1} [{diff}]: {title}**"):
-                display_practice_problem(i+1, diff, question)
-                if st.button(f"Show Answer", key=f"sqc_prac_{i}_{diff}"):
-                    display_solution(answer)
+        # ── Stats bar ─────────────────────────────────────────
+        easy_n   = sum(1 for q in questions if q[0] == "Easy")
+        med_n    = sum(1 for q in questions if q[0] == "Medium")
+        hard_n   = sum(1 for q in questions if q[0] == "Hard")
+        c1,c2,c3,c4 = st.columns(4)
+        c1.metric("Total Questions", len(questions))
+        c2.metric("🟢 Easy",   easy_n)
+        c3.metric("🟡 Medium", med_n)
+        c4.metric("🔴 Hard",   hard_n)
 
+        if not filtered_q:
+            display_callout("No questions match the selected filters.", "warning")
+        else:
+            st.markdown(f"**Showing {len(filtered_q)} question(s).**")
+            diff_color = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
+            for i, (diff, topic, title, question, answer) in enumerate(filtered_q):
+                with st.expander(
+                    f"{diff_color[diff]} **Q{i+1} [{diff}] · {topic}** — {title}"
+                ):
+                    display_practice_problem(i + 1, diff, question)
+                    hint_col, ans_col = st.columns([1, 1])
+                    with hint_col:
+                        hints = {
+                            "Cpk Calculation":         "Hint: Cpk = min(Cpu, Cpl) where each uses 3σ.",
+                            "p-Chart UCL":             "Hint: σ_p = √(p̄(1−p̄)/n).",
+                            "c-Chart Control Limits":  "Hint: UCL = c̄ + 3√c̄.",
+                            "x̄-Chart Constants":       "Hint: UCL = x̄̄ + A₂ × R̄.",
+                            "Sigma Level from DPMO":   "Hint: σ ≈ 0.8406 + √(29.37 − 2.221 × ln(DPMO)).",
+                        }
+                        if title in hints:
+                            display_hint(hints[title])
+                    with ans_col:
+                        if st.button("Show Answer ▼", key=f"sqc_prac_{i}_{diff}_{topic[:4]}",
+                                     use_container_width=True):
+                            st.session_state[f"sqc_ans_{i}"] = True
+                    if st.session_state.get(f"sqc_ans_{i}"):
+                        display_solution(answer)
+
+    # ─────────────────────────────────────────────────────────
     with tab2:
-        st.markdown("### SQC Formula Quick Reference")
+        st.markdown("### 🧮 Interactive SQC Calculators")
 
-        formulas = [
-            ("Process Capability",    r"C_p = \frac{USL - LSL}{6\sigma}"),
-            ("Process Centering",     r"C_{pk} = \min\!\left(\frac{USL-\mu}{3\sigma},\frac{\mu-LSL}{3\sigma}\right)"),
-            ("p-Chart Control Limits",r"UCL/LCL = \bar{p} \pm 3\sqrt{\frac{\bar{p}(1-\bar{p})}{n}}"),
-            ("x̄-Chart UCL",           r"UCL_{\bar{x}} = \bar{\bar{x}} + A_2 \bar{R}"),
-            ("R-Chart UCL",           r"UCL_R = D_4 \bar{R}"),
-            ("DPMO",                  r"DPMO = \frac{\text{Defects}}{\text{Units} \times \text{Opportunities}} \times 10^6"),
-        ]
-        for name, formula in formulas:
-            display_formula_card(name, formula)
+        calc = st.selectbox("Choose Calculator", [
+            "p-Chart Builder",
+            "c-Chart Builder",
+            "Process Capability (Cpk)",
+            "DPMO ↔ Sigma Level",
+            "x̄ & R Chart Limits",
+            "Sample Size for p-Chart",
+        ], key="sqc_calc_choice")
 
-        st.markdown("#### Control Chart Selection Guide")
-        chart_guide = pd.DataFrame({
-            "Data Type":     ["Variables (x̄ & R)", "Variables (x̄ & s)", "Attributes (defective)",
-                              "Attributes (defects)"],
-            "Chart":         ["x̄-R chart", "x̄-s chart", "p-chart or np-chart", "c-chart or u-chart"],
-            "Sample Size n": ["2–10",       "> 10",       "Variable / constant",   "Per unit / per area"],
-            "Measures":      ["Mean & range", "Mean & std dev", "Fraction defective", "Count of defects"]
+        st.markdown("---")
+
+        if calc == "p-Chart Builder":
+            st.markdown("#### p-Chart Control Limit Calculator")
+            c1, c2 = st.columns(2)
+            with c1:
+                p_bar_in = st.number_input("Average Proportion Defective (p̄)", value=0.04,
+                                           min_value=0.001, max_value=0.999, format="%.4f")
+                n_in     = st.number_input("Sample Size (n)", value=100, min_value=5)
+                z_in     = st.selectbox("Z-Value (sigma limits)", [2.0, 2.5, 3.0, 3.5], index=2)
+            with c2:
+                sp       = math.sqrt(p_bar_in * (1 - p_bar_in) / n_in)
+                ucl      = p_bar_in + z_in * sp
+                lcl      = max(0, p_bar_in - z_in * sp)
+                display_metric_card(f"{p_bar_in:.4f} ({p_bar_in:.2%})", "Center Line (p̄)", "normal")
+                display_metric_card(f"{ucl:.4f} ({ucl:.2%})", "UCL", "danger")
+                display_metric_card(f"{max(0,lcl):.4f} ({max(0,lcl):.2%})", "LCL", "danger")
+                display_metric_card(f"{sp:.5f}", "σ_p", "normal")
+            display_formula_card("p-Chart UCL/LCL",
+                r"\bar{p} \pm z\sqrt{\frac{\bar{p}(1-\bar{p})}{n}}")
+            display_callout(
+                f"With n={n_in} and p̄={p_bar_in:.3f}, minimum sample size to detect a "
+                f"shift of 0.01 with 95% power ≈ {int(math.ceil((z_in*sp/0.01)**2))} units.",
+                "info", "Design Tip"
+            )
+
+        elif calc == "c-Chart Builder":
+            st.markdown("#### c-Chart Control Limit Calculator")
+            c1, c2 = st.columns(2)
+            with c1:
+                c_bar_in = st.number_input("Average Defects per Unit (c̄)", value=4.5,
+                                           min_value=0.1, format="%.2f")
+                z_c      = st.selectbox("Z-Value", [2.0, 2.5, 3.0, 3.5], index=2,
+                                        key="c_z")
+            with c2:
+                sqrt_c   = math.sqrt(c_bar_in)
+                ucl_c    = c_bar_in + z_c * sqrt_c
+                lcl_c    = max(0, c_bar_in - z_c * sqrt_c)
+                display_metric_card(f"{c_bar_in:.3f}", "Center Line (c̄)", "normal")
+                display_metric_card(f"{ucl_c:.3f}", "UCL", "danger")
+                display_metric_card(f"{lcl_c:.3f}", "LCL (0 if negative)", "danger")
+                display_metric_card(f"{sqrt_c:.4f}", "√c̄ (Std Dev)", "normal")
+            display_formula_card("c-Chart UCL/LCL",
+                r"\bar{c} \pm 3\sqrt{\bar{c}}")
+
+        elif calc == "Process Capability (Cpk)":
+            st.markdown("#### Process Capability Calculator")
+            c1, c2 = st.columns(2)
+            with c1:
+                lsl  = st.number_input("LSL", value=44.0)
+                usl  = st.number_input("USL", value=58.0)
+                mean = st.number_input("Process Mean (μ)", value=50.0)
+                sig  = st.number_input("Process Std Dev (σ)", value=2.0, min_value=0.0001,
+                                       format="%.4f")
+            with c2:
+                result = process_capability(mean, sig, lsl, usl)
+                cp, cpk, cpu, cpl = result["Cp"], result["Cpk"], result["Cpu"], result["Cpl"]
+
+                cp_type  = "success" if cp  >= 1.33 else ("warning" if cp  >= 1.0 else "danger")
+                cpk_type = "success" if cpk >= 1.33 else ("warning" if cpk >= 1.0 else "danger")
+
+                display_metric_card(f"{cp:.3f}",  "Cp  (Potential)",  cp_type)
+                display_metric_card(f"{cpk:.3f}", "Cpk (Actual)",     cpk_type)
+                display_metric_card(f"{cpl:.3f}", "Cpl (Lower)",      "normal")
+                display_metric_card(f"{cpu:.3f}", "Cpu (Upper)",      "normal")
+
+            sig_lvl = sigma_level(cpk)
+            if cp and cpk:
+                off_center = abs(cp - cpk) / cp * 100 if cp > 0 else 0
+                interp = (
+                    "✅ Capable and well-centered" if cpk >= 1.33 and off_center < 10 else
+                    "⚠️ Capable but off-center — consider re-centering" if cp >= 1.33 and cpk < cp * 0.9 else
+                    "⚠️ Marginally capable — monitor closely" if 1.0 <= cpk < 1.33 else
+                    "🚨 Not capable — process produces defects"
+                )
+                display_callout(
+                    f"{interp}<br>Approx. sigma level: **{sig_lvl:.2f}σ** | "
+                    f"Off-center: {off_center:.1f}%",
+                    "success" if cpk >= 1.33 else "warning" if cpk >= 1.0 else "danger",
+                    "Interpretation"
+                )
+            display_formula_card("Cpk",
+                r"C_{pk} = \min\!\left(\frac{USL-\mu}{3\sigma},\frac{\mu-LSL}{3\sigma}\right)")
+
+        elif calc == "DPMO ↔ Sigma Level":
+            st.markdown("#### DPMO ↔ Sigma Level Converter")
+            mode = st.radio("Direction", ["Defects → DPMO & σ", "Sigma Level → DPMO"],
+                            horizontal=True)
+            if mode == "Defects → DPMO & σ":
+                c1, c2 = st.columns(2)
+                with c1:
+                    defects_i = st.number_input("Total Defects", value=33, min_value=0)
+                    units_i   = st.number_input("Total Units", value=2000, min_value=1)
+                    opp_i     = st.number_input("Opportunities / Unit", value=5, min_value=1)
+                with c2:
+                    dpmo_i = (defects_i / (units_i * opp_i)) * 1_000_000 if units_i * opp_i > 0 else 0
+                    if 0 < dpmo_i < 1_000_000:
+                        sl = 0.8406 + math.sqrt(max(0, 29.37 - 2.221 * math.log(dpmo_i)))
+                    else:
+                        sl = 0.0
+                    yield_pct = (1 - defects_i / (units_i * opp_i)) * 100 if units_i * opp_i > 0 else 0
+                    display_metric_card(f"{dpmo_i:,.1f}", "DPMO", "danger" if dpmo_i > 6210 else "success")
+                    display_metric_card(f"{sl:.2f}σ", "Sigma Level", "success" if sl >= 4 else "warning")
+                    display_metric_card(f"{yield_pct:.4f}%", "Process Yield", "normal")
+            else:
+                c1, c2 = st.columns(2)
+                with c1:
+                    target_sigma = st.slider("Target Sigma Level", 1.0, 6.5, 4.0, 0.1)
+                with c2:
+                    # Approximate reverse: DPMO from sigma
+                    z_eq   = target_sigma - 1.5   # account for 1.5σ shift
+                    dpmo_r = (1 - normal_cdf(z_eq)) * 1_000_000
+                    display_metric_card(f"{dpmo_r:,.1f}", "Estimated DPMO", "normal")
+                    display_metric_card(f"{(1-dpmo_r/1e6)*100:.4f}%", "Yield", "success")
+
+            # Reference table
+            with st.expander("📋 Sigma Level Reference Table"):
+                ref_df = pd.DataFrame({
+                    "Sigma Level": ["1σ", "2σ", "3σ", "4σ", "5σ", "6σ"],
+                    "DPMO":        ["691,462", "308,538", "66,807", "6,210", "233", "3.4"],
+                    "Yield (%)":   ["30.85", "69.15", "93.32", "99.38", "99.977", "99.99966"],
+                    "Example":     [
+                        "Very poor process",
+                        "Average company",
+                        "Industry standard",
+                        "Good process",
+                        "Near world class",
+                        "World class (Six Sigma goal)"
+                    ]
+                })
+                st.dataframe(ref_df, use_container_width=True, hide_index=True)
+
+        elif calc == "x̄ & R Chart Limits":
+            st.markdown("#### x̄ & R Chart Limit Calculator")
+            a2t = {2:1.880, 3:1.023, 4:0.729, 5:0.577, 6:0.483, 7:0.419, 8:0.373, 9:0.337, 10:0.308}
+            d3t = {2:0,     3:0,     4:0,     5:0,     6:0,     7:0.076, 8:0.136, 9:0.184, 10:0.223}
+            d4t = {2:3.267, 3:2.574, 4:2.282, 5:2.114, 6:2.004, 7:1.924, 8:1.864, 9:1.816, 10:1.777}
+            c1, c2 = st.columns(2)
+            with c1:
+                n_sel   = st.selectbox("Subgroup Size (n)", list(range(2, 11)), index=3)
+                xdbl    = st.number_input("Grand Mean (x̄̄)", value=12.0, format="%.4f")
+                r_bar   = st.number_input("Average Range (R̄)", value=0.8, min_value=0.0, format="%.4f")
+            with c2:
+                A2, D3, D4 = a2t[n_sel], d3t[n_sel], d4t[n_sel]
+                ucl_x = xdbl + A2 * r_bar
+                lcl_x = xdbl - A2 * r_bar
+                ucl_r = D4 * r_bar
+                lcl_r = D3 * r_bar
+                st.markdown("**x̄-Chart**")
+                c2a, c2b, c2c = st.columns(3)
+                c2a.metric("UCL_x̄", f"{ucl_x:.4f}")
+                c2b.metric("CL", f"{xdbl:.4f}")
+                c2c.metric("LCL_x̄", f"{lcl_x:.4f}")
+                st.markdown("**R-Chart**")
+                c2d, c2e, c2f = st.columns(3)
+                c2d.metric("UCL_R", f"{ucl_r:.4f}")
+                c2e.metric("CL (R̄)", f"{r_bar:.4f}")
+                c2f.metric("LCL_R", f"{lcl_r:.4f}" if D3 > 0 else "N/A (n<7)")
+                st.write(f"**Constants:** A₂={A2}, D₃={D3}, D₄={D4}")
+
+        elif calc == "Sample Size for p-Chart":
+            st.markdown("#### Minimum Sample Size for p-Chart")
+            c1, c2 = st.columns(2)
+            with c1:
+                p_est   = st.number_input("Estimated p̄", value=0.04, min_value=0.001,
+                                          max_value=0.5, format="%.3f")
+                delta_p = st.number_input("Detectable Shift (Δp)", value=0.02,
+                                          min_value=0.001, format="%.3f")
+                power   = st.selectbox("Desired Power", ["80% (z=0.84)", "90% (z=1.28)",
+                                                         "95% (z=1.65)"])
+                z_pow   = {"80% (z=0.84)": 0.84, "90% (z=1.28)": 1.28, "95% (z=1.65)": 1.65}[power]
+            with c2:
+                z_alpha = 3.0   # standard SPC 3-sigma
+                n_min   = math.ceil(
+                    ((z_alpha + z_pow) ** 2 * p_est * (1 - p_est)) / delta_p ** 2
+                )
+                sp_at_n = math.sqrt(p_est * (1 - p_est) / n_min)
+                ucl_at_n = p_est + 3 * sp_at_n
+                display_metric_card(f"{n_min}", "Min Sample Size", "highlight")
+                display_metric_card(f"{sp_at_n:.5f}", "σ_p at this n", "normal")
+                display_metric_card(f"{ucl_at_n:.4f}", "UCL at this n", "normal")
+
+    # ─────────────────────────────────────────────────────────
+    with tab3:
+        st.markdown("### 📊 SQC Formula Quick Reference")
+
+        col_f, col_c = st.columns(2)
+        with col_f:
+            st.markdown("#### Process Capability")
+            display_formula_card("Cp (Potential Capability)",
+                r"C_p = \frac{USL - LSL}{6\sigma}")
+            display_formula_card("Cpk (Actual Capability)",
+                r"C_{pk} = \min\!\left(\frac{USL-\mu}{3\sigma},\frac{\mu-LSL}{3\sigma}\right)")
+            display_formula_card("Sigma Level",
+                r"\sigma_{level} = 3 \times C_{pk}")
+
+            st.markdown("#### Attribute Charts")
+            display_formula_card("p-Chart Std Error",
+                r"\sigma_p = \sqrt{\frac{\bar{p}(1-\bar{p})}{n}}")
+            display_formula_card("p-Chart UCL/LCL",
+                r"\bar{p} \pm 3\sigma_p")
+            display_formula_card("c-Chart UCL/LCL",
+                r"\bar{c} \pm 3\sqrt{\bar{c}}")
+
+        with col_c:
+            st.markdown("#### Variables Charts")
+            display_formula_card("x̄-Chart UCL/LCL",
+                r"UCL/LCL_{\bar{x}} = \bar{\bar{x}} \pm A_2\bar{R}")
+            display_formula_card("R-Chart UCL",
+                r"UCL_R = D_4\bar{R}")
+            display_formula_card("R-Chart LCL",
+                r"LCL_R = D_3\bar{R}")
+
+            st.markdown("#### Six Sigma")
+            display_formula_card("DPMO",
+                r"DPMO = \frac{Defects}{Units \times Opportunities} \times 10^6")
+            display_formula_card("Approx Sigma Level",
+                r"\approx 0.8406 + \sqrt{29.37 - 2.221\ln(DPMO)}")
+
+        st.markdown("---")
+        st.markdown("#### Control Chart Constants Table")
+        const_df = pd.DataFrame({
+            "n (subgroup)": [2,3,4,5,6,7,8,9,10],
+            "A₂":           [1.880,1.023,0.729,0.577,0.483,0.419,0.373,0.337,0.308],
+            "D₃":           [0,0,0,0,0,0.076,0.136,0.184,0.223],
+            "D₄":           [3.267,2.574,2.282,2.114,2.004,1.924,1.864,1.816,1.777],
+            "d₂":           [1.128,1.693,2.059,2.326,2.534,2.704,2.847,2.970,3.078],
         })
-        st.dataframe(chart_guide, use_container_width=True)
+        st.dataframe(const_df, use_container_width=True, hide_index=True)
+
+        display_key_insight("When to Apply Each Chart",
+            "p-chart: fraction defective, variable n (binomial) | "
+            "np-chart: count defective, constant n | "
+            "c-chart: count defects/unit, constant area (Poisson) | "
+            "u-chart: defects/unit, variable area | "
+            "x̄-R: continuous data, n=2–10 | x̄-s: continuous data, n>10")
+
+        st.markdown("#### Western Electric Rules (4 Main Rules)")
+        we_df = pd.DataFrame({
+            "Rule": ["Rule 1", "Rule 2", "Rule 3", "Rule 4"],
+            "Signal": [
+                "1 point beyond ±3σ (Zone A)",
+                "8+ consecutive points on one side of CL",
+                "6+ points trending in same direction",
+                "2 of 3 consecutive points in Zone A (beyond ±2σ)"
+            ],
+            "Indicates": [
+                "Large sudden shift or outlier",
+                "Process mean has shifted",
+                "Gradual drift or trend",
+                "Large sustained shift"
+            ]
+        })
+        st.dataframe(we_df, use_container_width=True, hide_index=True)
+
+        st.markdown("#### Chart Selection Guide")
+        chart_guide = pd.DataFrame({
+            "Data Type":      ["Variables (x̄ & R)", "Variables (x̄ & s)", "Attributes (defective)",
+                               "Attributes (defective)", "Attributes (defects)", "Attributes (defects)"],
+            "Chart":          ["x̄-R", "x̄-s", "p-chart", "np-chart", "c-chart", "u-chart"],
+            "Sample Size n":  ["2–10", "> 10", "Variable", "Constant", "Constant area", "Variable area"],
+            "Distribution":   ["Normal", "Normal", "Binomial", "Binomial", "Poisson", "Poisson"],
+            "Measures":       ["Mean & range", "Mean & std dev",
+                               "Fraction defective", "Count defective",
+                               "Defects per unit", "Defects per unit (adjusted)"]
+        })
+        st.dataframe(chart_guide, use_container_width=True, hide_index=True)
+
+    # ─────────────────────────────────────────────────────────
+    with tab4:
+        st.markdown("### 🏆 SQC Quiz Mode")
+        st.write("Test yourself — answer without looking. Track your score below.")
+
+        if "sqc_quiz_score" not in st.session_state:
+            st.session_state.sqc_quiz_score  = 0
+            st.session_state.sqc_quiz_total  = 0
+            st.session_state.sqc_quiz_streak = 0
+
+        quiz_questions = [
+            ("What is the UCL formula for a c-chart?",
+             r"\bar{c} + 3\sqrt{\bar{c}}",
+             "UCL = c̄ + 3√c̄"),
+            ("What does Cpk measure?",
+             None,
+             "Actual process capability — accounts for both spread AND centering of the mean."),
+            ("For n=5, A₂=0.577. If R̄=1.2 and x̄̄=10, what is UCL_x̄?",
+             None,
+             "UCL = 10 + 0.577 × 1.2 = 10.692"),
+            ("DPMO = 66,807. What sigma level is this approximately?",
+             None,
+             "≈ 3 sigma (3σ quality level)"),
+            ("What does 'in control but not capable' mean?",
+             None,
+             "The process is statistically stable (no special causes) but the spread is too wide "
+             "to meet specifications — Cpk < 1.0 despite points within control limits."),
+            ("p̄ = 0.05, n = 200. Calculate σ_p.",
+             r"\sigma_p = \sqrt{\frac{0.05 \times 0.95}{200}} = 0.01541",
+             "σ_p = √(0.05 × 0.95 / 200) = √0.0002375 ≈ 0.01541"),
+        ]
+
+        q_idx = st.session_state.sqc_quiz_total % len(quiz_questions)
+        q_text, q_latex, q_answer = quiz_questions[q_idx]
+
+        sc1, sc2, sc3 = st.columns(3)
+        sc1.metric("Score",  f"{st.session_state.sqc_quiz_score}/{st.session_state.sqc_quiz_total}")
+        sc2.metric("Streak", f"🔥 {st.session_state.sqc_quiz_streak}")
+        pct = (st.session_state.sqc_quiz_score / max(st.session_state.sqc_quiz_total, 1)) * 100
+        sc3.metric("Accuracy", f"{pct:.0f}%")
+
+        display_practice_problem(q_idx + 1, "Medium", q_text)
+        if q_latex:
+            st.latex(q_latex)
+
+        qa_col1, qa_col2 = st.columns(2)
+        with qa_col1:
+            if st.button("✅ I Got It Right", key="sqc_quiz_right", use_container_width=True):
+                st.session_state.sqc_quiz_score  += 1
+                st.session_state.sqc_quiz_total  += 1
+                st.session_state.sqc_quiz_streak += 1
+                st.session_state.problems_solved += 1
+                st.session_state.correct_streak  += 1
+                display_solution(q_answer)
+        with qa_col2:
+            if st.button("❌ Show Answer (I Missed)", key="sqc_quiz_wrong",
+                         use_container_width=True):
+                st.session_state.sqc_quiz_total  += 1
+                st.session_state.sqc_quiz_streak  = 0
+                st.session_state.correct_streak   = 0
+                display_solution(q_answer)
+
+        if st.button("⏭ Next Question →", key="sqc_quiz_next", use_container_width=True):
+            st.session_state.sqc_quiz_total = st.session_state.sqc_quiz_total  # trigger increment next press
+            st.rerun()
+
+        if st.session_state.sqc_quiz_total >= 5:
+            grade = (
+                "🏆 Excellent!" if pct >= 90 else
+                "✅ Good work" if pct >= 70 else
+                "📖 Review the formula reference tab"
+            )
+            display_callout(f"{grade} — {pct:.0f}% accuracy over "
+                            f"{st.session_state.sqc_quiz_total} questions.", "success")
 
 
 # ============================================================
-# MODULE 36: PRACTICE PROBLEMS (General) - ENHANCED V5.0
+# MODULE 36: PRACTICE PROBLEMS (General) - ENHANCED V6.0
 # ============================================================
 def module_practice():
     display_header("🎓", "Exam Prep", "Comprehensive Practice Problems",
                    "Mixed review across all Operations Management chapters")
 
-    tab1, tab2 = st.tabs(["📝 Problem Bank", "🔬 Quick Calculators"])
+    tab1, tab2, tab3 = st.tabs([
+        "📝 Problem Bank", "🔬 Quick Calculators", "📊 Formula Cheat Sheet"
+    ])
 
+    # ─────────────────────────────────────────────────────────
     with tab1:
-        chapter_filter = st.selectbox("Filter by Chapter / Topic",
-                                      ["All", "Quality (Ch 13)", "Inventory (Ch 20)",
-                                       "MRP (Ch 21)", "Scheduling (Ch 22)", "Location & Capacity"])
+        col_f1, col_f2, col_f3 = st.columns(3)
+        with col_f1:
+            chapter_filter = st.selectbox("Filter by Chapter / Topic", [
+                "All", "Quality (Ch 13)", "Inventory (Ch 20)",
+                "MRP (Ch 21)", "Scheduling (Ch 22)",
+                "Location & Capacity", "Project Mgmt (Ch 4)",
+                "Forecasting (Ch 18)", "Queuing (Ch 10)"
+            ])
+        with col_f2:
+            diff_filter = st.selectbox("Filter by Difficulty",
+                                       ["All", "Easy", "Medium", "Hard"], key="prac_diff")
+        with col_f3:
+            sort_opt = st.selectbox("Sort By", ["Default", "Difficulty ↑", "Difficulty ↓"])
 
         problems = [
+            # (chapter, title, difficulty, question, answer)
             ("Quality (Ch 13)", "DPMO Calculation", "Medium",
-             "2,000 units produced, 33 total defects found, 5 opportunities per unit. Calculate DPMO.",
-             "DPMO = (Defects / (Units × Opportunities)) × 10⁶\n"
-             "= (33 / (2,000 × 5)) × 1,000,000 = **3,300 DPMO**\n"
-             "≈ 4.25 Sigma quality level."),
+             "2,000 units produced, 33 total defects, 5 opportunities per unit. Calculate DPMO and approximate sigma level.",
+             "DPMO = (Defects / (Units × Opp)) × 10⁶ = (33 / 10,000) × 1,000,000 = **3,300 DPMO**<br><br>"
+             "Sigma level ≈ 0.8406 + √(29.37 − 2.221 × ln(3300)) = 0.8406 + √(29.37 − 17.98) = **≈ 4.22σ**"),
 
             ("Quality (Ch 13)", "Cpk Interpretation", "Hard",
-             "Process mean = 50, σ = 2, LSL = 44, USL = 58. Calculate Cp and Cpk. Interpret.",
-             "Cp = (58−44)/(6×2) = 14/12 = **1.17** — capable\n"
-             "Cpl = (50−44)/(3×2) = **1.00**, Cpu = (58−50)/(3×2) = **1.33**\n"
-             "Cpk = min(1.00, 1.33) = **1.00** — marginally capable, mean is skewed toward LSL."),
+             "Process mean = 50, σ = 2, LSL = 44, USL = 58. Calculate Cp and Cpk. Interpret results.",
+             "Cp = (58−44)/(6×2) = 14/12 = **1.17** — potentially capable<br>"
+             "Cpl = (50−44)/(3×2) = **1.00**, Cpu = (58−50)/(3×2) = **1.33**<br>"
+             "Cpk = min(1.00, 1.33) = **1.00** — marginally capable; mean is closer to LSL.<br><br>"
+             "Action: Shift mean upward toward 51 to equalize Cpl and Cpu."),
+
+            ("Quality (Ch 13)", "p-Chart Decision", "Medium",
+             "15 samples, n=200 each. Total defectives = 120. Compute p̄, σ_p, UCL, LCL. "
+             "Sample 8 has 19 defectives — is it out of control?",
+             "p̄ = 120 / (15×200) = **0.040**<br>"
+             "σ_p = √(0.040 × 0.960 / 200) = **0.01386**<br>"
+             "UCL = 0.040 + 3(0.01386) = **0.0816**; LCL = max(0, 0.040 − 0.0416) = **0**<br><br>"
+             "Sample 8: p = 19/200 = 0.095 > UCL = 0.082 → **⚠️ Out of Control!**"),
 
             ("Inventory (Ch 20)", "EOQ & Annual Cost", "Medium",
-             "D = 10,000 units/yr, S = $50/order, H = $2/unit/yr. Find Q* and total inventory cost.",
-             "Q* = √(2DS/H) = √(2×10,000×50/2) = **707 units**\n"
-             "TC = (Q*/2)×H + (D/Q*)×S = (353.5×2) + (14.14×50) = $707 + $707 = **$1,414/yr**"),
+             "D = 10,000 units/yr, S = $50/order, H = $2/unit/yr. Find Q*, annual orders, and total inventory cost.",
+             "Q* = √(2DS/H) = √(2×10,000×50/2) = √500,000 = **707.1 units**<br>"
+             "Annual orders = D/Q* = 10,000/707 = **14.1 orders/yr**<br>"
+             "TC = (Q*/2)×H + (D/Q*)×S = 707 + 707 = **$1,414/yr**<br><br>"
+             "Note: At EOQ, holding cost = ordering cost — this is a useful check."),
 
             ("Inventory (Ch 20)", "Safety Stock + ROP", "Medium",
-             "d̄ = 40 units/day, σ_d = 8, LT = 9 days, service level = 95% (z=1.65). Find SS and ROP.",
-             "SS = z × σ_d × √LT = 1.65 × 8 × √9 = 1.65 × 8 × 3 = **39.6 ≈ 40 units**\n"
-             "ROP = d̄ × LT + SS = 40×9 + 40 = 360 + 40 = **400 units**"),
+             "d̄ = 40 units/day, σ_d = 8, LT = 9 days, service level = 95% (z=1.65). Find SS, ROP, and cycle stock.",
+             "SS = z × σ_d × √LT = 1.65 × 8 × √9 = 1.65 × 8 × 3 = **39.6 ≈ 40 units**<br>"
+             "ROP = d̄ × LT + SS = 40×9 + 40 = 360 + 40 = **400 units**<br>"
+             "Average cycle stock = Q*/2 (depends on order quantity policy)"),
 
-            ("Inventory (Ch 20)", "Newsvendor", "Hard",
-             "Price = $120, Cost = $80, Salvage = $30, μ = 500, σ = 60. Find Q*.",
-             "Cu = 120−80 = $40, Co = 80−30 = $50\n"
-             "CR = 40/(40+50) = **0.444**\n"
-             "z = Φ⁻¹(0.444) ≈ **−0.14**\n"
-             "Q* = 500 + (−0.14)×60 = **492 units**"),
+            ("Inventory (Ch 20)", "Newsvendor Model", "Hard",
+             "Price = $120, Cost = $80, Salvage = $30, μ = 500, σ = 60. Find optimal order quantity Q*.",
+             "Cu (underage cost) = P − C = 120−80 = **$40**<br>"
+             "Co (overage cost)  = C − S = 80−30 = **$50**<br>"
+             "CR = Cu/(Cu+Co) = 40/90 = **0.444**<br>"
+             "z = Φ⁻¹(0.444) ≈ **−0.14**<br>"
+             "Q* = μ + z×σ = 500 + (−0.14)×60 = **492 units**<br><br>"
+             "Interpretation: Since CR < 0.5, overages cost more — order below the mean."),
+
+            ("Inventory (Ch 20)", "ABC Classification", "Easy",
+             "5 items with annual usage × unit cost: A=$45k, B=$3k, C=$38k, D=$1.5k, E=$12k. "
+             "Classify using ABC analysis.",
+             "Total = $99.5k. Sort descending: A($45k=45%), C($38k=38%), E($12k=12%), B($3k=3%), D($1.5k=2%)<br><br>"
+             "**Class A (≈80%):** Items A + C = $83k (83%) → tight control, frequent review<br>"
+             "**Class B (≈15%):** Item E = $12k (12%) → moderate control<br>"
+             "**Class C (≈5%):** Items B + D = $4.5k (5%) → minimal control, bulk ordering"),
 
             ("MRP (Ch 21)", "MRP Net Requirements", "Medium",
-             "Gross req = 200, On-Hand = 50, Scheduled Receipt = 75, Safety Stock = 20. Net req?",
-             "Net = Gross − (OH + SR) = 200 − (50 + 75) = 75\n"
-             "Since 75 > SS=20, Net Requirement = **75 units** (order 75)."),
+             "Gross req = 200, On-Hand = 50, Scheduled Receipt = 75, Safety Stock = 20. "
+             "Compute net requirement and planned order.",
+             "Available = OH + SR = 50 + 75 = 125<br>"
+             "Net = max(0, Gross − Available + SS) = max(0, 200 − 125 + 20) = **95 units**<br>"
+             "Planned order receipt = **95 units** (or round up to lot size if applicable)."),
 
             ("MRP (Ch 21)", "POQ Period", "Medium",
-             "S = $50, H = $1/unit/week, avg demand = 25 units/week. Calculate T* (POQ period).",
-             "EOQ = √(2×S×d_annual / H) — weekly: EOQ = √(2×50×25/1) = √2,500 = **50 units**\n"
-             "T* = EOQ/d = 50/25 = **2 weeks**"),
+             "S = $50, H = $1/unit/week, average demand = 25 units/week. Calculate T* (POQ interval).",
+             "EOQ_weekly = √(2 × S × d / H) = √(2 × 50 × 25 / 1) = √2,500 = **50 units**<br>"
+             "T* = EOQ/d = 50/25 = **2 weeks**<br><br>"
+             "So order every 2 weeks, covering that period's net requirements."),
+
+            ("MRP (Ch 21)", "L4L vs FOQ", "Hard",
+             "Weekly demands: 30, 45, 20, 60, 25. S=$100, H=$2/unit/wk. "
+             "Compare Lot-for-Lot vs Fixed Order Qty (FOQ=80) total cost.",
+             "**L4L:** Order exactly what is needed each week — no carrying cost.<br>"
+             "Setup cost = 5 orders × $100 = $500; Holding cost = $0; **TC = $500**<br><br>"
+             "**FOQ=80:** Orders in wk1(80), wk2 carries 5 → needs 40 more in wk3 → wk4 needs 45 → wk5 order 25<br>"
+             "Approx holding cost = (5+0+15+0)×$2 = $40; Setup = 5×$100 = $500; **TC ≈ $540**<br><br>"
+             "L4L minimizes cost here — best when holding costs dominate setup costs."),
 
             ("Scheduling (Ch 22)", "SPT Sequence", "Medium",
-             "Jobs: A(PT=5,DD=8), B(PT=2,DD=6), C(PT=4,DD=9), D(PT=1,DD=5). SPT sequence & avg flow time.",
-             "SPT order: D(1) → B(2) → C(4) → A(5)\n"
-             "Finish times: 1, 3, 7, 12\n"
-             "Avg Flow Time = (1+3+7+12)/4 = **5.75 days**\n"
-             "Tardiness: D=0, B=0, C=0, A=4 → Avg tardiness = **1.0 day**"),
+             "Jobs: A(PT=5,DD=8), B(PT=2,DD=6), C(PT=4,DD=9), D(PT=1,DD=5). "
+             "Find SPT sequence, avg flow time, and avg tardiness.",
+             "SPT order: **D(1) → B(2) → C(4) → A(5)**<br>"
+             "Finish times: 1, 3, 7, 12<br>"
+             "Avg Flow Time = (1+3+7+12)/4 = **5.75 days**<br>"
+             "Tardiness: D=max(0,1−5)=0, B=max(0,3−6)=0, C=max(0,7−9)=0, A=max(0,12−8)=4<br>"
+             "Avg Tardiness = (0+0+0+4)/4 = **1.0 day**"),
+
+            ("Scheduling (Ch 22)", "EDD vs SPT", "Medium",
+             "Same jobs: A(5,8), B(2,6), C(4,9), D(1,5). Find EDD sequence and compare avg tardiness to SPT.",
+             "EDD order (by due date): **D(DD=5) → B(DD=6) → A(DD=8) → C(DD=9)**<br>"
+             "Finish times: 1, 3, 8, 12<br>"
+             "Tardiness: D=0, B=0, A=max(0,8−8)=0, C=max(0,12−9)=3<br>"
+             "Avg Tardiness = **0.75 days** (better than SPT's 1.0 for minimizing tardiness).<br><br>"
+             "EDD minimizes max tardiness; SPT minimizes avg flow time."),
 
             ("Scheduling (Ch 22)", "Critical Ratio", "Easy",
-             "Today = Day 5. Job X: PT = 3, Due = Day 10. Job Y: PT = 4, Due = Day 9. Rank by CR.",
-             "CR_X = (10−5)/3 = **1.67** (ahead)\n"
-             "CR_Y = (9−5)/4 = **1.00** (on schedule)\n"
-             "Priority: **Job Y first** (lower CR = more urgent)"),
+             "Today = Day 5. Job X: PT=3, Due=Day 10. Job Y: PT=4, Due=Day 9. Rank by CR.",
+             "CR_X = (10−5)/3 = **1.67** (ahead of schedule)<br>"
+             "CR_Y = (9−5)/4 = **1.00** (exactly on schedule)<br><br>"
+             "CR < 1.0 = behind schedule, CR = 1.0 = on schedule, CR > 1.0 = ahead.<br>"
+             "Priority: **Job Y first** (lower CR = more urgent)."),
+
+            ("Scheduling (Ch 22)", "Johnson's Rule", "Hard",
+             "Two-machine scheduling: Job A(M1=3,M2=5), B(M1=6,M2=2), C(M1=1,M2=4), D(M1=5,M2=6). "
+             "Apply Johnson's Rule and calculate makespan.",
+             "Step 1 — Find minimum processing time across all jobs and machines:<br>"
+             "Min = 1 (Job C, M1) → assign C first. Remaining: A(3,5), B(6,2), D(5,6)<br>"
+             "Min = 2 (Job B, M2) → assign B last. Remaining: A(3,5), D(5,6)<br>"
+             "Min = 3 (Job A, M1) → assign next. Min = 6 (Job D, either) → D next.<br>"
+             "**Sequence: C → A → D → B**<br><br>"
+             "Makespan calculation: M1 finish: C=1, A=4, D=9, B=15<br>"
+             "M2 start/finish: C=[1,5], A=[5,10], D=[10,16], B=[16,18] → **Makespan = 18**"),
 
             ("Location & Capacity", "Break-Even Analysis", "Medium",
-             "FC = $100,000, Selling Price = $50, VC = $30/unit. Calculate BEP in units and revenue.",
-             "BEP(units) = FC / (P − VC) = 100,000 / (50−30) = **5,000 units**\n"
-             "BEP(revenue) = 5,000 × $50 = **$250,000**"),
+             "FC = $100,000, Selling Price = $50, VC = $30/unit. "
+             "Calculate BEP in units, revenue, and degree of operating leverage at 6,000 units.",
+             "CM = $50 − $30 = **$20/unit**<br>"
+             "BEP(units) = 100,000 / 20 = **5,000 units**<br>"
+             "BEP(revenue) = 5,000 × $50 = **$250,000**<br>"
+             "At 6,000 units: Revenue=$300k, VC=$180k, CM=$120k, Profit=$20k<br>"
+             "DOL = CM / Profit = $120k / $20k = **6.0×** (1% sales change → 6% profit change)"),
 
             ("Location & Capacity", "Learning Curve", "Hard",
-             "First unit takes 100 hrs. 80% learning curve. Time for unit 4 (cumulative avg)?",
-             "Unit 1: 100 hrs avg\n"
-             "Unit 2: 100 × 0.80 = 80 hrs avg\n"
-             "Unit 4: 80 × 0.80 = **64 hrs cumulative average**\n"
-             "Total for 4 units = 64 × 4 = 256 hrs; Unit 4 alone = 256 − (80×2) = **96 hrs**\n"
-             "Using formula: Y_4 = 100 × 4^(−0.322) = **64 hrs avg** ✅"),
+             "First unit = 100 hrs, 80% learning curve. Find cumulative avg time and total time for 8 units.",
+             "Using doubling rule: Y₁=100, Y₂=80, Y₄=64, Y₈=51.2 hrs (cumulative avg)<br>"
+             "b = ln(0.8)/ln(2) = −0.2231/0.6931 = **−0.3219**<br>"
+             "Y₈ = 100 × 8^(−0.3219) = 100 × 0.512 = **51.2 hrs**<br>"
+             "Total hrs for 8 units = 51.2 × 8 = **409.6 hrs**<br>"
+             "Unit 8 alone = 409.6 − (64 × 4) = 409.6 − 256 = **153.6 hrs** cumulative check ✅"),
 
             ("Location & Capacity", "Factor Rating", "Easy",
-             "Location A scores: 75, 80, 70 on factors with weights 0.3, 0.5, 0.2. "
-             "Location B scores: 85, 70, 80. Which is preferred?",
-             "Score A = 0.3×75 + 0.5×80 + 0.2×70 = 22.5+40+14 = **76.5**\n"
-             "Score B = 0.3×85 + 0.5×70 + 0.2×80 = 25.5+35+16 = **76.5**\n"
-             "Tie! Consider qualitative factors or re-examine weights."),
+             "Site A: [75, 80, 70] on factors with weights [0.3, 0.5, 0.2]. "
+             "Site B: [85, 70, 80]. Which is preferred?",
+             "Score A = 0.3×75 + 0.5×80 + 0.2×70 = 22.5 + 40.0 + 14.0 = **76.5**<br>"
+             "Score B = 0.3×85 + 0.5×70 + 0.2×80 = 25.5 + 35.0 + 16.0 = **76.5**<br><br>"
+             "**Tie!** Examine qualitative factors or re-weight. Small weight changes can break the tie."),
+
+            ("Location & Capacity", "Indifference Point", "Medium",
+             "Option A: FC=$80k, VC=$20/unit. Option B: FC=$120k, VC=$14/unit. "
+             "Find indifference volume. Which is better at 5,000 units?",
+             "Indifference: 80,000 + 20Q = 120,000 + 14Q → 6Q = 40,000 → **Q = 6,667 units**<br><br>"
+             "At 5,000 units:<br>"
+             "TC_A = 80,000 + 20×5,000 = $180,000<br>"
+             "TC_B = 120,000 + 14×5,000 = $190,000<br>"
+             "**Choose Option A** at 5,000 units (below indifference point)."),
+
+            ("Project Mgmt (Ch 4)", "PERT Expected Time", "Easy",
+             "Activity E: optimistic=3, most likely=5, pessimistic=9 weeks. "
+             "Find expected time and variance.",
+             "t_e = (a + 4m + b) / 6 = (3 + 4×5 + 9) / 6 = (3 + 20 + 9) / 6 = **32/6 = 5.33 weeks**<br>"
+             "σ² = ((b − a) / 6)² = ((9 − 3) / 6)² = 1² = **1.0 week²**<br>"
+             "σ = **1.0 week**"),
+
+            ("Project Mgmt (Ch 4)", "Project Completion Probability", "Hard",
+             "Critical path expected duration = 42 weeks, σ²_path = 9 weeks². "
+             "What is P(project completes ≤ 45 weeks)?",
+             "σ_path = √9 = **3 weeks**<br>"
+             "Z = (45 − 42) / 3 = **1.0**<br>"
+             "P(Z ≤ 1.0) = Φ(1.0) = **0.8413 = 84.13%**<br><br>"
+             "There is an 84.13% probability of finishing by week 45."),
+
+            ("Forecasting (Ch 18)", "Exponential Smoothing", "Medium",
+             "Last period forecast = 200, actual demand = 220, α = 0.3. "
+             "Find new forecast. What if α = 0.7?",
+             "F_new = α × A_last + (1−α) × F_last<br>"
+             "α=0.3: F = 0.3×220 + 0.7×200 = 66 + 140 = **206**<br>"
+             "α=0.7: F = 0.7×220 + 0.3×200 = 154 + 60 = **214**<br><br>"
+             "Higher α reacts faster to recent demand — better for volatile series."),
+
+            ("Forecasting (Ch 18)", "MAD and Bias", "Medium",
+             "Actual: [100,110,105,115]. Forecast: [102,108,110,112]. Calculate MAD, MSE, and Bias.",
+             "Errors: −2, 2, −5, 3<br>"
+             "MAD = (|−2|+|2|+|−5|+|3|) / 4 = 12/4 = **3.0**<br>"
+             "MSE = (4+4+25+9) / 4 = 42/4 = **10.5**<br>"
+             "Bias = (−2+2−5+3) / 4 = −2/4 = **−0.5** (slight consistent under-forecast)"),
+
+            ("Queuing (Ch 10)", "M/M/1 Queue", "Medium",
+             "Arrival rate λ = 4/hr, service rate μ = 6/hr. Find ρ, Lq, Wq, L, W.",
+             "ρ = λ/μ = 4/6 = **0.667** (utilization)<br>"
+             "Lq = ρ²/(1−ρ) = 0.444/0.333 = **1.333 customers in queue**<br>"
+             "Wq = Lq/λ = 1.333/4 = **0.333 hrs = 20 min wait**<br>"
+             "L = ρ/(1−ρ) = **2.0 customers in system**<br>"
+             "W = L/λ = 2.0/4 = **0.5 hrs = 30 min in system**"),
+
+            ("Queuing (Ch 10)", "Queue Capacity Decision", "Hard",
+             "Current M/M/1: λ=8/hr, μ=10/hr. Adding a 2nd server raises effective μ to 20/hr combined. "
+             "Should you add the server if hourly cost = $30 and customer wait cost = $50/hr?",
+             "**Current (1 server):** ρ=0.8, Lq=3.2, Wq=0.4 hr<br>"
+             "Wait cost = 8 customers/hr × 0.4 hr × $50 = **$160/hr total wait cost**<br><br>"
+             "**2 servers (M/M/2 approximation):** ρ=0.4 per server, Lq≈0.152, Wq≈0.019 hr<br>"
+             "Wait cost ≈ 8 × 0.019 × $50 = **$7.60/hr**<br>"
+             "Added server cost = **$30/hr**<br>"
+             "Net savings = $160 − $7.60 − $30 = **$122.40/hr → Add the server ✅**"),
         ]
 
-        filtered_p = problems if chapter_filter == "All" \
-            else [p for p in problems if p[0] == chapter_filter]
+        # ── Filter & sort ─────────────────────────────────────
+        filtered_p = problems
+        if chapter_filter != "All":
+            filtered_p = [p for p in filtered_p if p[0] == chapter_filter]
+        if diff_filter != "All":
+            filtered_p = [p for p in filtered_p if p[2] == diff_filter]
 
-        diff_icons = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
-        for i, (chapter, title, diff, question, answer) in enumerate(filtered_p):
-            with st.expander(f"{diff_icons[diff]} **{title}** _{chapter}_"):
-                display_practice_problem(i+1, diff, f"**{title}:** {question}")
-                if st.button(f"Show Solution", key=f"prac_{i}_{chapter[:3]}"):
-                    display_solution(answer)
+        diff_order = {"Easy": 0, "Medium": 1, "Hard": 2}
+        if sort_opt == "Difficulty ↑":
+            filtered_p = sorted(filtered_p, key=lambda x: diff_order[x[2]])
+        elif sort_opt == "Difficulty ↓":
+            filtered_p = sorted(filtered_p, key=lambda x: -diff_order[x[2]])
 
-        st.markdown(f"**Showing {len(filtered_p)} of {len(problems)} problems.**")
+        # ── Stats row ─────────────────────────────────────────
+        easy_n  = sum(1 for p in problems if p[2] == "Easy")
+        med_n   = sum(1 for p in problems if p[2] == "Medium")
+        hard_n  = sum(1 for p in problems if p[2] == "Hard")
+        s1,s2,s3,s4 = st.columns(4)
+        s1.metric("Total Problems", len(problems))
+        s2.metric("🟢 Easy",   easy_n)
+        s3.metric("🟡 Medium", med_n)
+        s4.metric("🔴 Hard",   hard_n)
 
+        if not filtered_p:
+            display_callout("No problems match the current filters.", "warning")
+        else:
+            st.markdown(f"**Showing {len(filtered_p)} of {len(problems)} problems.**")
+            diff_icons = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
+            for i, (chapter, title, diff, question, answer) in enumerate(filtered_p):
+                with st.expander(
+                    f"{diff_icons[diff]} **{title}** — *{chapter}*"
+                ):
+                    display_practice_problem(i + 1, diff,
+                                             f"**{title}:** {question}")
+                    key_hint = {
+                        "EOQ & Annual Cost":            "Hint: Q* = √(2DS/H). At EOQ, holding = ordering cost.",
+                        "Safety Stock + ROP":           "Hint: SS = z × σ_d × √LT, ROP = d̄×LT + SS.",
+                        "Newsvendor Model":             "Hint: CR = Cu/(Cu+Co), then z = Φ⁻¹(CR).",
+                        "Project Completion Probability": "Hint: Z = (T_D − T_E) / σ_path.",
+                        "M/M/1 Queue":                  "Hint: Lq = ρ²/(1−ρ), then use Little's Law.",
+                        "Johnson's Rule":               "Hint: Assign smallest time first; if M1 → front, if M2 → back.",
+                    }.get(title)
+                    if key_hint:
+                        display_hint(key_hint)
+                    if st.button("Show Solution ▼",
+                                 key=f"prac_{i}_{chapter[:4]}_{diff}",
+                                 use_container_width=True):
+                        st.session_state[f"prac_ans_{i}"] = True
+                        st.session_state.problems_solved += 1
+                    if st.session_state.get(f"prac_ans_{i}"):
+                        display_solution(answer)
+
+    # ─────────────────────────────────────────────────────────
     with tab2:
         st.markdown("### 🔬 Quick Formula Calculators")
 
-        calc_choice = st.selectbox("Choose Calculator",
-                                   ["EOQ", "Break-Even", "Learning Curve", "DPMO"])
+        calc_choice = st.selectbox("Choose Calculator", [
+            "EOQ",
+            "Break-Even",
+            "Learning Curve",
+            "DPMO",
+            "Safety Stock & ROP",
+            "Newsvendor",
+            "PERT",
+        ])
+
+        st.markdown("---")
 
         if calc_choice == "EOQ":
-            col1, col2 = st.columns(2)
-            with col1:
-                D_c = st.number_input("Annual Demand D", value=10000)
-                S_c = st.number_input("Setup/Order Cost S ($)", value=50.0)
-                H_c = st.number_input("Holding Cost H ($/unit/yr)", value=2.0)
-            with col2:
-                Q_c  = math.sqrt(2 * D_c * S_c / H_c) if H_c > 0 else 0
-                TC_c = (Q_c/2)*H_c + (D_c/Q_c)*S_c if Q_c > 0 else 0
-                st.metric("EOQ (Q*)", f"{Q_c:.0f} units")
-                st.metric("Annual Orders", f"{D_c/Q_c:.1f}" if Q_c>0 else "—")
-                st.metric("Total Inv Cost", f"${TC_c:.2f}")
-                st.latex(rf"Q^* = \sqrt{{\frac{{2 \times {D_c} \times {S_c}}}{{{H_c}}}}} = {Q_c:.0f}")
+            c1, c2 = st.columns(2)
+            with c1:
+                D_c = st.number_input("Annual Demand D", value=10000, min_value=1)
+                S_c = st.number_input("Setup/Order Cost S ($)", value=50.0, min_value=0.01)
+                H_c = st.number_input("Holding Cost H ($/unit/yr)", value=2.0, min_value=0.01)
+            with c2:
+                Q_c  = math.sqrt(2 * D_c * S_c / H_c)
+                TC_c = (Q_c / 2) * H_c + (D_c / Q_c) * S_c
+                display_metric_card(f"{Q_c:.1f} units", "EOQ (Q*)", "highlight")
+                display_metric_card(f"{D_c/Q_c:.1f} orders/yr", "Annual Orders", "normal")
+                display_metric_card(f"${TC_c:.2f}", "Min Annual TC", "success")
+                display_metric_card(f"${(D_c/Q_c)*S_c:.2f}", "Annual Order Cost", "normal")
+                display_metric_card(f"${(Q_c/2)*H_c:.2f}", "Annual Holding Cost", "normal")
+            st.latex(rf"Q^* = \sqrt{{\frac{{2 \times {D_c:,.0f} \times {S_c}}}{{{H_c}}}}} = {Q_c:.1f} \text{{ units}}")
+            display_callout("At EOQ, annual ordering cost = annual holding cost — this is a useful self-check.",
+                            "info", "Tip")
 
         elif calc_choice == "Break-Even":
-            col1, col2 = st.columns(2)
-            with col1:
-                FC_c = st.number_input("Fixed Costs ($)", value=100000)
-                P_c  = st.number_input("Unit Price ($)", value=50.0)
-                VC_c = st.number_input("Variable Cost/unit ($)", value=30.0)
-            with col2:
+            c1, c2 = st.columns(2)
+            with c1:
+                FC_c = st.number_input("Fixed Costs ($)", value=100000, min_value=0)
+                P_c  = st.number_input("Unit Price ($)", value=50.0, min_value=0.01)
+                VC_c = st.number_input("Variable Cost/unit ($)", value=30.0, min_value=0.0)
+                vol  = st.number_input("Volume to evaluate (units)", value=6000, min_value=0)
+            with c2:
                 margin = P_c - VC_c
                 if margin > 0:
-                    bep_u  = FC_c / margin
-                    bep_r  = bep_u * P_c
-                    st.metric("BEP (units)", f"{bep_u:,.0f}")
-                    st.metric("BEP (revenue)", f"${bep_r:,.0f}")
-                    st.metric("Contribution Margin", f"${margin:.2f}/unit")
-                    st.latex(rf"BEP = \frac{{{FC_c}}}{{{P_c}-{VC_c}}} = {bep_u:,.0f}")
+                    bep_u = FC_c / margin
+                    bep_r = bep_u * P_c
+                    profit_at_vol = (P_c - VC_c) * vol - FC_c
+                    display_metric_card(f"{bep_u:,.0f} units", "BEP (units)", "highlight")
+                    display_metric_card(f"${bep_r:,.0f}", "BEP (revenue)", "normal")
+                    display_metric_card(f"${margin:.2f}/unit", "Contribution Margin", "normal")
+                    display_metric_card(
+                        f"${profit_at_vol:,.0f}",
+                        f"Profit at {vol:,} units",
+                        "success" if profit_at_vol >= 0 else "danger"
+                    )
                 else:
                     st.error("Price must exceed variable cost.")
 
         elif calc_choice == "Learning Curve":
-            col1, col2 = st.columns(2)
-            with col1:
-                t1  = st.number_input("Time for Unit 1 (hrs)", value=100.0)
-                lc  = st.selectbox("Learning Rate", ["70%", "75%", "80%", "85%", "90%"])
+            c1, c2 = st.columns(2)
+            with c1:
+                t1   = st.number_input("Time for Unit 1 (hrs)", value=100.0, min_value=0.1)
+                lc   = st.selectbox("Learning Rate", ["70%", "75%", "80%", "85%", "90%"])
                 lc_v = float(lc.strip("%")) / 100
-                n_u  = st.number_input("Unit Number N", value=4, min_value=1)
-            with col2:
+                n_u  = st.number_input("Unit Number N", value=8, min_value=1)
+            with c2:
                 b    = math.log(lc_v) / math.log(2)
                 yn   = t1 * (n_u ** b)
-                st.metric(f"Cum Avg Time at Unit {n_u}", f"{yn:.2f} hrs")
-                st.metric("Learning Index (b)", f"{b:.4f}")
-                st.metric(f"Total Time (1 to {n_u})", f"{yn * n_u:.2f} hrs")
-                st.latex(rf"Y_{{{n_u}}} = {t1} \times {n_u}^{{{b:.3f}}} = {yn:.2f}")
+                display_metric_card(f"{yn:.2f} hrs", f"Cum Avg Time at Unit {n_u}", "highlight")
+                display_metric_card(f"{yn * n_u:.2f} hrs", f"Total Time (1 to {n_u})", "normal")
+                display_metric_card(f"{b:.4f}", "Learning Index (b)", "normal")
+                if n_u > 1:
+                    yn_prev  = t1 * ((n_u - 1) ** b) * (n_u - 1)
+                    unit_n_t = yn * n_u - yn_prev
+                    display_metric_card(f"{unit_n_t:.2f} hrs", f"Unit {n_u} alone", "normal")
+            st.latex(rf"Y_{{{n_u}}} = {t1} \times {n_u}^{{{b:.3f}}} = {yn:.2f} \text{{ hrs}}")
 
         elif calc_choice == "DPMO":
-            col1, col2 = st.columns(2)
-            with col1:
-                defects  = st.number_input("Total Defects", value=33)
-                units    = st.number_input("Total Units", value=2000)
-                opp      = st.number_input("Opportunities per Unit", value=5, min_value=1)
-            with col2:
-                dpmo = (defects / (units * opp)) * 1_000_000 if units * opp > 0 else 0
-                sigma_level = 0.8406 + math.sqrt(29.37 - 2.221 * math.log(dpmo)) \
-                              if 0 < dpmo < 1_000_000 else 0
-                st.metric("DPMO", f"{dpmo:,.1f}")
-                st.metric("Approx Sigma Level", f"{sigma_level:.2f}σ" if dpmo > 0 else "—")
-                st.latex(rf"DPMO = \frac{{{defects}}}{{{units} \times {opp}}} "
-                         rf"\times 10^6 = {dpmo:,.1f}")
+            c1, c2 = st.columns(2)
+            with c1:
+                defects_i = st.number_input("Total Defects", value=33, min_value=0)
+                units_i   = st.number_input("Total Units", value=2000, min_value=1)
+                opp_i     = st.number_input("Opportunities per Unit", value=5, min_value=1)
+            with c2:
+                dpmo = (defects_i / (units_i * opp_i)) * 1_000_000 if units_i * opp_i > 0 else 0
+                if 0 < dpmo < 1_000_000:
+                    sl = 0.8406 + math.sqrt(max(0, 29.37 - 2.221 * math.log(dpmo)))
+                    yld = (1 - defects_i / (units_i * opp_i)) * 100
+                else:
+                    sl, yld = 0.0, 100.0
+                display_metric_card(f"{dpmo:,.1f}", "DPMO", "danger" if dpmo > 6210 else "success")
+                display_metric_card(f"{sl:.2f}σ",   "Approx Sigma Level", "success" if sl >= 4 else "warning")
+                display_metric_card(f"{yld:.4f}%",  "Process Yield", "normal")
+            st.latex(rf"DPMO = \frac{{{defects_i}}}{{{units_i} \times {opp_i}}} \times 10^6 = {dpmo:,.1f}")
+
+        elif calc_choice == "Safety Stock & ROP":
+            c1, c2 = st.columns(2)
+            with c1:
+                d_bar    = st.number_input("Avg Daily Demand (d̄)", value=40.0, min_value=0.0)
+                sigma_d  = st.number_input("Std Dev of Daily Demand (σ_d)", value=8.0, min_value=0.0)
+                lt       = st.number_input("Lead Time (days)", value=9, min_value=1)
+                sl_pct   = st.selectbox("Service Level",
+                                        ["90% (z=1.28)", "95% (z=1.65)", "98% (z=2.05)", "99% (z=2.33)"])
+                z_sl     = {"90% (z=1.28)": 1.28, "95% (z=1.65)": 1.65,
+                            "98% (z=2.05)": 2.05, "99% (z=2.33)": 2.33}[sl_pct]
+            with c2:
+                ss  = safety_stock_units(z_sl, sigma_d, lt)
+                rop = reorder_point(d_bar, lt, ss)
+                display_metric_card(f"{ss:.1f} units",  "Safety Stock (SS)", "highlight")
+                display_metric_card(f"{rop:.1f} units", "Reorder Point (ROP)", "normal")
+                display_metric_card(f"{d_bar * lt:.1f} units", "Avg Demand over LT", "normal")
+            st.latex(
+                rf"SS = {z_sl} \times {sigma_d} \times \sqrt{{{lt}}} = {ss:.1f}, "
+                rf"\quad ROP = {d_bar} \times {lt} + {ss:.1f} = {rop:.1f}"
+            )
+
+        elif calc_choice == "Newsvendor":
+            c1, c2 = st.columns(2)
+            with c1:
+                price_nv = st.number_input("Selling Price ($)", value=120.0)
+                cost_nv  = st.number_input("Unit Cost ($)", value=80.0)
+                salv_nv  = st.number_input("Salvage Value ($)", value=30.0)
+                mu_nv    = st.number_input("Mean Demand (μ)", value=500.0)
+                sig_nv   = st.number_input("Std Dev Demand (σ)", value=60.0)
+            with c2:
+                cu_nv  = price_nv - cost_nv
+                co_nv  = cost_nv - salv_nv
+                cr_nv  = cu_nv / (cu_nv + co_nv) if (cu_nv + co_nv) > 0 else 0
+                z_nv   = normal_ppf(cr_nv)
+                q_star = mu_nv + z_nv * sig_nv
+                display_metric_card(f"${cu_nv:.2f}", "Underage Cost (Cu)", "normal")
+                display_metric_card(f"${co_nv:.2f}", "Overage Cost (Co)",  "normal")
+                display_metric_card(f"{cr_nv:.4f}",  "Critical Ratio",     "normal")
+                display_metric_card(f"{z_nv:.3f}",   "Z-value",            "normal")
+                display_metric_card(f"{q_star:.0f} units", "Q* (Optimal Order)", "highlight")
+            st.latex(
+                rf"Q^* = \mu + z \cdot \sigma = {mu_nv:.0f} + ({z_nv:.3f}) \times {sig_nv:.0f} = {q_star:.0f}"
+            )
+
+        elif calc_choice == "PERT":
+            c1, c2 = st.columns(2)
+            with c1:
+                a_pert = st.number_input("Optimistic (a)", value=3.0)
+                m_pert = st.number_input("Most Likely (m)", value=5.0)
+                b_pert = st.number_input("Pessimistic (b)", value=9.0)
+                deadline = st.number_input("Project Deadline (weeks)", value=45.0)
+                path_var = st.number_input("Sum of Path Variances (Σσ²)", value=9.0,
+                                           help="Sum of variances of critical path activities")
+            with c2:
+                te  = pert_te(a_pert, m_pert, b_pert)
+                var = pert_variance(a_pert, b_pert)
+                sig = pert_sigma(a_pert, b_pert)
+                display_metric_card(f"{te:.2f} weeks", "Expected Time (t_e)", "highlight")
+                display_metric_card(f"{var:.4f} wk²",  "Activity Variance (σ²)", "normal")
+                display_metric_card(f"{sig:.4f} wks",  "Activity Std Dev (σ)", "normal")
+                if path_var > 0:
+                    path_sig = math.sqrt(path_var)
+                    z_dead   = (deadline - te) / path_sig
+                    prob     = normal_cdf(z_dead)
+                    display_metric_card(f"{prob:.2%}", f"P(done by wk {deadline:.0f})", "success")
+            st.latex(
+                rf"t_e = \frac{{a+4m+b}}{{6}} = \frac{{{a_pert:.0f}+4({m_pert:.0f})+{b_pert:.0f}}}{{6}} = {te:.2f}"
+            )
+
+    # ─────────────────────────────────────────────────────────
+    with tab3:
+        st.markdown("### 📊 Formula Cheat Sheet")
+
+        cheat_cols = st.columns(2)
+        sections = [
+            ("📦 Inventory", [
+                ("EOQ",           r"Q^* = \sqrt{\frac{2DS}{H}}"),
+                ("TC at EOQ",     r"TC = \frac{Q}{2}H + \frac{D}{Q}S"),
+                ("ROP",           r"ROP = \bar{d} \cdot LT + SS"),
+                ("Safety Stock",  r"SS = z \cdot \sigma_d \cdot \sqrt{LT}"),
+                ("Newsvendor CR", r"CR = \frac{C_u}{C_u + C_o}"),
+            ]),
+            ("📈 Forecasting", [
+                ("Exp. Smoothing", r"F_{t+1} = \alpha A_t + (1-\alpha)F_t"),
+                ("MAD",            r"MAD = \frac{\sum|A_t - F_t|}{n}"),
+                ("MSE",            r"MSE = \frac{\sum(A_t-F_t)^2}{n}"),
+                ("MAPE",           r"MAPE = \frac{1}{n}\sum\left|\frac{A_t-F_t}{A_t}\right|\times100"),
+            ]),
+            ("🔗 Project", [
+                ("PERT t_e",       r"t_e = \frac{a+4m+b}{6}"),
+                ("PERT σ²",        r"\sigma^2 = \left(\frac{b-a}{6}\right)^2"),
+                ("P(complete)",    r"Z = \frac{T_D - \mu_{path}}{\sigma_{path}}"),
+                ("Crash $/day",    r"\frac{CC - NC}{NT - CT}"),
+            ]),
+            ("👥 Queuing", [
+                ("Utilization",    r"\rho = \frac{\lambda}{\mu}"),
+                ("Lq (M/M/1)",     r"L_q = \frac{\rho^2}{1-\rho}"),
+                ("Little's Law",   r"L = \lambda W"),
+                ("Wq",             r"W_q = \frac{L_q}{\lambda}"),
+            ]),
+            ("📉 Learning Curve", [
+                ("Cum Avg",        r"Y_n = Y_1 \cdot n^b"),
+                ("Learning Index", r"b = \frac{\ln(r)}{\ln(2)}"),
+            ]),
+            ("⚖️ Cost / Break-Even", [
+                ("BEP Units",      r"BEP = \frac{FC}{P - VC}"),
+                ("Indiff. Point",  r"Q^* = \frac{FC_2 - FC_1}{VC_1 - VC_2}"),
+                ("EMV",            r"EMV = P \times \text{Impact}"),
+            ]),
+        ]
+
+        for i, (section_title, formulas) in enumerate(sections):
+            with cheat_cols[i % 2]:
+                st.markdown(f"#### {section_title}")
+                for name, formula in formulas:
+                    display_formula_card(name, formula)
+                                             
 # ============================================================
 # MODULE REGISTRY
 # ============================================================
-# Single source of truth for all modules.
-# Keys match session-state routing and module_functions dict.
+# Tuple schema:
+#   (key, display_name, icon, chapter_tag, chapter_label, is_new, tags, est_min)
+#   tags     – list of searchable keywords beyond name/key/chapter
+#   est_min  – estimated completion time in minutes (0 = quick reference)
 MODULE_REGISTRY = [
-    # (key, display_name, icon, chapter_tag, chapter_label, is_new)
-    ("risk",         "SC Risk Assessment",     "🛡️",  "ch1",  "Ch 1 · Strategy & Risk",        False),
-    ("pert",         "PERT Network",           "🔗",  "ch4",  "Ch 4 · Project Management",     False),
-    ("crashing",     "Project Crashing",       "⚡",  "ch4",  "Ch 4 · Project Management",     False),
-    ("breakeven",    "Break-Even Analysis",    "📈",  "ch5",  "Ch 5 · Capacity Planning",      False),
-    ("decision",     "Decision Trees",         "🌳",  "ch5",  "Ch 5 · Capacity Planning",      False),
-    ("learning",     "Learning Curves",        "📉",  "ch6",  "Ch 6 · Learning Curves",        False),
-    ("decoupling",   "Decoupling Point",       "🔀",  "ch7",  "Ch 7 · Manufacturing",          False),
-    ("linebalance",  "Line Balancing",         "⚖️",  "ch8",  "Ch 8 · Layout",                 False),
-    ("service",      "Service Design",         "🎯",  "ch9",  "Ch 9 · Service Design",         False),
-    ("pokayoke",     "Poka-yoke DB",           "🛡️",  "ch9",  "Ch 9 · Service Design",         True),
-    ("queuing",      "Queuing Theory",         "👥",  "ch10", "Ch 10 · Queuing",               False),
-    ("distributions","Distributions",          "📐",  "ch10", "Ch 10 · Queuing",               False),
-    ("littles",      "Little's Law",           "🔄",  "ch11", "Ch 11 · Process Analysis",      False),
-    ("dpmo",         "DPMO & DMAIC",           "🎯",  "ch12", "Ch 12 · Six Sigma",             False),
-    ("fmea",         "FMEA Risk",              "⚠️",  "ch12", "Ch 12 · Six Sigma",             False),
-    ("sqc",          "p & c Charts",           "📉",  "ch13", "Ch 13 · Quality Control",       False),
-    ("capability",   "Process Capability",     "🎯",  "ch13", "Ch 13 · Quality Control",       False),
-    ("sampling",     "Acceptance Sampling",    "📊",  "ch13", "Ch 13 · Quality Control",       False),
-    ("pareto",       "Pareto Analysis",        "📊",  "ch13", "Ch 13 · Quality Control",       False),
-    ("fishbone",     "Fishbone Diagram",       "🐟",  "ch13", "Ch 13 · Quality Control",       False),
-    ("sqc_practice", "SQC Practice",           "🎓",  "ch13", "Ch 13 · Quality Control",       True),
-    ("lean",         "Lean Supply Chains",     "🔄",  "ch14", "Ch 14 · Lean",                  False),
-    ("centroid",     "Centroid Method",        "📍",  "ch15", "Ch 15 · Logistics",             False),
-    ("factor",       "Factor Rating",          "⚖️",  "ch15", "Ch 15 · Logistics",             False),
-    ("transportation","Transportation",        "🚚",  "ch15", "Ch 15 · Logistics",             False),
-    ("sourcing",     "Global Sourcing",        "🌐",  "ch16", "Ch 16 · Sourcing",              False),
-    ("forecast",     "Enhanced Forecast",      "📈",  "ch18", "Ch 18 · Forecasting",           False),
-    ("regression",   "Regression+",            "📈",  "ch18", "Ch 18 · Forecasting",           False),
-    ("aggregate",    "Aggregate Planning",     "📋",  "ch19", "Ch 19 · Aggregate Planning",    False),
-    ("eoq",          "EOQ Model",              "📦",  "ch20", "Ch 20 · Inventory",             False),
-    ("safetystock",  "Safety Stock",           "🛡️",  "ch20", "Ch 20 · Inventory",             False),
-    ("newsvendor",   "Newsvendor Model",       "📰",  "ch20", "Ch 20 · Inventory",             False),
-    ("mrp",          "MRP Matrix",             "🏭",  "ch21", "Ch 21 · MRP",                   False),
-    ("mrp_lotsizing","MRP Lot Sizing",         "📦",  "ch21", "Ch 21 · MRP",                   True),
-    ("scheduling",   "Job Scheduling",         "📅",  "ch22", "Ch 22 · Scheduling",            False),
-    ("practice",     "Practice Problems",      "🎓",  "exam", "Exam Prep",                     False),
+    # key              name                      icon  ch_tag  chapter_label                         new   tags                                          min
+    ("risk",          "SC Risk Assessment",      "🛡️", "ch1",  "Ch 1 · Strategy & Risk",             False, ["risk","supply chain","strategy","swot"],     8),
+    ("pert",          "PERT Network",            "🔗", "ch4",  "Ch 4 · Project Management",          False, ["pert","network","critical path","cpm","time"], 12),
+    ("crashing",      "Project Crashing",        "⚡", "ch4",  "Ch 4 · Project Management",          False, ["crashing","cost","project","compress"],        10),
+    ("breakeven",     "Break-Even Analysis",     "📈", "ch5",  "Ch 5 · Capacity Planning",           False, ["breakeven","fixed cost","contribution"],       8),
+    ("decision",      "Decision Trees",          "🌳", "ch5",  "Ch 5 · Capacity Planning",           False, ["decision tree","emv","expected value","risk"],  10),
+    ("learning",      "Learning Curves",         "📉", "ch6",  "Ch 6 · Learning Curves",             False, ["learning curve","improvement","wright"],        8),
+    ("decoupling",    "Decoupling Point",        "🔀", "ch7",  "Ch 7 · Manufacturing",               False, ["decoupling","push pull","inventory","flow"],    7),
+    ("linebalance",   "Line Balancing",          "⚖️", "ch8",  "Ch 8 · Layout",                      False, ["line balancing","takt","cycle time","layout"],  10),
+    ("service",       "Service Design",          "🎯", "ch9",  "Ch 9 · Service Design",              False, ["service","blueprint","design","customer"],      8),
+    ("pokayoke",      "Poka-yoke DB",            "🛡️", "ch9",  "Ch 9 · Service Design",              True,  ["poka yoke","mistake proof","error"],           5),
+    ("queuing",       "Queuing Theory",          "👥", "ch10", "Ch 10 · Queuing",                    False, ["queue","waiting","mm1","server","utilization"], 12),
+    ("distributions", "Distributions",          "📐", "ch10", "Ch 10 · Queuing",                    False, ["normal","poisson","binomial","distribution"],   8),
+    ("littles",       "Little's Law",            "🔄", "ch11", "Ch 11 · Process Analysis",           False, ["little","throughput","wip","flow time"],        6),
+    ("dpmo",          "DPMO & DMAIC",            "🎯", "ch12", "Ch 12 · Six Sigma",                  False, ["dpmo","dmaic","defects","six sigma","sigma"],   10),
+    ("fmea",          "FMEA Risk",               "⚠️", "ch12", "Ch 12 · Six Sigma",                  False, ["fmea","failure mode","rpn","severity"],         10),
+    ("sqc",           "p & c Charts",            "📉", "ch13", "Ch 13 · Quality Control",            False, ["p chart","c chart","control","attribute"],      12),
+    ("capability",    "Process Capability",      "🎯", "ch13", "Ch 13 · Quality Control",            False, ["cpk","cp","capability","sigma","process"],      8),
+    ("sampling",      "Acceptance Sampling",     "📊", "ch13", "Ch 13 · Quality Control",            False, ["sampling","aql","oc curve","lot"],              8),
+    ("pareto",        "Pareto Analysis",         "📊", "ch13", "Ch 13 · Quality Control",            False, ["pareto","80/20","defect","priority"],           6),
+    ("fishbone",      "Fishbone Diagram",        "🐟", "ch13", "Ch 13 · Quality Control",            False, ["fishbone","ishikawa","cause effect","root"],    6),
+    ("sqc_practice",  "SQC Practice",            "🎓", "ch13", "Ch 13 · Quality Control",            True,  ["practice","quiz","sqc","control chart"],        15),
+    ("lean",          "Lean Supply Chains",      "🔄", "ch14", "Ch 14 · Lean",                       False, ["lean","waste","kanban","jit","5s","value"],     10),
+    ("centroid",      "Centroid Method",         "📍", "ch15", "Ch 15 · Logistics",                  False, ["centroid","location","facility","coordinates"], 8),
+    ("factor",        "Factor Rating",           "⚖️", "ch15", "Ch 15 · Logistics",                  False, ["factor rating","location","weight","score"],    8),
+    ("transportation","Transportation",          "🚚", "ch15", "Ch 15 · Logistics",                  False, ["transportation","shipping","lp","network"],     10),
+    ("sourcing",      "Global Sourcing",         "🌐", "ch16", "Ch 16 · Sourcing",                   False, ["sourcing","global","supplier","tco","cost"],    8),
+    ("forecast",      "Enhanced Forecast",       "📈", "ch18", "Ch 18 · Forecasting",                False, ["forecast","moving average","exponential","mad"],12),
+    ("regression",    "Regression+",             "📈", "ch18", "Ch 18 · Forecasting",                False, ["regression","trend","r squared","linear"],     10),
+    ("aggregate",     "Aggregate Planning",      "📋", "ch19", "Ch 19 · Aggregate Planning",         False, ["aggregate","chase","level","workforce"],        10),
+    ("eoq",           "EOQ Model",               "📦", "ch20", "Ch 20 · Inventory",                  False, ["eoq","order quantity","holding","setup cost"],  10),
+    ("safetystock",   "Safety Stock",            "🛡️", "ch20", "Ch 20 · Inventory",                  False, ["safety stock","reorder","lead time","service"], 8),
+    ("newsvendor",    "Newsvendor Model",        "📰", "ch20", "Ch 20 · Inventory",                  False, ["newsvendor","single period","overage","cu"],    8),
+    ("mrp",           "MRP Matrix",              "🏭", "ch21", "Ch 21 · MRP",                        False, ["mrp","material requirements","bom","lot size"], 12),
+    ("mrp_lotsizing", "MRP Lot Sizing",          "📦", "ch21", "Ch 21 · MRP",                        True,  ["lot sizing","eoq","mrp","l4l","pod"],           10),
+    ("scheduling",    "Job Scheduling",          "📅", "ch22", "Ch 22 · Scheduling",                 False, ["scheduling","spт","johnson","makespan","jobs"], 10),
+    ("practice",      "Practice Problems",       "🎓", "exam", "Exam Prep",                          False, ["practice","exam","quiz","review","all topics"], 20),
 ]
 
-# Build lookup tables from registry
-_KEY_TO_META   = {r[0]: r for r in MODULE_REGISTRY}
-_CHAPTER_ORDER = list(dict.fromkeys(r[4] for r in MODULE_REGISTRY))
+# ── Fast lookup structures ────────────────────────────────
+_KEY_TO_META    = {r[0]: r for r in MODULE_REGISTRY}
+_CHAPTER_ORDER  = list(dict.fromkeys(r[4] for r in MODULE_REGISTRY))
+_ALL_TAGS       = sorted({tag for r in MODULE_REGISTRY for tag in r[6]})
 
 
-def _get_chapter_modules():
-    """Return OrderedDict: chapter_label → list of (key, name, icon, is_new)."""
+def _get_chapter_modules() -> dict:
+    """Return OrderedDict: chapter_label → list of (key, name, icon, is_new, est_min)."""
     chapters = {}
-    for key, name, icon, _, ch_label, is_new in MODULE_REGISTRY:
-        chapters.setdefault(ch_label, []).append((key, name, icon, is_new))
+    for key, name, icon, _, ch_label, is_new, _, est_min in MODULE_REGISTRY:
+        chapters.setdefault(ch_label, []).append((key, name, icon, is_new, est_min))
     return chapters
 
 
-def _get_module_meta(key):
-    """Return (key, name, icon, chapter_tag, chapter_label, is_new) or None."""
+def _get_module_meta(key: str):
+    """Return full registry tuple or None."""
     return _KEY_TO_META.get(key)
+
+
+def _get_chapter_progress(visited: set) -> dict:
+    """
+    Returns {chapter_label: (visited_count, total_count)} for progress rings.
+    """
+    chapters = _get_chapter_modules()
+    return {
+        ch: (sum(1 for k, *_ in mods if k in visited), len(mods))
+        for ch, mods in chapters.items()
+    }
+
+
+# ── Session state defaults ────────────────────────────────
+def init_session_state():
+    """Initialize all required session-state keys once."""
+    defaults = {
+        "dark_mode":        False,
+        "problems_solved":  0,
+        "correct_streak":   0,
+        "best_streak":      0,
+        "modules_visited":  set(),
+        "recent_modules":   [],
+        "bookmarks":        set(),
+        "last_module":      None,
+        "selected_module":  None,
+    }
+    for key, val in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = val
+
+init_session_state()
 
 
 # ============================================================
 # WELCOME SCREEN
 # ============================================================
 def _render_welcome():
-    """Full-page welcome shown on first load."""
+    """Full-page welcome shown when no module is selected."""
     p = _get_palette()
 
+    # ── Hero banner ──────────────────────────────────────────
     st.markdown(f"""
     <div style="
         background: {p['metric_grad_hi']};
@@ -9875,73 +11115,145 @@ def _render_welcome():
     </div>
     """, unsafe_allow_html=True)
 
-    # Stats row
-    total_mods    = len(MODULE_REGISTRY)
-    new_mods      = sum(1 for r in MODULE_REGISTRY if r[5])
+    # ── Stats row ────────────────────────────────────────────
+    total_mods     = len(MODULE_REGISTRY)
+    new_mods       = sum(1 for r in MODULE_REGISTRY if r[5])
     total_chapters = len(_CHAPTER_ORDER)
+    total_mins     = sum(r[7] for r in MODULE_REGISTRY)
+    visited_count  = len(st.session_state.modules_visited)
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1: display_metric_card(str(total_mods),    "Total Modules",    "highlight")
-    with c2: display_metric_card("75+",              "Formulas",         "normal")
-    with c3: display_metric_card(str(total_chapters),"Chapters Covered", "normal")
-    with c4: display_metric_card(str(new_mods),      "New This Version", "success")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1: display_metric_card(str(total_mods),         "Total Modules",       "highlight")
+    with c2: display_metric_card("75+",                   "Formulas",            "normal")
+    with c3: display_metric_card(str(total_chapters),     "Chapters Covered",    "normal")
+    with c4: display_metric_card(str(new_mods),           "New This Version",    "success")
+    with c5: display_metric_card(f"~{total_mins//60}h",   "Est. Study Time",     "normal")
+
+    # ── Personal progress (only show if user has started) ────
+    if visited_count > 0:
+        st.markdown("<br>", unsafe_allow_html=True)
+        pct = visited_count / total_mods
+        solved  = st.session_state.problems_solved
+        streak  = st.session_state.best_streak
+        st.markdown("### 📈 Your Progress")
+        pc1, pc2, pc3 = st.columns(3)
+        with pc1: display_metric_card(f"{visited_count}/{total_mods}", "Modules Explored", "normal")
+        with pc2: display_metric_card(str(solved),  "Problems Solved",  "normal" if solved < 10 else "success")
+        with pc3: display_metric_card(f"🔥 {streak}", "Best Streak",    "warning" if streak >= 3 else "normal")
+        display_progress_bar(visited_count, total_mods, label="Overall completion", bar_type="accent")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Feature highlights
+    # ── Quick-jump popular modules ────────────────────────────
+    st.markdown("### ⚡ Quick Start")
+    popular_keys = ["eoq", "pert", "queuing", "sqc", "forecast", "breakeven"]
+    qcols = st.columns(len(popular_keys))
+    for i, key in enumerate(popular_keys):
+        meta = _get_module_meta(key)
+        if not meta:
+            continue
+        _, name, icon, _, ch_label, _, _, est = meta
+        with qcols[i]:
+            st.markdown(f"""
+            <div style="
+                background:{p['bg_secondary']};
+                border:1px solid {p['border']};
+                border-radius:10px;
+                padding:0.7rem 0.5rem;
+                text-align:center;
+                font-size:0.82rem;
+                color:{p['text_primary']};
+            ">
+                <div style="font-size:1.5rem;">{icon}</div>
+                <div style="font-weight:700;margin-top:0.3rem;">{name}</div>
+                <div style="font-size:0.72rem;color:{p['text_muted']};margin-top:0.15rem;">
+                    ~{est} min
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Open", key=f"welcome_quick_{key}", use_container_width=True):
+                st.session_state.selected_module = key
+                st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Feature highlights ────────────────────────────────────
     st.markdown("### 🚀 What's Inside")
-    feat_cols = st.columns(3)
     features = [
         ("🔬", "Interactive Simulators",
-         "Adjust parameters in real time and see results update instantly across every module."),
+         "Adjust parameters in real time and see results update instantly."),
         ("📐", "Step-by-Step Solutions",
-         "Every practice problem includes hints, answer checking, and fully worked solutions."),
+         "Hints, auto-grading, and fully worked solutions for every problem."),
         ("📊", "Plotly Visualizations",
-         "Dynamic charts — risk heat maps, S-curves, Gantt-style bars, control charts, and more."),
+         "Dynamic charts — control charts, Gantt bars, heat maps, and more."),
         ("🎓", "Practice Problems",
-         "Graded Easy / Medium / Hard problems with tolerance-based auto-grading."),
+         "Easy / Medium / Hard problems with tolerance-based auto-grading."),
         ("🌙", "Dark / Light Theme",
-         "Toggle between modes at any time — all charts and cards adapt automatically."),
+         "Toggle at any time — charts and cards adapt automatically."),
         ("📖", "Textbook Citations",
-         "Every concept is anchored to Jacobs & Chase (2024) page references."),
+         "Anchored to Jacobs & Chase (2024) with page references."),
     ]
+    feat_cols = st.columns(3)
     for i, (icon, title, desc) in enumerate(features):
         with feat_cols[i % 3]:
             display_concept_card(icon, title, desc)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 📚 Module Map")
 
-    chapters = _get_chapter_modules()
-    ch_cols  = st.columns(3)
-    # Define the HTML badge outside to avoid f-string escaping issues
-    new_badge = "&nbsp;<span style='font-size:0.7rem;background:#16a34a;color:white;border-radius:3px;padding:0 4px;'>NEW</span>"
+    # ── Module map ────────────────────────────────────────────
+    st.markdown("### 📚 Full Module Map")
+    visited    = st.session_state.modules_visited
+    ch_prog    = _get_chapter_progress(visited)
+    chapters   = _get_chapter_modules()
+    ch_cols    = st.columns(3)
+    new_badge  = (
+        "&nbsp;<span style='font-size:0.7rem;background:#16a34a;color:white;"
+        "border-radius:3px;padding:0 4px;'>NEW</span>"
+    )
 
     for idx, (ch_label, mods) in enumerate(chapters.items()):
+        v_count, t_count = ch_prog.get(ch_label, (0, len(mods)))
+        prog_pct = v_count / t_count if t_count else 0
+
         with ch_cols[idx % 3]:
-            # Cleanly insert the badge using an inline if
             items_html = "".join(
-            f"<li style='padding:0.15rem 0;'>{icon} {name}{new_badge if is_new else ''}</li>"
-            for _, name, icon, is_new in mods
-        )
+                f"<li style='padding:0.15rem 0;"
+                f"color:{'#6366f1' if k in visited else 'inherit'};'>"
+                f"{'✓' if k in visited else icon} {name}"
+                f"<span style='font-size:0.7rem;color:{p['text_muted']};'> ~{est}m</span>"
+                f"{new_badge if is_new else ''}</li>"
+                for k, name, icon, is_new, est in mods
+            )
+            progress_bar_html = (
+                f"<div style='background:{p['border_strong']};border-radius:99px;"
+                f"height:4px;margin-top:0.5rem;overflow:hidden;'>"
+                f"<div style='width:{prog_pct*100:.0f}%;height:100%;"
+                f"background:linear-gradient(90deg,#6366f1,#8b5cf6);"
+                f"border-radius:99px;'></div></div>"
+                f"<div style='font-size:0.68rem;color:{p['text_muted']};margin-top:0.2rem;'>"
+                f"{v_count}/{t_count} visited</div>"
+                if v_count > 0 else ""
+            )
             st.markdown(f"""
             <div style="background:{p['bg_secondary']};border:1px solid {p['border']};
                         border-radius:10px;padding:0.9rem 1rem;margin:0.4rem 0;">
                 <div style="font-weight:700;font-size:0.82rem;color:{p['accent']};
                             text-transform:uppercase;letter-spacing:0.04em;
                             margin-bottom:0.5rem;">{ch_label}</div>
-                <ul style="margin:0;padding-left:1.1rem;list-style:none;">
+                <ul style="margin:0;padding-left:1.1rem;list-style:none;
+                           font-size:0.83rem;color:{p['text_primary']};">
                     {items_html}
                 </ul>
+                {progress_bar_html}
             </div>
             """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     display_callout(
-        "Select any module from the sidebar to begin. "
-        "Use the 🔍 search box to jump directly to a topic.",
+        "Select any module from the sidebar or use the Quick Start cards above. "
+        "Use the 🔍 search box to jump directly to any topic.",
         callout_type="tip",
-        title="Getting Started"
+        title="Getting Started",
     )
 
 
@@ -9949,18 +11261,27 @@ def _render_welcome():
 # BREADCRUMB + MODULE TITLE BAR
 # ============================================================
 def _render_breadcrumb(key: str):
-    """Render a slim breadcrumb bar above the module content."""
+    """Slim breadcrumb bar with estimated time and bookmark button."""
     meta = _get_module_meta(key)
     if not meta:
         return
-    _, name, icon, _, ch_label, is_new = meta
+    _, name, icon, _, ch_label, is_new, _, est_min = meta
     p = _get_palette()
+
+    bookmarks = st.session_state.get("bookmarks", set())
+    is_bookmarked = key in bookmarks
 
     new_badge = (
         f'&nbsp;<span style="background:#16a34a;color:white;font-size:0.72rem;'
         f'border-radius:4px;padding:0.1rem 0.4rem;font-weight:700;">NEW</span>'
         if is_new else ""
     )
+    est_html = (
+        f'<span style="margin-left:auto;font-size:0.75rem;color:{p["text_muted"]};">'
+        f'⏱ ~{est_min} min</span>'
+        if est_min else ""
+    )
+
     st.markdown(f"""
     <div style="
         display:flex; align-items:center; gap:0.5rem;
@@ -9972,13 +11293,26 @@ def _render_breadcrumb(key: str):
         font-size:0.82rem;
         color:{p['text_secondary']};
     ">
-        <span>📊 OSCM Simulator</span>
+        <span>📊 OSCM</span>
         <span style="color:{p['border_strong']};">›</span>
-        <span style="color:{p['text_secondary']};">{ch_label}</span>
+        <span>{ch_label}</span>
         <span style="color:{p['border_strong']};">›</span>
         <span style="color:{p['accent']};font-weight:700;">{icon} {name}{new_badge}</span>
+        {est_html}
     </div>
     """, unsafe_allow_html=True)
+
+    # Bookmark toggle rendered as a native button alongside breadcrumb
+    bc1, bc2 = st.columns([10, 1])
+    with bc2:
+        bm_label = "⭐" if is_bookmarked else "☆"
+        if st.button(bm_label, key=f"bm_{key}", help="Bookmark this module",
+                     use_container_width=True):
+            if is_bookmarked:
+                st.session_state.bookmarks.discard(key)
+            else:
+                st.session_state.bookmarks.add(key)
+            st.rerun()
 
 
 # ============================================================
@@ -9986,39 +11320,66 @@ def _render_breadcrumb(key: str):
 # ============================================================
 def _render_search():
     """
-    Inline search box. Returns the key to jump to, or None.
-    Filters module names case-insensitively.
+    Search box with name, key, chapter, and tag matching.
+    Returns key to jump to, or None.
     """
     query = st.sidebar.text_input(
         "🔍 Search modules",
-        placeholder="e.g. EOQ, PERT, queuing…",
+        placeholder="e.g. EOQ, PERT, queuing, cpk…",
         key="module_search",
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
     if not query or len(query) < 2:
         return None
 
-    q = query.lower()
-    matches = [
-        (key, name, icon)
-        for key, name, icon, _, ch_label, _ in MODULE_REGISTRY
-        if q in name.lower() or q in ch_label.lower() or q in key.lower()
-    ]
+    q = query.lower().strip()
+    matches = []
+    for key, name, icon, _, ch_label, _, tags, _ in MODULE_REGISTRY:
+        score = 0
+        if q == key.lower():          score += 10   # exact key hit
+        if q in name.lower():         score += 5    # name substring
+        if any(q in t for t in tags): score += 3    # tag hit
+        if q in ch_label.lower():     score += 1    # chapter hit
+        if score:
+            matches.append((score, key, name, icon))
+
+    matches.sort(key=lambda x: -x[0])   # best matches first
 
     if not matches:
         st.sidebar.caption("No modules match your search.")
         return None
 
     st.sidebar.caption(f"{len(matches)} result(s):")
-    for key, name, icon in matches[:6]:
+    for _, key, name, icon in matches[:6]:
         if st.sidebar.button(f"{icon} {name}", key=f"search_nav_{key}",
-                              use_container_width=True):
+                             use_container_width=True):
             return key
 
     if len(matches) > 6:
         st.sidebar.caption(f"…and {len(matches)-6} more. Refine your search.")
 
     return None
+
+
+# ============================================================
+# BOOKMARKS PANEL
+# ============================================================
+def _render_bookmarks():
+    """Render bookmarked modules in the sidebar."""
+    bookmarks = st.session_state.get("bookmarks", set())
+    if not bookmarks:
+        return
+
+    with st.sidebar.expander(f"⭐ Bookmarks ({len(bookmarks)})", expanded=False):
+        for key in list(bookmarks):
+            meta = _get_module_meta(key)
+            if not meta:
+                continue
+            _, name, icon, *_ = meta
+            if st.button(f"{icon} {name}", key=f"bm_nav_{key}",
+                         use_container_width=True):
+                st.session_state.selected_module = key
+                st.rerun()
 
 
 # ============================================================
@@ -10033,9 +11394,9 @@ def _push_recent(key: str):
 
 
 def _render_recent():
-    """Render a collapsible 'Recently Visited' section in the sidebar."""
+    """Render Recently Visited in sidebar."""
     recent = st.session_state.get("recent_modules", [])
-    if len(recent) < 2:   # nothing interesting to show yet
+    if len(recent) < 2:
         return
 
     with st.sidebar.expander("🕐 Recently Visited", expanded=False):
@@ -10043,9 +11404,9 @@ def _render_recent():
             meta = _get_module_meta(key)
             if not meta:
                 continue
-            _, name, icon, _, _, _ = meta
+            _, name, icon, *_ = meta
             if st.button(f"{icon} {name}", key=f"recent_{key}",
-                          use_container_width=True):
+                         use_container_width=True):
                 st.session_state.selected_module = key
                 st.rerun()
 
@@ -10054,14 +11415,20 @@ def _render_recent():
 # SIDEBAR STATS PANEL
 # ============================================================
 def _render_stats_panel():
-    """Render the dynamic stats row in the sidebar."""
+    """Dynamic stats card in the sidebar."""
     visited = len(st.session_state.get("modules_visited", set()))
     total   = len(MODULE_REGISTRY)
     solved  = st.session_state.get("problems_solved", 0)
     streak  = st.session_state.get("correct_streak", 0)
+    best    = st.session_state.get("best_streak", 0)
     p       = _get_palette()
 
     pct_visited = visited / total
+    streak_html = (
+        f'<div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;'
+        f'color:#f59e0b;">🔥 {streak}-answer streak! (best: {best})</div>'
+        if streak >= 3 else ""
+    )
 
     st.sidebar.markdown(f"""
     <div style="
@@ -10071,25 +11438,34 @@ def _render_stats_panel():
         padding:0.8rem;
         margin:0.5rem 0;
     ">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;text-align:center;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                    gap:0.4rem;text-align:center;">
             <div>
-                <div style="font-size:1.3rem;font-weight:800;color:{p['accent']};">
+                <div style="font-size:1.2rem;font-weight:800;color:{p['accent']};">
                     {visited}/{total}
                 </div>
-                <div style="font-size:0.72rem;color:{p['text_secondary']};">Modules</div>
+                <div style="font-size:0.68rem;color:{p['text_secondary']};">Modules</div>
             </div>
             <div>
-                <div style="font-size:1.3rem;font-weight:800;color:{p['accent']};">
+                <div style="font-size:1.2rem;font-weight:800;color:{p['accent']};">
                     {solved}
                 </div>
-                <div style="font-size:0.72rem;color:{p['text_secondary']};">Solved</div>
+                <div style="font-size:0.68rem;color:{p['text_secondary']};">Solved</div>
+            </div>
+            <div>
+                <div style="font-size:1.2rem;font-weight:800;
+                    color:{'#f59e0b' if streak >= 3 else p['accent']};">
+                    🔥{streak}
+                </div>
+                <div style="font-size:0.68rem;color:{p['text_secondary']};">Streak</div>
             </div>
         </div>
         <div style="margin-top:0.6rem;">
-            <div style="font-size:0.72rem;color:{p['text_secondary']};margin-bottom:0.25rem;">
+            <div style="font-size:0.7rem;color:{p['text_secondary']};margin-bottom:0.2rem;">
                 Progress: {pct_visited:.0%}
             </div>
-            <div style="background:{p['border']};border-radius:99px;height:6px;overflow:hidden;">
+            <div style="background:{p['border_strong']};border-radius:99px;
+                        height:6px;overflow:hidden;">
                 <div style="
                     width:{pct_visited*100:.1f}%;height:100%;border-radius:99px;
                     background:linear-gradient(90deg,#6366f1,#8b5cf6);
@@ -10097,7 +11473,7 @@ def _render_stats_panel():
                 "></div>
             </div>
         </div>
-        {"" if streak < 3 else f'<div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:#f59e0b;">🔥 {streak}-answer streak!</div>'}
+        {streak_html}
     </div>
     """, unsafe_allow_html=True)
 
@@ -10107,133 +11483,91 @@ def _render_stats_panel():
 # ============================================================
 def _render_chapter_nav():
     """
-    Render the chapter-grouped navigation expanders.
-    Returns the key of the module clicked, or None.
+    Chapter-grouped navigation with per-chapter progress indicators.
+    Returns the key of a clicked module, or None.
     """
     chapters   = _get_chapter_modules()
     current    = st.session_state.get("selected_module", "risk")
     visited    = st.session_state.get("modules_visited", set())
+    bookmarks  = st.session_state.get("bookmarks", set())
+    ch_prog    = _get_chapter_progress(visited)
     p          = _get_palette()
     jump_to    = None
 
     for ch_label, mods in chapters.items():
-        # Auto-expand the chapter containing the current module
         is_active = any(k == current for k, *_ in mods)
+        v_c, t_c  = ch_prog.get(ch_label, (0, len(mods)))
 
-        with st.sidebar.expander(ch_label, expanded=is_active):
-            for key, name, icon, is_new in mods:
-                is_current  = (key == current)
-                was_visited = (key in visited)
+        # Chapter label with inline progress fraction
+        ch_display = (
+            f"{ch_label}  ✓{v_c}/{t_c}"
+            if v_c > 0 else ch_label
+        )
 
-                # Build button label
-                visited_dot = "● " if was_visited and not is_current else "○ "
-                new_tag     = " 🆕" if is_new else ""
-                btn_label   = f"{visited_dot}{icon} {name}{new_tag}"
+        with st.sidebar.expander(ch_display, expanded=is_active):
+            for key, name, icon, is_new, est_min in mods:
+                is_current    = (key == current)
+                was_visited   = (key in visited)
+                is_bookmarked = (key in bookmarks)
 
-                # Highlight current module differently
+                new_tag  = " 🆕" if is_new else ""
+                bm_tag   = " ⭐" if is_bookmarked else ""
+                dot      = "● " if was_visited and not is_current else "○ "
+                est_tag  = f" ({est_min}m)" if est_min else ""
+                btn_label = f"{dot}{icon} {name}{new_tag}{bm_tag}"
+
                 if is_current:
+                    p_ = _get_palette()
                     st.markdown(f"""
                     <div style="
-                        background:{p['accent_soft']};
-                        border:1px solid {p['accent']};
+                        background:{p_['accent_soft']};
+                        border:1px solid {p_['accent']};
                         border-radius:6px;
                         padding:0.35rem 0.6rem;
-                        font-size:0.85rem;
+                        font-size:0.83rem;
                         font-weight:700;
-                        color:{p['accent']};
+                        color:{p_['accent']};
                         margin:0.15rem 0;
-                    ">▶ {icon} {name}{new_tag}</div>
+                    ">▶ {icon} {name}{new_tag}{bm_tag}
+                    <span style="font-size:0.7rem;opacity:0.75;">{est_tag}</span>
+                    </div>
                     """, unsafe_allow_html=True)
                 else:
                     if st.button(btn_label, key=f"nav_{key}",
-                                  use_container_width=True):
+                                 use_container_width=True,
+                                 help=f"~{est_min} min"):
                         jump_to = key
 
     return jump_to
 
 
 # ============================================================
-# MODULE → FUNCTION MAP
-# ============================================================
-def _get_module_functions():
-    """
-    Returns the key→function dispatch table.
-    Defined here so it is built once per run and easy to extend.
-    """
-    return {
-        "risk":          module_risk,
-        "pert":          module_pert,
-        "crashing":      module_crashing,
-        "breakeven":     module_breakeven,
-        "decision":      module_decision,
-        "learning":      module_learning,
-        "decoupling":    module_decoupling,
-        "linebalance":   module_linebalance,
-        "service":       module_service,
-        "pokayoke":      module_pokayoke,
-        "queuing":       module_queuing,
-        "distributions": module_distributions,
-        "littles":       module_littles,
-        "dpmo":          module_dpmo,
-        "fmea":          module_fmea,
-        "sqc":           module_sqc,
-        "capability":    module_capability,
-        "sampling":      module_sampling,
-        "pareto":        module_pareto,
-        "fishbone":      module_fishbone,
-        "sqc_practice":  module_sqc_practice,
-        "lean":          module_lean,
-        "centroid":      module_centroid,
-        "factor":        module_factor,
-        "transportation":module_transportation,
-        "sourcing":      module_sourcing,
-        "forecast":      module_forecast,
-        "regression":    module_regression,
-        "aggregate":     module_aggregate,
-        "eoq":           module_eoq,
-        "safetystock":   module_safetystock,
-        "newsvendor":    module_newsvendor,
-        "mrp":           module_mrp,
-        "mrp_lotsizing": module_mrp_lotsizing,
-        "scheduling":    module_scheduling,
-        "practice":      module_practice,
-    }
-
-
-# ============================================================
-# NEXT / PREV MODULE NAVIGATION (rendered below module content)
+# NEXT / PREV MODULE FOOTER
 # ============================================================
 def _render_module_footer(current_key: str):
-    """
-    Render ← Prev  |  chapter  |  Next → footer below each module.
-    """
-    keys    = [r[0] for r in MODULE_REGISTRY]
-    idx     = keys.index(current_key) if current_key in keys else -1
+    """← Prev | chapter · module index | Next → navigation row."""
+    keys = [r[0] for r in MODULE_REGISTRY]
+    idx  = keys.index(current_key) if current_key in keys else -1
     if idx < 0:
         return
 
-    meta    = _get_module_meta(current_key)
+    meta     = _get_module_meta(current_key)
     ch_label = meta[4] if meta else ""
-    p = _get_palette()
+    p        = _get_palette()
 
-    prev_key = keys[idx - 1] if idx > 0 else None
+    prev_key = keys[idx - 1] if idx > 0          else None
     next_key = keys[idx + 1] if idx < len(keys) - 1 else None
 
     st.markdown(f"""
     <div style="
         border-top:1px solid {p['border']};
-        margin-top:2rem;
-        padding-top:1rem;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        flex-wrap:wrap;
-        gap:0.5rem;
-        font-size:0.85rem;
-        color:{p['text_secondary']};
+        margin-top:2rem; padding-top:1rem;
+        display:flex; justify-content:space-between; align-items:center;
+        flex-wrap:wrap; gap:0.5rem;
+        font-size:0.82rem; color:{p['text_secondary']};
     ">
         <div>{ch_label}</div>
-        <div style="font-size:0.78rem;opacity:0.6;">
+        <div style="font-size:0.76rem;opacity:0.6;">
             Module {idx+1} of {len(keys)}
         </div>
     </div>
@@ -10245,20 +11579,85 @@ def _render_module_footer(current_key: str):
             prev_meta = _get_module_meta(prev_key)
             if prev_meta and st.button(
                 f"← {prev_meta[2]} {prev_meta[1]}",
-                key="footer_prev", use_container_width=True
+                key="footer_prev", use_container_width=True,
             ):
                 st.session_state.selected_module = prev_key
                 st.rerun()
+
+    with nav_cols[1]:
+        # Related modules suggestion (same chapter)
+        if meta:
+            same_ch = [
+                r for r in MODULE_REGISTRY
+                if r[4] == ch_label and r[0] != current_key
+            ]
+            if same_ch:
+                p_ = _get_palette()
+                links = "  ·  ".join(
+                    f"<span style='color:{p_['accent']};cursor:pointer;'>"
+                    f"{r[2]} {r[1]}</span>"
+                    for r in same_ch[:3]
+                )
+                st.markdown(
+                    f"<div style='text-align:center;font-size:0.76rem;"
+                    f"color:{p_['text_muted']};'>Also in this chapter: {links}</div>",
+                    unsafe_allow_html=True,
+                )
 
     with nav_cols[2]:
         if next_key:
             next_meta = _get_module_meta(next_key)
             if next_meta and st.button(
                 f"{next_meta[2]} {next_meta[1]} →",
-                key="footer_next", use_container_width=True
+                key="footer_next", use_container_width=True,
             ):
                 st.session_state.selected_module = next_key
                 st.rerun()
+
+
+# ============================================================
+# MODULE → FUNCTION DISPATCH TABLE
+# ============================================================
+def _get_module_functions() -> dict:
+    """Key → callable dispatch. One place to add new modules."""
+    return {
+        "risk":           module_risk,
+        "pert":           module_pert,
+        "crashing":       module_crashing,
+        "breakeven":      module_breakeven,
+        "decision":       module_decision,
+        "learning":       module_learning,
+        "decoupling":     module_decoupling,
+        "linebalance":    module_linebalance,
+        "service":        module_service,
+        "pokayoke":       module_pokayoke,
+        "queuing":        module_queuing,
+        "distributions":  module_distributions,
+        "littles":        module_littles,
+        "dpmo":           module_dpmo,
+        "fmea":           module_fmea,
+        "sqc":            module_sqc,
+        "capability":     module_capability,
+        "sampling":       module_sampling,
+        "pareto":         module_pareto,
+        "fishbone":       module_fishbone,
+        "sqc_practice":   module_sqc_practice,
+        "lean":           module_lean,
+        "centroid":       module_centroid,
+        "factor":         module_factor,
+        "transportation": module_transportation,
+        "sourcing":       module_sourcing,
+        "forecast":       module_forecast,
+        "regression":     module_regression,
+        "aggregate":      module_aggregate,
+        "eoq":            module_eoq,
+        "safetystock":    module_safetystock,
+        "newsvendor":     module_newsvendor,
+        "mrp":            module_mrp,
+        "mrp_lotsizing":  module_mrp_lotsizing,
+        "scheduling":     module_scheduling,
+        "practice":       module_practice,
+    }
 
 
 # ============================================================
@@ -10266,9 +11665,9 @@ def _render_module_footer(current_key: str):
 # ============================================================
 def main():
     module_functions = _get_module_functions()
-
-    # ── Sidebar ──────────────────────────────────────────────
     p = _get_palette()
+
+    # ── Sidebar header ────────────────────────────────────────
     st.sidebar.markdown(f"""
     <div style="
         text-align:center;
@@ -10277,20 +11676,17 @@ def main():
         margin-bottom:0.5rem;
     ">
         <div style="font-size:2.4rem;">📊</div>
-        <div style="
-            font-weight:800;font-size:1.15rem;
-            color:{p['text_primary']};
-            letter-spacing:-0.01em;
-        ">OSCM Simulator</div>
-        <div style="
-            font-size:0.72rem;
-            color:{p['text_secondary']};
-            margin-top:0.2rem;
-        ">Interactive Learning Edition</div>
+        <div style="font-weight:800;font-size:1.15rem;
+                    color:{p['text_primary']};letter-spacing:-0.01em;">
+            OSCM Simulator
+        </div>
+        <div style="font-size:0.72rem;color:{p['text_secondary']};margin-top:0.2rem;">
+            Interactive Learning Edition
+        </div>
         <div style="margin-top:0.5rem;">
             <span style="
                 background:{p['accent_soft']};
-                color:{p['accent']};
+                color:{p['accent_hover']};
                 border:1px solid {p['accent']};
                 border-radius:20px;
                 padding:0.18rem 0.65rem;
@@ -10301,26 +11697,28 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # Theme toggle
+    # ── Theme toggle ──────────────────────────────────────────
     render_theme_toggle()
 
-    # Stats panel
+    # ── Stats panel ───────────────────────────────────────────
     _render_stats_panel()
-
     st.sidebar.markdown("---")
 
-    # Search
+    # ── Search ────────────────────────────────────────────────
     search_jump = _render_search()
     if search_jump:
         st.session_state.selected_module = search_jump
         st.rerun()
 
-    # Recently visited
+    # ── Bookmarks ─────────────────────────────────────────────
+    _render_bookmarks()
+
+    # ── Recently visited ──────────────────────────────────────
     _render_recent()
 
     st.sidebar.markdown("---")
 
-    # Chapter navigation
+    # ── Chapter navigation ────────────────────────────────────
     nav_jump = _render_chapter_nav()
     if nav_jump:
         st.session_state.selected_module = nav_jump
@@ -10332,21 +11730,19 @@ def main():
         "17th ed. McGraw-Hill."
     )
 
-    # ── Main panel ───────────────────────────────────────────
-    # Initialise selected module
-    if "selected_module" not in st.session_state:
-        st.session_state.selected_module = None   # None = show welcome
-
+    # ── Main panel ────────────────────────────────────────────
     selected = st.session_state.selected_module
 
-    # Track visits
     if selected:
         visited = st.session_state.get("modules_visited", set())
         visited.add(selected)
         st.session_state.modules_visited = visited
         _push_recent(selected)
+        # Update best streak
+        if st.session_state.correct_streak > st.session_state.best_streak:
+            st.session_state.best_streak = st.session_state.correct_streak
 
-    # Dispatch
+    # ── Dispatch ──────────────────────────────────────────────
     if selected is None:
         _render_welcome()
     elif selected in module_functions:
@@ -10354,9 +11750,13 @@ def main():
         module_functions[selected]()
         _render_module_footer(selected)
     else:
-        st.error(f"Module `{selected}` not found. Returning to welcome screen.")
-        st.session_state.selected_module = None
-        st.rerun()
+        st.error(
+            f"Module `{selected}` not found. Please select a module from the sidebar.",
+            icon="🚨",
+        )
+        if st.button("← Return to Welcome", key="error_home"):
+            st.session_state.selected_module = None
+            st.rerun()
 
 
 if __name__ == "__main__":
