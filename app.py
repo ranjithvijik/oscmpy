@@ -1,4 +1,5 @@
-# ===========================================================# IMPORTS & COMPATIBILITY PATCHES
+# ============================================================
+# IMPORTS & COMPATIBILITY PATCHES
 # ============================================================
 import math
 import sys
@@ -24,19 +25,21 @@ try:
     import plotly.figure_factory as ff
     _HAS_FF = True
 except ImportError:
+    ff = None
     _HAS_FF = False
 
 try:
     from scipy.optimize import linprog
     _HAS_LINPROG = True
 except ImportError:
+    linprog = None
     _HAS_LINPROG = False
 
 try:
     from scipy.special import factorial
     _HAS_FACTORIAL = True
 except ImportError:
-    from math import factorial as _factorial
+    from math import factorial
     _HAS_FACTORIAL = False
 
 # ── Pandas Styler patch (.applymap removed in pandas ≥ 2.2) ──
@@ -49,11 +52,27 @@ except (ImportError, AttributeError):
 
 # ── NumPy legacy scalar alias patch (removed in NumPy ≥ 2.0) ─
 for _alias, _builtin in {
-    "bool": bool, "int": int, "float": float,
-    "complex": complex, "object": object, "str": str,
+    "bool":    bool,
+    "int":     int,
+    "float":   float,
+    "complex": complex,
+    "object":  object,
+    "str":     str,
 }.items():
     if not hasattr(np, _alias):
         setattr(np, _alias, _builtin)
+
+# ── Runtime version dict (MUST be defined before init_session_state) ──
+_VERSIONS: dict = {
+    "python":    sys.version.split()[0],
+    "streamlit": st.__version__,
+    "pandas":    pd.__version__,
+    "numpy":     np.__version__,
+    "scipy":     scipy.__version__,
+    "plotly":    px.__version__,
+}
+logging.info("OSCM runtime: %s", _VERSIONS)
+
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -70,9 +89,13 @@ st.set_page_config(
             "📊 **OSCM Interactive Simulator**\n\n"
             "Based on Jacobs & Chase — *Operations and Supply Chain Management*, "
             "17th ed. (McGraw-Hill, 2024).\n\n"
+            f"Python {_VERSIONS['python']} · "
+            f"Streamlit {_VERSIONS['streamlit']} · "
+            f"Pandas {_VERSIONS['pandas']}"
         ),
     },
 )
+
 
 # ============================================================
 # SESSION STATE INITIALIZER
@@ -80,15 +103,16 @@ st.set_page_config(
 def init_session_state():
     """
     Initialize all session-state keys exactly once per session.
-    Grouped by concern so new keys are easy to find and add.
+    FIX: _VERSIONS is now defined above at module level before this
+    function is called, so 'runtime_versions' populates correctly.
     """
     defaults = {
         # ── Navigation ────────────────────────────────────────
-        "selected_module":  None,       # None = show welcome screen
+        "selected_module":  None,
         "last_module":      None,
-        "recent_modules":   [],         # list[str], max 5
-        "modules_visited":  set(),      # set[str]
-        "bookmarks":        set(),      # set[str]
+        "recent_modules":   [],
+        "modules_visited":  set(),
+        "bookmarks":        set(),
 
         # ── Theme ─────────────────────────────────────────────
         "dark_mode":        False,
@@ -98,26 +122,23 @@ def init_session_state():
         "correct_streak":   0,
         "best_streak":      0,
 
-        # ── Quiz state (per-module, cleared on navigation) ────
+        # ── Quiz state ────────────────────────────────────────
         "sqc_quiz_score":   0,
         "sqc_quiz_total":   0,
         "sqc_quiz_streak":  0,
 
         # ── Diagnostics ───────────────────────────────────────
         "app_load_count":   0,
-        "runtime_versions": _VERSIONS,
+        "runtime_versions": _VERSIONS,   # safe — _VERSIONS defined above
     }
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
 
-    # Increment load counter each hard rerun
     st.session_state.app_load_count += 1
 
 
 init_session_state()
-
-
 # ============================================================
 # THEME MANAGEMENT
 # ============================================================
