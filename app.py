@@ -73,14 +73,13 @@ def init_session_state():
         "sqc_quiz_streak":  0,
 
         # ── Diagnostics ───────────────────────────────────────
-        "app_load_count":   0
+        "app_load_count":   0,
+        "runtime_versions": _VERSIONS
     }
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
-            if key == "app_load_count":
-                st.session_state.app_load_count += 1
-
+    st.session_state.app_load_count += 1
 
 init_session_state()
 # ============================================================
@@ -1269,37 +1268,95 @@ def display_textbook_content(title: str, content: str, icon: str = "📖"):
 
 
 def display_formula_card(title: str, formula_latex: str,
-                          description: str = "", numbered: bool = False,
+                          description: str = "",
+                          numbered: bool = False,
                           number: int = 0):
     """
-    Accent-bordered formula card with LaTeX.
-    ENHANCED:
-    - Optional description line beneath the LaTeX.
-    - Optional equation number (e.g. "(1)") shown top-right.
-    FIX: removed unused _get_palette() call — palette not needed in this function.
+    Accent-bordered formula card enclosing a LaTeX expression.
+    FIX: st.latex() cannot live inside an HTML <div>, so we use a
+    three-div sandwich:
+        ┌─ top div    (title bar  — top + left + right border)
+        │  st.latex() (rendered by Streamlit as a sibling element)
+        └─ bottom div (closing cap — bottom + left + right border)
+    CSS negative margins stitch the three pieces into one visual unit.
     """
+    p = _get_palette()
+
+    # ── Shared border style ───────────────────────────────────
+    border     = f"2px solid {p['accent']}"
+    bg         = p['bg_secondary']
+    radius_top = "var(--radius-md) var(--radius-md) 0 0"
+    radius_bot = "0 0 var(--radius-md) var(--radius-md)"
+
     num_html = (
-        f'<div style="position:absolute;top:0.5rem;right:0.75rem;'
-        f'font-size:0.75rem;color:var(--text-muted);font-weight:600;">({number})</div>'
-        if numbered else ""
-    )
+        f'<span style="position:absolute;top:0.5rem;right:0.75rem;'
+        f'font-size:0.72rem;color:{p["text_muted"]};font-weight:600;">'
+        f'({number})</span>'
+    ) if numbered else ""
+
+    desc_html = (
+        f'<p style="font-size:0.81rem;color:{p["text_muted"]};'
+        f'text-align:center;margin:0;line-height:1.5;">'
+        f'{description}</p>'
+    ) if description else ""
+
+    # ── TOP: title bar ────────────────────────────────────────
     st.markdown(f"""
-    <div class="formula-card" style="position:relative;">
+    <div style="
+        background:{bg};
+        border-top:{border};
+        border-left:{border};
+        border-right:{border};
+        border-radius:{radius_top};
+        padding:0.55rem 1rem 0.35rem;
+        text-align:center;
+        position:relative;
+        margin-bottom:0;
+    ">
         {num_html}
-        <div class="formula-title">{title}</div>
+        <span style="
+            color:{p['accent_hover']};
+            font-weight:700;
+            font-size:0.80rem;
+            text-transform:uppercase;
+            letter-spacing:0.05em;
+        ">{title}</span>
     </div>
     """, unsafe_allow_html=True)
-    with st.container():
-        st.latex(formula_latex)
-    if description:
-        p = _get_palette()
-        st.markdown(
-            f"<p style='font-size:0.82rem;color:{p['text_muted']};"
-            f"text-align:center;margin-top:-0.4rem;line-height:1.5;'>"
-            f"{description}</p>",
-            unsafe_allow_html=True,
-        )
 
+    # ── MIDDLE: left/right borders only — st.latex fills center ──
+    # Outer wrapper provides the side borders; st.latex is rendered inside
+    st.markdown(f"""
+    <div style="
+        border-left:{border};
+        border-right:{border};
+        background:{bg};
+        margin-top:0;
+        margin-bottom:0;
+        padding:0 0.5rem;
+    ">
+    """, unsafe_allow_html=True)
+
+    st.latex(formula_latex)
+
+    # Close the middle wrapper
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── BOTTOM: closing cap + optional description ────────────
+    st.markdown(f"""
+    <div style="
+        background:{bg};
+        border-bottom:{border};
+        border-left:{border};
+        border-right:{border};
+        border-radius:{radius_bot};
+        padding:{'0.45rem 1rem 0.6rem' if description else '0.3rem 1rem 0.3rem'};
+        text-align:center;
+        margin-top:0;
+    ">
+        {desc_html}
+    </div>
+    """, unsafe_allow_html=True)
 
 def display_equation(label: str, latex_eq: str, description: str = "",
                       number: str = ""):
@@ -1470,9 +1527,8 @@ def display_practice_problem(problem_num, difficulty: str, problem_text: str,
     icon = icons.get(difficulty, "⚪")
     bcls = badge_cls.get(difficulty, "accent")
     topic_html = (
-        f'<div style="font-size:0.78rem;color:var(--text-muted);"'
-        f'margin-bottom:0.4rem;>{topic}</div>'
-        if topic else ""
+        f'<div style="font-size:0.78rem;color:var(--text-muted);">'
+        f'{topic}</div>'
     )
     st.markdown(f"""
     <div class="practice-problem">
@@ -2366,7 +2422,7 @@ def newsvendor(price: float, cost: float, salvage: float,
     pdf_z  = normal_pdf(z)
     e_sales   = mean_demand * phi_z - std_demand * pdf_z + q * (1 - phi_z)
     e_leftover = max(0.0, q - e_sales)
-    e_profit   = (price - cost) * e_sales - (cost - salvage) * e_leftover - cost * 0
+    e_profit   = price * e_sales + salvage * e_leftover - cost * q
 
     return {
         "Cu":             round(cu, 4),
@@ -2411,24 +2467,67 @@ def npv(cash_flows: list, rate: float) -> float:
     return sum(cf / (1 + rate) ** t for t, cf in enumerate(cash_flows))
 
 
-def irr(cash_flows: list, guess: float = 0.1) -> float:
+def irr(cash_flows: list, guess: float = 0.1):
     """
-    Internal Rate of Return via bisection search.
-    ENHANCED: NEW — useful for capital budgeting modules.
-    Returns None if no IRR found in (−99%, 1000%) range.
+    Internal Rate of Return using scipy.optimize.brentq.
+    FIX: replaced bisection (fails for non-conventional cash flows with
+    multiple sign changes) with Brent's method — guaranteed convergence
+    for any bracket where NPV changes sign.
+    Returns None if:
+      - fewer than 2 cash flows provided
+      - cash_flows[0] is non-negative (no initial investment)
+      - no sign change in NPV found across search range
+      - scipy cannot converge
     """
-    lo, hi = -0.9999, 10.0
-    for _ in range(200):
-        mid = (lo + hi) / 2
-        if abs(hi - lo) < 1e-8:
-            return round(mid, 6)
-        if npv(cash_flows, mid) > 0:
-            lo = mid
-        else:
-            hi = mid
+    if len(cash_flows) < 2:
+        return None
+
+    # Non-conventional cash flow warning: count sign changes
+    sign_changes = sum(
+        1 for i in range(1, len(cash_flows))
+        if (cash_flows[i] > 0) != (cash_flows[i - 1] > 0)
+    )
+    # Multiple IRRs possible when sign changes > 1 — return first root found
+    # near guess, but flag in logs
+    if sign_changes > 2:
+        logging.warning(
+            "irr(): %d sign changes detected — multiple IRRs possible. "
+            "Returning first root found near guess=%.4f.",
+            sign_changes, guess,
+        )
+
+    from scipy.optimize import brentq
+
+    def _npv(r: float) -> float:
+        return npv(cash_flows, r)
+
+    # ── Strategy 1: bracket around the guess ─────────────────
+    # Search outward from guess until we find a sign change
+    lo, hi = max(-0.9999, guess - 0.5), min(10.0, guess + 0.5)
+    for _ in range(40):
+        try:
+            if _npv(lo) * _npv(hi) < 0:
+                return round(brentq(_npv, lo, hi, xtol=1e-10, maxiter=500), 6)
+        except (ValueError, ZeroDivisionError):
+            pass
+        lo = max(-0.9999, lo - 0.25)
+        hi = min(10.0,    hi + 0.25)
+        if lo <= -0.9999 and hi >= 10.0:
+            break
+
+    # ── Strategy 2: full range scan in 0.5-wide windows ──────
+    # Catches IRRs far from the guess (e.g. very high-return projects)
+    boundaries = [-0.9999, -0.5, 0.0, 0.5, 1.0, 2.0, 4.0, 7.0, 10.0]
+    for a, b in zip(boundaries, boundaries[1:]):
+        try:
+            if _npv(a) * _npv(b) < 0:
+                return round(brentq(_npv, a, b, xtol=1e-10, maxiter=500), 6)
+        except (ValueError, ZeroDivisionError):
+            continue
+
+    # No sign change found anywhere — no real IRR in (−99%, 1000%)
     return None
-
-
+    
 def break_even_units(fixed_cost: float, price: float,
                       variable_cost: float):
     """
@@ -6595,65 +6694,84 @@ def module_queuing():
         st.dataframe(sens_df, use_container_width=True)
 
     with tab3:
-        st.markdown("### M/M/s Multi-Server Queue")
-
+        st.markdown("### M/M/s — Multi-Server Queue")
         col1, col2 = st.columns(2)
         with col1:
-            lam_s = st.number_input("Arrival Rate (λ)", value=15.0, key="mms_lam")
-            mu_s  = st.number_input("Service Rate per Server (μ)", value=6.0, key="mms_mu")
-            s     = st.number_input("Number of Servers (s)", value=3, min_value=1, key="mms_s")
+            lam_s = st.number_input("Arrival Rate λ (per hour)",  value=15.0, key="mms_lam")
+            mu_s  = st.number_input("Service Rate μ per Server",  value=6.0,  key="mms_mu")
+            s     = st.number_input("Number of Servers (s)",      value=3,    min_value=1, key="mms_s")
 
-        with col2:
-            if lam_s < s * mu_s:
-                rho_s    = lam_s / (s * mu_s)
-                r        = lam_s / mu_s  # traffic intensity
+    with col2:
+        s = int(s)
 
-                # P0 for M/M/s
-                sum_term = sum(r**n / math.factorial(n) for n in range(int(s)))
-                last_term = r**s / (math.factorial(int(s)) * (1 - rho_s))
-                P0_s     = 1 / (sum_term + last_term)
+        # ── Stability check ──────────────────────────────────
+        if lam_s >= s * mu_s:
+            st.error(
+                f"⚠️ Unstable system: λ ({lam_s}) ≥ s·μ ({s * mu_s:.1f}). "
+                f"Need λ < s·μ for steady state."
+            )
+            st.stop()
 
-                Lq_s     = (P0_s * r**s * rho_s) / (math.factorial(int(s)) * (1 - rho_s)**2)
-                Wq_s     = Lq_s / lam_s
-                Ws_s     = Wq_s + 1/mu_s
-                Ls_s     = lam_s * Ws_s
-                P_wait   = (P0_s * r**s) / (math.factorial(int(s)) * (1 - rho_s))
+        rho_s = lam_s / (s * mu_s)          # per-server utilisation
+        r     = lam_s / mu_s                 # traffic intensity
 
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.metric("Server Utilization (ρ)",   f"{rho_s:.1%}")
-                    st.metric("Avg in Queue (Lq)",        f"{Lq_s:.4f}")
-                    st.metric("Avg Wait in Queue (Wq)",   f"{Wq_s*60:.3f} min")
-                with col_b:
-                    st.metric("Avg in System (Ls)",       f"{Ls_s:.4f}")
-                    st.metric("Avg Time in System (Ws)",  f"{Ws_s*60:.3f} min")
-                    st.metric("P(Must Wait)",             f"{P_wait:.1%}")
-                    st.metric("P₀ (All servers idle)",   f"{P0_s:.1%}")
+        # ── Saturation guard ─────────────────────────────────
+        SATURATION_THRESHOLD = 1e-6
+        if abs(1 - rho_s) < SATURATION_THRESHOLD:
+            st.error(
+                "🚨 System is at saturation (ρ ≈ 1.0) — "
+                "P₀ and queue metrics are undefined. "
+                "Increase servers or service rate slightly."
+            )
+            st.stop()
 
-            else:
-                st.error("⚠️ Unstable system: λ must be < s×μ")
+        # ── Erlang-C P0 ───────────────────────────────────────
+        # P0 = [ Σ(n=0 to s-1) r^n/n!  +  r^s / (s! × (1 − ρ)) ]^−1
+        try:
+            sum_term  = sum(r**n / math.factorial(n) for n in range(s))
+            last_term = (r**s) / (math.factorial(s) * (1 - rho_s))
 
-        # ─── Server Comparison ───
-        st.markdown("#### Server Count Comparison")
-        if lam_s < 20 * mu_s:
-            comp_rows = []
-            for s_test in range(max(1, math.ceil(lam_s/mu_s)), min(10, math.ceil(lam_s/mu_s))+5):
-                if lam_s < s_test * mu_s:
-                    rho_t    = lam_s / (s_test * mu_s)
-                    r_t      = lam_s / mu_s
-                    sum_t    = sum(r_t**n/math.factorial(n) for n in range(s_test))
-                    last_t   = r_t**s_test/(math.factorial(s_test)*(1-rho_t))
-                    P0_t     = 1/(sum_t+last_t)
-                    Lq_t     = (P0_t*r_t**s_test*rho_t)/(math.factorial(s_test)*(1-rho_t)**2)
-                    Wq_t     = Lq_t/lam_s*60
-                    comp_rows.append({
-                        "Servers (s)": s_test,
-                        "ρ":          f"{rho_t:.1%}",
-                        "Lq":         f"{Lq_t:.4f}",
-                        "Wq (min)":   f"{Wq_t:.3f}",
-                        "Feasible?":  "✅" if rho_t < 0.85 else "⚠️ High"
-                    })
-            st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
+            # Guard against overflow on very large r or s
+            if not math.isfinite(sum_term) or not math.isfinite(last_term):
+                st.error("Numerical overflow — reduce arrival rate or server count.")
+                st.stop()
+
+            P0s = 1 / (sum_term + last_term)
+
+        except (OverflowError, ZeroDivisionError) as e:
+            st.error(f"Computation error: {e}. Try reducing λ or s.")
+            st.stop()
+
+        # ── Erlang-C probability of waiting ──────────────────
+        P_wait = (P0s * (r**s)) / (math.factorial(s) * (1 - rho_s))
+
+        # ── Queue metrics ─────────────────────────────────────
+        Lq_s = P_wait * rho_s / (1 - rho_s)
+        Wq_s = Lq_s / lam_s
+        Ws_s = Wq_s + 1 / mu_s
+        Ls_s = lam_s * Ws_s
+
+        # ── Display ───────────────────────────────────────────
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.metric("Server Utilisation ρ",   f"{rho_s:.1%}")
+            st.metric("Avg in Queue Lq",         f"{Lq_s:.4f}")
+            st.metric("Avg Wait in Queue Wq",    f"{Wq_s * 60:.3f} min")
+        with col_b:
+            st.metric("Avg in System Ls",        f"{Ls_s:.4f}")
+            st.metric("Avg Time in System Ws",   f"{Ws_s * 60:.3f} min")
+            st.metric("P(Must Wait)",            f"{P_wait:.1%}")
+            st.metric("P(All Servers Idle) P₀",  f"{P0s:.1%}")
+
+        # ── Saturation proximity warning ─────────────────────
+        if rho_s > 0.95:
+            st.error(  f"🔴 ρ = {rho_s:.1%} — extreme congestion. Results unreliable in practice.")
+        elif rho_s > 0.85:
+            st.warning(f"🟡 ρ = {rho_s:.1%} — heavy utilisation. Queue grows rapidly.")
+        elif rho_s > 0.70:
+            st.info(   f"🔵 ρ = {rho_s:.1%} — moderate utilisation. Monitor closely.")
+        else:
+            st.success(f"🟢 ρ = {rho_s:.1%} — healthy utilisation.")
 
     with tab4:
         st.markdown("### Queue Cost Analysis")
@@ -12293,30 +12411,6 @@ def _get_chapter_progress(visited: set) -> dict:
         ch: (sum(1 for k, *_ in mods if k in visited), len(mods))
         for ch, mods in chapters.items()
     }
-
-
-# ── Session state defaults ────────────────────────────────
-def init_session_state():
-    """Initialize all required session-state keys once."""
-    defaults = {
-        "dark_mode":        False,
-        "problems_solved":  0,
-        "correct_streak":   0,
-        "best_streak":      0,
-        "modules_visited":  set(),
-        "recent_modules":   [],
-        "bookmarks":        set(),
-        "last_module":      None,
-        "selected_module":  None,
-    }
-    for key, val in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = val
-            if key == "app_load_count":
-                st.session_state.app_load_count += 1
-
-init_session_state()
-
 
 # ============================================================
 # WELCOME SCREEN
