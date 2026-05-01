@@ -5,6 +5,7 @@ import math
 import sys
 import logging
 import warnings
+import textwrap
 from collections import OrderedDict
 from functools import lru_cache
 
@@ -1137,6 +1138,49 @@ def _get_theme_css_cached(dark: bool) -> str:
 def get_theme_css() -> str:
     """Public accessor — always returns CSS for the current theme mode."""
     return _get_theme_css_cached(is_dark())
+
+
+_NATIVE_MARKDOWN = st.markdown
+
+
+def _call_native_markdown(body, *, unsafe_allow_html=False, help=None, width="stretch"):
+    """Call Streamlit's native markdown API across Streamlit 1.x signatures."""
+    kwargs = {"unsafe_allow_html": unsafe_allow_html, "help": help, "width": width}
+    try:
+        return _NATIVE_MARKDOWN(body, **kwargs)
+    except TypeError:
+        kwargs.pop("width", None)
+        return _NATIVE_MARKDOWN(body, **kwargs)
+
+
+def render_html_fragment(body, *, width="stretch"):
+    """
+    Render trusted app-owned HTML without letting Markdown treat indented
+    multiline fragments as code blocks.
+    """
+    html = textwrap.dedent(str(body)).strip()
+    if not html:
+        return st.empty()
+    if hasattr(st, "html"):
+        try:
+            return st.html(html, width=width)
+        except TypeError:
+            return st.html(html)
+    return _call_native_markdown(html, unsafe_allow_html=True, width=width)
+
+
+def _markdown_with_safe_html(body, unsafe_allow_html: bool = False, *, help=None, width="stretch"):
+    """
+    Streamlit 1.51 can display indented HTML fragments as literal text when
+    they flow through Markdown. Route unsafe HTML through st.html instead,
+    while preserving normal Markdown rendering everywhere else.
+    """
+    if unsafe_allow_html:
+        return render_html_fragment(body, width=width)
+    return _call_native_markdown(body, unsafe_allow_html=False, help=help, width=width)
+
+
+st.markdown = _markdown_with_safe_html
 
 
 st.markdown(get_theme_css(), unsafe_allow_html=True)
