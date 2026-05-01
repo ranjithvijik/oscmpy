@@ -139,7 +139,7 @@ def toggle_theme():
 def render_theme_toggle():
     """Render the sidebar theme toggle button."""
     label = "☀️ Switch to Light Mode" if st.session_state.dark_mode else "🌙 Switch to Dark Mode"
-    if st.sidebar.button(label, key="theme_toggle", use_container_width=True):
+    if st.sidebar.button(label, key="theme_toggle", width='stretch'):
         toggle_theme()
         st.rerun()
 
@@ -3021,7 +3021,7 @@ def module_risk():
                             "Prioritized risk list (by score or EMV)",
                             "Contingency plans and monitoring protocols"]
         })
-        st.dataframe(steps_df, use_container_width=True, hide_index=True)
+        st.dataframe(steps_df, width='stretch', hide_index=True)
 
         st.markdown("#### Risk Categories & Examples")
         cat_df = pd.DataFrame({
@@ -3040,7 +3040,7 @@ def module_risk():
                              "Hedging, diversified revenue, credit insurance",
                              "Backups, incident response plan, cybersecurity protocols"]
         })
-        st.dataframe(cat_df, use_container_width=True, hide_index=True)
+        st.dataframe(cat_df, width='stretch', hide_index=True)
 
         display_textbook_content(
             "The Triple Bottom Line",
@@ -3140,7 +3140,7 @@ def module_risk():
             df_risk["Priority"] = df_risk["Risk Score"].apply(
                 lambda s: "🔴 HIGH" if s >= 15 else ("🟡 MEDIUM" if s >= 8 else "🟢 LOW")
             )
-            st.dataframe(df_risk, use_container_width=True)
+            st.dataframe(df_risk, width='stretch')
 
             total_score    = sum(r["score"] for r in risks)
             max_score      = len(risks) * 25
@@ -3244,7 +3244,7 @@ def module_risk():
             template="plotly_white",
             height=480
         )
-        st.plotly_chart(fig_risk, use_container_width=True)
+        st.plotly_chart(fig_risk, width='stretch')
 
     # ─────────────────────────────────────────────────────────
     with tab3:
@@ -3266,20 +3266,20 @@ def module_risk():
         for i in range(int(num_emv_risks)):
             cols = st.columns([1.8, 1, 1.2, 1, 1.2])
             with cols[0]:
-                rname = st.text_input("", value=f"Risk {chr(65+i)}",
+                rname = st.text_input(f"Risk Name {i}", value=f"Risk {chr(65+i)}",  # <-- Added hidden label
                                        key=f"emv_name_{i}", label_visibility="collapsed")
             with cols[1]:
-                prob_f = st.number_input("", value=[0.15, 0.30, 0.05][i % 3],
+                prob_f = st.number_input(f"Probability {i}", value=[0.15, 0.30, 0.05][i % 3], # <-- Added hidden label
                                           min_value=0.0, max_value=1.0, step=0.01,
                                           format="%.2f", key=f"emv_p_{i}",
                                           label_visibility="collapsed")
             with cols[2]:
-                fin_impact = st.number_input("", value=[2000000, 500000, 10000000][i % 3],
+                fin_impact = st.number_input(f"Financial Impact {i}", value=[2000000, 500000, 10000000][i % 3], # <-- Added hidden label
                                               min_value=0, step=50000,
                                               key=f"emv_imp_{i}",
                                               label_visibility="collapsed")
             with cols[3]:
-                mit_cost = st.number_input("", value=[200000, 50000, 300000][i % 3],
+                mit_cost = st.number_input(f"Mitigation Cost {i}", value=[200000, 50000, 300000][i % 3], # <-- Added hidden label
                                             min_value=0, step=10000,
                                             key=f"emv_mit_{i}",
                                             label_visibility="collapsed")
@@ -3311,7 +3311,7 @@ def module_risk():
             display_df["EMV"]              = display_df["EMV"].apply(lambda x: f"${x:,.0f}")
             display_df["Mitigation Cost"]  = display_df["Mitigation Cost"].apply(lambda x: f"${x:,.0f}")
             display_df["Net Value"]        = display_df["Net Value"].apply(lambda x: f"${x:,.0f}")
-            st.dataframe(display_df, use_container_width=True)
+            st.dataframe(display_df, width='stretch')
 
             total_emv = sum(r["EMV"] for r in emv_risks)
             top_risk  = max(emv_risks, key=lambda x: x["EMV"])
@@ -3346,7 +3346,7 @@ def module_risk():
                 height=380,
                 legend=dict(orientation="h", y=1.02)
             )
-            st.plotly_chart(fig_emv_chart, use_container_width=True)
+            st.plotly_chart(fig_emv_chart, width='stretch')
 
     # ─────────────────────────────────────────────────────────
     with tab4:
@@ -3651,7 +3651,7 @@ def module_pert():
                                   "Beta distribution → Normal approximation",
                                   "R&D, new product development, uncertain projects"]
         })
-        st.dataframe(cpm_pert_df, use_container_width=True, hide_index=True)
+        st.dataframe(cpm_pert_df, width='stretch', hide_index=True)
 
         st.markdown("### Core Formulas")
         col1, col2 = st.columns(2)
@@ -3696,7 +3696,7 @@ def module_pert():
                              "LF of predecessor chain",
                              "LS − ES  or  LF − EF"]
         })
-        st.dataframe(float_df, use_container_width=True, hide_index=True)
+        st.dataframe(float_df, width='stretch', hide_index=True)
 
         display_textbook_content(
             "The Beta Distribution in PERT",
@@ -3734,7 +3734,7 @@ def module_pert():
                      2.33: "99% confidence"
                 }.get(z, "")
             })
-        st.dataframe(pd.DataFrame(z_data), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(z_data), width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab2:
@@ -3818,7 +3818,7 @@ def module_pert():
                     yaxis_title="Relative Probability",
                     template="plotly_white", height=320
                 )
-                st.plotly_chart(fig_dist, use_container_width=True)
+                st.plotly_chart(fig_dist, width='stretch')
 
         # ── Multi-Activity Path Builder ──
         st.markdown("---")
@@ -3885,7 +3885,7 @@ def module_pert():
                 xaxis_title="Activity", yaxis_title="Variance (σ²)",
                 template="plotly_white", height=320
             )
-            st.plotly_chart(fig_var, use_container_width=True)
+            st.plotly_chart(fig_var, width='stretch')
 
             top_var_act = path_acts[pcts_v.index(max(pcts_v))]
             st.warning(
@@ -3976,7 +3976,7 @@ def module_pert():
                 yaxis_title="P(Complete on time) %",
                 template="plotly_white", height=380
             )
-            st.plotly_chart(fig_prob, use_container_width=True)
+            st.plotly_chart(fig_prob, width='stretch')
 
             # Required date table
             st.markdown("#### Required Date for Confidence Level")
@@ -3989,7 +3989,7 @@ def module_pert():
                     f"Buffer vs. Tₑ ({t_unit_p})":  f"{d_req - te_project:+.2f}",
                     "Your Target?": "← current" if abs(d_req - d_target) < (sigma_p * 0.1) else ""
                 })
-            st.dataframe(pd.DataFrame(conf_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(conf_rows), width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab4:
@@ -4320,7 +4320,7 @@ def module_crashing():
                 "Stop when crash cost/day > indirect savings/day"
             ]
         })
-        st.dataframe(steps_df, use_container_width=True, hide_index=True)
+        st.dataframe(steps_df, width='stretch', hide_index=True)
 
         display_key_insight(
             "Multiple Critical Paths",
@@ -4422,7 +4422,7 @@ def module_crashing():
                 "Net if Fully Crashed": f"${a['Max Crash Days'] * (indirect_per_day - a['Cost/Day']):+,.0f}",
                 "Worth Crashing?": a["Profitable?"]
             } for i, a in enumerate(crashable_sorted)])
-            st.dataframe(priority_df, use_container_width=True, hide_index=True)
+            st.dataframe(priority_df, width='stretch', hide_index=True)
 
             # ── Optimal Crash Recommendation ──
             profitable_activities = [a for a in crashable_sorted
@@ -4514,7 +4514,7 @@ def module_crashing():
                 legend=dict(orientation="h", y=1.02),
                 xaxis=dict(autorange="reversed")  # Shorter duration = more crashing
             )
-            st.plotly_chart(fig_cost, use_container_width=True)
+            st.plotly_chart(fig_cost, width='stretch')
 
             col1, col2, col3 = st.columns(3)
             col1.metric("Normal Duration",  f"{base_duration} days")
@@ -4531,7 +4531,7 @@ def module_crashing():
                 "Total Cost ($)":  [f"${c:,.0f}" for c in total_costs],
                 "Optimal?":        ["🌟 OPTIMAL" if d == opt_duration else "" for d in durations]
             })
-            st.dataframe(sched_df, use_container_width=True, hide_index=True)
+            st.dataframe(sched_df, width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab4:
@@ -4751,7 +4751,7 @@ def module_breakeven():
                         "$20,000 annual target", "$40 per unit",
                         "1,250 units or $125,000"]
         })
-        st.dataframe(var_df, use_container_width=True, hide_index=True)
+        st.dataframe(var_df, width='stretch', hide_index=True)
 
         display_textbook_content(
             "Indifference Point — Choosing Between Alternatives",
@@ -4873,7 +4873,7 @@ def module_breakeven():
                 template="plotly_white", height=420,
                 legend=dict(orientation="h", y=1.02)
             )
-            st.plotly_chart(fig_be, use_container_width=True)
+            st.plotly_chart(fig_be, width='stretch')
 
     # ─────────────────────────────────────────────────────────
     with tab3:
@@ -4926,7 +4926,7 @@ def module_breakeven():
                         "Δ vs Base":   f"{change:+.1f}%"
                     })
 
-            st.dataframe(pd.DataFrame(results), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(results), width='stretch', hide_index=True)
 
             # Tornado chart
             st.markdown("#### Sensitivity Tornado Chart")
@@ -4952,7 +4952,7 @@ def module_breakeven():
                 template="plotly_white", height=380,
                 margin=dict(l=180)
             )
-            st.plotly_chart(fig_tornado, use_container_width=True)
+            st.plotly_chart(fig_tornado, width='stretch')
 
             display_key_insight(
                 "Most Sensitive Variable",
@@ -5039,7 +5039,7 @@ def module_breakeven():
                         template="plotly_white", height=400,
                         legend=dict(orientation="h", y=1.02)
                     )
-                    st.plotly_chart(fig_comp, use_container_width=True)
+                    st.plotly_chart(fig_comp, width='stretch')
 
                     # ── Volume Analysis Table ──
                     st.markdown("#### Cost Comparison at Key Volumes")
@@ -5056,7 +5056,7 @@ def module_breakeven():
                             "Better Option": f"A (saves ${cb-ca:,.0f})" if ca < cb else
                                              f"B (saves ${ca-cb:,.0f})" if cb < ca else "Indifferent"
                         })
-                    st.dataframe(pd.DataFrame(vol_rows), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(vol_rows), width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab5:
@@ -5260,7 +5260,7 @@ def module_decision():
                           "Label with probability or description",
                           "Stated given — not calculated"]
         })
-        st.dataframe(comp_df, use_container_width=True, hide_index=True)
+        st.dataframe(comp_df, width='stretch', hide_index=True)
 
         display_formula_card("Expected Monetary Value",
             r"EMV = \sum_{i=1}^{n} P_i \times V_i")
@@ -5301,7 +5301,7 @@ def module_decision():
                                 "Statistical Process Control"],
             "Chapter":        ["5", "5", "5", "Advanced", "13"]
         })
-        st.dataframe(when_df, use_container_width=True, hide_index=True)
+        st.dataframe(when_df, width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab2:
@@ -5381,7 +5381,7 @@ def module_decision():
             xaxis_title="Alternative", yaxis_title="EMV ($)",
             template="plotly_white", height=360
         )
-        st.plotly_chart(fig_emv, use_container_width=True)
+        st.plotly_chart(fig_emv, width='stretch')
 
         # ── Payoff Summary Table ──
         st.markdown("#### Full Payoff Table")
@@ -5396,7 +5396,7 @@ def module_decision():
                                             else ("← WORST" if a["name"] == worst["name"] else "")
                                             for a in alt_data]
         })
-        st.dataframe(payoff_df, use_container_width=True, hide_index=True)
+        st.dataframe(payoff_df, width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab3:
@@ -5455,7 +5455,7 @@ def module_decision():
                 template="plotly_white", height=400,
                 legend=dict(orientation="h", y=1.02)
             )
-            st.plotly_chart(fig_sens, use_container_width=True)
+            st.plotly_chart(fig_sens, width='stretch')
 
             # Find crossover points
             st.markdown("#### Decision Crossover Points")
@@ -5709,7 +5709,7 @@ def module_learning():
                               "Simple repetitive tasks"],
             "Unit 8 / Unit 1": [f"{r**3*100:.1f}%" for r in [0.60,0.70,0.75,0.80,0.85,0.90,0.95]]
         })
-        st.dataframe(lr_table, use_container_width=True)
+        st.dataframe(lr_table, width='stretch')
 
         display_key_insight(
             "The Doubling Rule",
@@ -5727,7 +5727,7 @@ def module_learning():
             "Use Case":    ["Estimating a specific unit's time",
                              "Cost estimating and bidding on contracts"]
         })
-        st.dataframe(model_df, use_container_width=True)
+        st.dataframe(model_df, width='stretch')
 
     with tab2:
         st.markdown("### Learning Curve Calculator")
@@ -5753,7 +5753,7 @@ def module_learning():
                 "% of Unit 1":     [f"{p:.1f}%" for p in pct_d],
                 "Savings vs prev": ["—"] + [f"{(1-times_d[i]/times_d[i-1])*100:.1f}%" for i in range(1, len(times_d))]
             })
-            st.dataframe(df_double, use_container_width=True)
+            st.dataframe(df_double, width='stretch')
 
         st.markdown("---")
         st.markdown("### Specific Unit Analysis")
@@ -5803,7 +5803,7 @@ def module_learning():
                 "Cum. Average":  [f"{a:.2f}" for a in tbl_avg],
                 "% of Unit 1":   [f"{p:.1f}%" for p in tbl_pct]
             })
-            st.dataframe(tbl_df, use_container_width=True)
+            st.dataframe(tbl_df, width='stretch')
 
     with tab3:
         st.markdown("### Learning Curve Chart")
@@ -5843,7 +5843,7 @@ def module_learning():
                           yaxis_title="Hours per Unit",
                           template="plotly_white", height=450,
                           legend=dict(orientation="h", y=1.02))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Log-log version
         with st.expander("📊 Log-Log Chart (linearized view)"):
@@ -5860,7 +5860,7 @@ def module_learning():
                                   xaxis_title="log₁₀(Unit Number)",
                                   yaxis_title="log₁₀(Hours)",
                                   template="plotly_white", height=380)
-            st.plotly_chart(fig_log, use_container_width=True)
+            st.plotly_chart(fig_log, width='stretch')
             st.info("💡 On a log-log scale, learning curves become straight lines. "
                     "The slope equals n (the learning exponent).")
 
@@ -5992,7 +5992,7 @@ def module_decoupling():
             "Example":          ["Supermarket goods", "Dell PCs, cars",
                                  "Boeing 737", "Offshore oil platform"]
         })
-        st.dataframe(strat_df, use_container_width=True)
+        st.dataframe(strat_df, width='stretch')
 
         st.markdown("#### Supply Chain Positioning Map")
         col1, col2, col3, col4 = st.columns(4)
@@ -6069,7 +6069,7 @@ def module_decoupling():
         opt_df = pd.DataFrame(option_data)
         opt_df["Running Product"] = opt_df["Choices"].cumprod()
         opt_df["Marginal Configs Added"] = opt_df["Running Product"] - opt_df["Running Product"].shift(1).fillna(1)
-        st.dataframe(opt_df, use_container_width=True)
+        st.dataframe(opt_df, width='stretch')
 
     with tab3:
         st.markdown("### Strategy Selection Guide")
@@ -6096,7 +6096,7 @@ def module_decoupling():
                 "Score":    [f"{v:.1f}" for v in scores.values()],
                 "Match":    ["✅ Best Fit" if k == best else "" for k in scores.keys()]
             })
-            st.dataframe(score_df, use_container_width=True)
+            st.dataframe(score_df, width='stretch')
             st.success(f"📍 **Recommended Strategy: {best}**")
 
             fig = go.Figure(go.Bar(
@@ -6105,7 +6105,7 @@ def module_decoupling():
             ))
             fig.update_layout(title="Strategy Fit Scores", yaxis_title="Score",
                               template="plotly_white", height=300)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -6150,7 +6150,7 @@ def module_linebalance():
             "Best For":    ["Reduces bottleneck risk", "Clears precedence bottlenecks",
                             "Best overall heuristic", "Minimizing balance delay at end"]
         })
-        st.dataframe(heuristic_df, use_container_width=True)
+        st.dataframe(heuristic_df, width='stretch')
 
         display_key_insight(
             "Theoretical Minimum vs. Practical",
@@ -6245,7 +6245,7 @@ def module_linebalance():
                     "Over CT?":           "❌ OVER!" if s_time > cycle_time else "✅ OK"
                 })
             assign_df = pd.DataFrame(assign_results)
-            st.dataframe(assign_df, use_container_width=True)
+            st.dataframe(assign_df, width='stretch')
 
             # Recalculate efficiency from actual assignment
             actual_sum   = sum(r["Station Time (sec)"] for r in assign_results)
@@ -6272,7 +6272,7 @@ def module_linebalance():
             fig.update_layout(barmode="stack", title="Station Loading vs. Cycle Time",
                               xaxis_title="Workstation", yaxis_title="Time (sec)",
                               template="plotly_white", height=400)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Efficiency gauge
             fig2 = go.Figure(go.Indicator(
@@ -6290,7 +6290,7 @@ def module_linebalance():
                                      "thickness": 0.75, "value": 95}}
             ))
             fig2.update_layout(height=300, template="plotly_white")
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
         else:
             st.info("Complete the Simulator tab first to generate charts.")
 
@@ -6387,7 +6387,7 @@ def module_service():
                                    "Co-produce with customers; manage front office",
                                    "Yield management; demand smoothing"]
         })
-        st.dataframe(ihip, use_container_width=True)
+        st.dataframe(ihip, width='stretch')
 
         st.markdown("#### Service-System Design Matrix")
         design_matrix = pd.DataFrame({
@@ -6400,7 +6400,7 @@ def module_service():
             "Worker Skills":   ["Clerical", "Technical", "Procedural",
                                 "Service scripted", "Service diagnostic", "Professional judgment"]
         })
-        st.dataframe(design_matrix, use_container_width=True)
+        st.dataframe(design_matrix, width='stretch')
 
         display_key_insight(
             "Contact–Efficiency Tradeoff",
@@ -6470,7 +6470,7 @@ def module_service():
             fig.update_layout(polar=dict(radialaxis=dict(range=[0, 5])),
                               title="Service Triangle Assessment",
                               template="plotly_white", height=350)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
     with tab3:
         st.markdown("### Service Blueprinting")
@@ -6497,7 +6497,7 @@ def module_service():
                            "─── Internal operational boundary ───",
                            "IT systems, back-office, suppliers"]
         })
-        st.dataframe(anatomy, use_container_width=True)
+        st.dataframe(anatomy, width='stretch')
 
         st.markdown("#### Blueprint Builder — Choose Service Type")
         service_type = st.selectbox("Service Template",
@@ -6551,7 +6551,7 @@ def module_service():
                 "Backstage (Hidden)": bp["backstage"],
                 "Support Process":    bp["support"]
             })
-            st.dataframe(bp_df, use_container_width=True)
+            st.dataframe(bp_df, width='stretch')
         else:
             st.markdown("#### Custom Blueprint")
             n_steps = st.number_input("Number of Process Steps", 3, 10, 5)
@@ -6565,7 +6565,7 @@ def module_service():
                 support     = rc[4].text_input(f"Support",    value="",            key=f"bp_sp_{i}")
                 rows.append({"Step": step_name, "Customer": cust_action,
                              "Onstage": onstage, "Backstage": backstage, "Support": support})
-            st.dataframe(pd.DataFrame(rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), width='stretch')
 
         st.markdown("#### Fail Point Analysis")
         st.write("Mark steps where failure most likely occurs:")
@@ -6647,7 +6647,7 @@ def module_queuing():
             "Common":  ["M = Poisson/Memoryless", "M = Exponential", "1, 2, 3…",
                         "∞ (default)", "∞ (default)", "FIFO (default)"]
         })
-        st.dataframe(kendall_df, use_container_width=True)
+        st.dataframe(kendall_df, width='stretch')
 
         st.markdown("#### M/M/1 Formulas")
         col1, col2, col3 = st.columns(3)
@@ -6721,7 +6721,7 @@ def module_queuing():
                     }
                 ))
                 fig_g.update_layout(height=280, template="plotly_white")
-                st.plotly_chart(fig_g, use_container_width=True)
+                st.plotly_chart(fig_g, width='stretch')
 
                 if rho >= 0.9:
                     st.error(f"⚠️ ρ = {rho:.1%} — dangerously high. Queue will explode; add capacity.")
@@ -6741,7 +6741,7 @@ def module_queuing():
             "Wq (×1/μ)":  [f"{r/(1-r):.3f}"   for r in util_range],
             "Ls":         [f"{r/(1-r):.3f}"    for r in util_range],
         })
-        st.dataframe(sens_df, use_container_width=True)
+        st.dataframe(sens_df, width='stretch')
 
     # ─────────────────────────────────────────────────────────
     with tab3:
@@ -6867,7 +6867,7 @@ def module_queuing():
                 cost_df["Optimal?"] = cost_df["TC_num"].apply(
                     lambda x: "✅ Best" if x == min_tc else ""
                 )
-                st.dataframe(cost_df.drop("TC_num", axis=1), use_container_width=True)
+                st.dataframe(cost_df.drop("TC_num", axis=1), width='stretch')
 
                 best_row = cost_df.loc[cost_df["TC_num"].idxmin()]
                 st.success(f"📊 Minimum cost: {best_row['Scenario']} at {best_row['Total Cost']}/hr")
@@ -6886,7 +6886,7 @@ def module_queuing():
             ])
             fig_c.update_layout(barmode="stack", title="Cost Breakdown by Scenario",
                                 yaxis_title="$/hour", template="plotly_white", height=360)
-            st.plotly_chart(fig_c, use_container_width=True)
+            st.plotly_chart(fig_c, width='stretch')
 
     # ─────────────────────────────────────────────────────────
     with tab5:
@@ -7009,7 +7009,7 @@ def module_distributions():
                              "High variability relative to mean",
                              "Past service time gives no info about remaining time"]
         })
-        st.dataframe(rel_df, use_container_width=True)
+        st.dataframe(rel_df, width='stretch')
 
         display_key_insight(
             "Memoryless Property",
@@ -7032,7 +7032,7 @@ def module_distributions():
                           "μ = 1/mean service time", "λ = 1/mean time between",
                           "λ = avg hits/min", "λ = avg hits/min"]
         })
-        st.dataframe(usage_df, use_container_width=True)
+        st.dataframe(usage_df, width='stretch')
 
     with tab2:
         st.markdown("### Exponential Distribution Calculator")
@@ -7075,7 +7075,7 @@ def module_distributions():
                 "Multiples of mean":     [f"{t*exp_lambda:.2f}×" for t in t_range],
                 "% Completed by t":      [f"{(1-math.exp(-exp_lambda*t))*100:.1f}%" for t in t_range]
             })
-            st.dataframe(tbl, use_container_width=True)
+            st.dataframe(tbl, width='stretch')
 
         # ─── Quantile Calculator ───
         st.markdown("#### Quantile (Inverse) Calculator")
@@ -7136,7 +7136,7 @@ def module_distributions():
                 "P(N>n)": f"{1-cum_p:.5f}",
                 "Mode?":  "← Mode" if n_i == mode_n else ""
             })
-        st.dataframe(pd.DataFrame(poi_rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(poi_rows), width='stretch')
 
         col1, col2, col3 = st.columns(3)
         col1.metric("Mode (most likely n)", mode_n)
@@ -7190,7 +7190,7 @@ def module_distributions():
             template="plotly_white", height=380,
             legend=dict(orientation="h", y=1.02)
         )
-        st.plotly_chart(fig_exp, use_container_width=True)
+        st.plotly_chart(fig_exp, width='stretch')
 
         # ─── Exponential CDF ───
         st.markdown("#### Exponential CDF — P(T ≤ t)")
@@ -7211,7 +7211,7 @@ def module_distributions():
             xaxis_title="Time t", yaxis_title="P(T ≤ t)",
             yaxis_range=[0, 1.05], template="plotly_white", height=360
         )
-        st.plotly_chart(fig_cdf, use_container_width=True)
+        st.plotly_chart(fig_cdf, width='stretch')
 
         # ─── Poisson PMF ───
         st.markdown("#### Poisson PMF — Arrivals in Period T")
@@ -7236,7 +7236,7 @@ def module_distributions():
             template="plotly_white", height=380, barmode="group",
             legend=dict(orientation="h", y=1.02)
         )
-        st.plotly_chart(fig_poi, use_container_width=True)
+        st.plotly_chart(fig_poi, width='stretch')
 
         # ─── CDF Comparison Sidebar ───
         with col2:
@@ -7249,7 +7249,7 @@ def module_distributions():
                 "P95":    [f"{-math.log(0.05)/l:.3f}" for l in lambdas],
                 "P99":    [f"{-math.log(0.01)/l:.3f}" for l in lambdas],
             })
-            st.dataframe(qt_df, use_container_width=True)
+            st.dataframe(qt_df, width='stretch')
 
 
 # ============================================================
@@ -7298,7 +7298,7 @@ def module_littles():
                              "Arrival rate λ, Throughput",
                              "Cycle time, Lead time, Ws (queuing)"]
         })
-        st.dataframe(vars_df, use_container_width=True)
+        st.dataframe(vars_df, width='stretch')
 
         st.markdown("#### Real-World Applications")
         apps_df = pd.DataFrame({
@@ -7311,7 +7311,7 @@ def module_littles():
             "T (Flow Time)":["5 days", "4 days", "5 min",
                               "1.5 min", "10 min", "5 days"]
         })
-        st.dataframe(apps_df, use_container_width=True)
+        st.dataframe(apps_df, width='stretch')
 
         display_key_insight(
             "The Lean Connection",
@@ -7388,7 +7388,7 @@ def module_littles():
                     "Time Saved":     f"{savings:.2f}",
                     "% Time Reduction": f"{savings/T_base*100:.0f}%"
                 })
-            st.dataframe(pd.DataFrame(sensitivity_rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(sensitivity_rows), width='stretch')
         except:
             pass
 
@@ -7434,7 +7434,7 @@ def module_littles():
                 "Little's Law":    f"T = {s['WIP']}/{throughput_r:.0f} = {ft:.2f} days"
             })
 
-        st.dataframe(pd.DataFrame(stage_results), use_container_width=True)
+        st.dataframe(pd.DataFrame(stage_results), width='stretch')
 
         col1, col2, col3 = st.columns(3)
         col1.metric("Total WIP",         f"{total_wip:,.0f} units")
@@ -7451,7 +7451,7 @@ def module_littles():
                           title="Flow Time Contribution by Stage (Little's Law)",
                           yaxis_title="Flow Time (days)",
                           template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         bottleneck = max(stage_results, key=lambda x: x["Flow Time (days)"])
         st.warning(f"⚠️ **Bottleneck Stage: {bottleneck['Stage']}** — "
@@ -7588,7 +7588,7 @@ def module_dpmo():
                                   "Above average", "World class", "Best-in-class / Medical devices"],
             "Defects/Day (1M ops)": ["691,462", "308,538", "66,807", "6,210", "233", "3.4"]
         })
-        st.dataframe(sigma_df, use_container_width=True)
+        st.dataframe(sigma_df, width='stretch')
 
         display_key_insight(
             "The 1.5σ Shift",
@@ -7610,7 +7610,7 @@ def module_dpmo():
                                 "Lead smaller projects; support BBs",
                                 "Participate in improvement teams"]
         })
-        st.dataframe(roles_df, use_container_width=True)
+        st.dataframe(roles_df, width='stretch')
 
     with tab2:
         st.markdown("### DPMO & Sigma Level Calculator")
@@ -7688,7 +7688,7 @@ def module_dpmo():
                 "Cumulative RTY": f"{running_rty*100:.3f}%",
                 "Hidden Factory": f"{(1-math.exp(-dpu_s))*100:.2f}% rework"
             })
-        st.dataframe(pd.DataFrame(rty_rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(rty_rows), width='stretch')
 
     with tab3:
         st.markdown("### DMAIC Methodology")
@@ -7802,7 +7802,7 @@ def module_dpmo():
                 }
             ))
             fig_gauge.update_layout(height=300, template="plotly_white")
-            st.plotly_chart(fig_gauge, use_container_width=True)
+            st.plotly_chart(fig_gauge, width='stretch')
 
         # ─── Industry Benchmark Chart ───
         industry_benchmarks = {
@@ -7834,7 +7834,7 @@ def module_dpmo():
                                 xaxis_title="Sigma Level",
                                 xaxis_range=[0, 7],
                                 template="plotly_white", height=420)
-        st.plotly_chart(fig_bench, use_container_width=True)
+        st.plotly_chart(fig_bench, width='stretch')
 
 
 # ============================================================
@@ -7869,7 +7869,7 @@ def module_fmea():
                              "Low", "Moderate", "High", "Very high",
                              "Hazardous (warning)", "Hazardous (no warning)"]
             })
-            st.dataframe(s_scale, use_container_width=True)
+            st.dataframe(s_scale, width='stretch')
         with col2:
             st.markdown("**Occurrence (O) — Frequency of Cause**")
             o_scale = pd.DataFrame({
@@ -7878,7 +7878,7 @@ def module_fmea():
                                "1 in 2,000", "1 in 400", "1 in 80",
                                "1 in 20", "1 in 8", "1 in 3", "1 in 2"]
             })
-            st.dataframe(o_scale, use_container_width=True)
+            st.dataframe(o_scale, width='stretch')
         with col3:
             st.markdown("**Detection (D) — Ability to Find Before Reaching Customer**")
             d_scale = pd.DataFrame({
@@ -7887,7 +7887,7 @@ def module_fmea():
                              "Moderately high", "Moderate", "Low",
                              "Very low", "Remote", "Very remote", "Cannot detect"]
             })
-            st.dataframe(d_scale, use_container_width=True)
+            st.dataframe(d_scale, width='stretch')
 
         st.markdown("#### RPN Interpretation")
         rpn_df = pd.DataFrame({
@@ -7899,7 +7899,7 @@ def module_fmea():
                            "Urgent action required",
                            "Stop process; fix immediately"]
         })
-        st.dataframe(rpn_df, use_container_width=True)
+        st.dataframe(rpn_df, width='stretch')
 
         display_key_insight(
             "RPN Limitation",
@@ -7966,7 +7966,7 @@ def module_fmea():
             lambda r: "🔴 Critical" if r >= 200 else "🟡 High" if r >= 100 else "🟢 Low")
         st.markdown("---")
         st.markdown("#### Ranked FMEA Results")
-        st.dataframe(df_fmea, use_container_width=True)
+        st.dataframe(df_fmea, width='stretch')
 
         col1, col2, col3, col4 = st.columns(4)
         rpn_vals = [m["RPN"] for m in modes]
@@ -8032,7 +8032,7 @@ def module_fmea():
                            tickvals=list(range(1, 11))),
                 template="plotly_white", height=520, showlegend=False
             )
-            st.plotly_chart(fig_risk, use_container_width=True)
+            st.plotly_chart(fig_risk, width='stretch')
 
             # ─── Pareto of RPN ───
             st.markdown("#### Pareto of Failure Modes by RPN")
@@ -8054,7 +8054,7 @@ def module_fmea():
                 xaxis_tickangle=-30,
                 title="RPN Pareto Chart", template="plotly_white", height=400
             )
-            st.plotly_chart(fig_par, use_container_width=True)
+            st.plotly_chart(fig_par, width='stretch')
 
 
 # ============================================================
@@ -8113,7 +8113,7 @@ def module_sqc():
                 "Approximately normal"
             ]
         })
-        st.dataframe(chart_guide, use_container_width=True, hide_index=True)
+        st.dataframe(chart_guide, width='stretch', hide_index=True)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -8151,7 +8151,7 @@ def module_sqc():
                 "More missed problems"
             ]
         })
-        st.dataframe(err_df, use_container_width=True, hide_index=True)
+        st.dataframe(err_df, width='stretch', hide_index=True)
 
         display_textbook_content(
             "Control Chart Interpretation",
@@ -8232,7 +8232,7 @@ def module_sqc():
                 template="plotly_white",
                 height=420
             )
-            st.plotly_chart(fig_p, use_container_width=True)
+            st.plotly_chart(fig_p, width='stretch')
 
             if ooc_p:
                 st.error(f"⚠️ **Out-of-Control:** Samples {ooc_p} — investigate special causes.")
@@ -8247,7 +8247,7 @@ def module_sqc():
                     "Status": ["🔴 OOC" if i + 1 in ooc_p else "✅ OK" for i in range(int(num_samp_p))],
                     "Dist from CL": [f"{abs(p - p_bar) / sp_p:.2f}σ" if sp_p > 0 else "NA" for p in proportions]
                 })
-                st.dataframe(p_tbl, use_container_width=True, hide_index=True)
+                st.dataframe(p_tbl, width='stretch', hide_index=True)
 
     with tab3:
         st.markdown("### c-Chart — Count of Defects per Unit")
@@ -8319,7 +8319,7 @@ def module_sqc():
             template="plotly_white",
             height=400
         )
-        st.plotly_chart(fig_c, use_container_width=True)
+        st.plotly_chart(fig_c, width='stretch')
 
         if ooc_c:
             st.error(f"⚠️ **Out-of-Control:** Units {ooc_c}")
@@ -8430,7 +8430,7 @@ def module_sqc():
             template="plotly_white",
             height=360
         )
-        st.plotly_chart(fig_xbar, use_container_width=True)
+        st.plotly_chart(fig_xbar, width='stretch')
 
         colors_r = ["#e74c3c" if (r > ucl_r or r < lcl_r) else "#9b59b6" for r in subgroup_ranges]
         fig_r = go.Figure()
@@ -8453,7 +8453,7 @@ def module_sqc():
             template="plotly_white",
             height=320
         )
-        st.plotly_chart(fig_r, use_container_width=True)
+        st.plotly_chart(fig_r, width='stretch')
 
         if ooc_xbar or ooc_r:
             st.error(f"⚠️ x̄ OOC: {ooc_xbar if ooc_xbar else 'None'} | R OOC: {ooc_r if ooc_r else 'None'}")
@@ -8560,7 +8560,7 @@ def module_capability():
             "Expected PPM": ["2,700+", "64–2,700", "0.6–64", "< 0.6"],
             "Action":       ["Immediate improvement", "Monitor closely", "Acceptable", "Excellent — benchmark"]
         })
-        st.dataframe(df_interp, use_container_width=True)
+        st.dataframe(df_interp, width='stretch')
 
         st.markdown("#### Taguchi Loss Function Insight")
         display_key_insight(
@@ -8635,7 +8635,7 @@ def module_capability():
             "Defective PPM":  ["317,311", "45,500", "2,700", "63", "0.57", "0.002"],
             "Fraction Def.":  ["31.7%", "4.55%", "0.27%", "0.006%", "0.000057%", "0.0000002%"]
         })
-        st.dataframe(ref_data, use_container_width=True)
+        st.dataframe(ref_data, width='stretch')
 
     with tab3:
         st.markdown("### Process Distribution vs. Spec Limits")
@@ -8688,7 +8688,7 @@ def module_capability():
         fig.update_layout(title=f"Process Distribution | Cp={v_cp:.2f}, Cpk={v_cpk:.2f}",
                           xaxis_title="Measurement", yaxis_title="Probability Density",
                           template="plotly_white", height=420, showlegend=True)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         with col2:
             v_ppm = ((1-normal_cdf((v_usl-v_mean)/v_sigma)) +
@@ -8736,7 +8736,7 @@ def module_sampling():
                            "Prob. of accepting a bad lot (Type II)"],
             "Typical Value": ["1–5%", "5–15%", "0.05 (5%)", "0.10 (10%)"]
         })
-        st.dataframe(params, use_container_width=True)
+        st.dataframe(params, width='stretch')
 
         st.markdown("#### Textbook Sampling Plan Table (n·AQL at α=0.05, β=0.10)")
         exhibit_data = pd.DataFrame({
@@ -8744,7 +8744,7 @@ def module_sampling():
             "LTPD/AQL": [44.890, 10.946, 6.509, 4.890, 4.057, 3.549, 3.206, 2.957],
             "n·AQL":    [0.052, 0.355, 0.818, 1.366, 1.970, 2.613, 3.286, 3.981]
         })
-        st.dataframe(exhibit_data, use_container_width=True)
+        st.dataframe(exhibit_data, width='stretch')
 
         st.markdown("**Example (from textbook):** AQL=2%, LTPD=8% → LTPD/AQL=4.0 → use c=4, n=99")
 
@@ -8840,7 +8840,7 @@ def module_sampling():
                           yaxis_title="Probability of Acceptance",
                           xaxis_tickformat=".1%", yaxis_range=[0, 1.05],
                           template="plotly_white", height=450)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         with col2:
             st.metric("α (Producer's Risk)", f"{1-pa_aql_oc:.4f}")
@@ -8942,7 +8942,7 @@ def module_pareto():
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
             template="plotly_white", height=460, barmode="group"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Summary table
         df_display = df[["Rank","Category","Frequency","Pct","Cum %"]].copy()
@@ -8950,7 +8950,7 @@ def module_pareto():
         df_display["Cum %"] = df_display["Cum %"].map("{:.1f}%".format)
         df_display["Vital Few"] = df_display["Category"].apply(
             lambda x: "✅ Vital Few" if x in vital_few else "")
-        st.dataframe(df_display, use_container_width=True)
+        st.dataframe(df_display, width='stretch')
 
         vital_pct = df[df["Category"].isin(vital_few)]["Frequency"].sum() / total * 100
         st.success(
@@ -8991,7 +8991,7 @@ def module_fishbone():
                                 "Process steps, SOPs", "Raw materials, components",
                                 "Gauges, test methods", "Temperature, humidity, environment"]
             })
-            st.dataframe(mfg_6m, use_container_width=True)
+            st.dataframe(mfg_6m, width='stretch')
         with col2:
             st.markdown("#### 4S Framework (Service)")
             svc_4s = pd.DataFrame({
@@ -9001,7 +9001,7 @@ def module_fishbone():
                                "Procedures, IT, policies",
                                "Training, competency, attitude"]
             })
-            st.dataframe(svc_4s, use_container_width=True)
+            st.dataframe(svc_4s, width='stretch')
 
         display_key_insight(
             "How to Use",
@@ -9124,7 +9124,7 @@ def module_lean():
             "Lean/JIT":      ["Small (ideally 1)", "Minimal JIT", "Few; long-term partners",
                               "Minimized (<10 min)", "Zero defects at source", "Multi-skilled"]
         })
-        st.dataframe(comparison, use_container_width=True)
+        st.dataframe(comparison, width='stretch')
 
     with tab2:
         st.markdown("### Waste Cost Analyzer")
@@ -9203,7 +9203,7 @@ def module_lean():
         ])
         fig.update_layout(barmode="stack", title="Lead Time Breakdown: Before vs. After Lean",
                           yaxis_title="Days", template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with tab4:
         st.markdown("### Value Stream Map Simulator")
@@ -9223,7 +9223,7 @@ def module_lean():
             "Time (days)": times,
             "Value Added?": ["✅ VA" if v else "❌ NVA" for v in va_flags]
         })
-        st.dataframe(vsm_df, use_container_width=True)
+        st.dataframe(vsm_df, width='stretch')
 
         total_time = sum(times)
         va_time    = sum(t for t, v in zip(times, va_flags) if v)
@@ -9336,7 +9336,7 @@ def module_centroid():
                               yaxis_title="Y Coordinate",
                               template="plotly_white", height=480,
                               showlegend=True)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
             # Distance from centroid to each location
             locs_df = pd.DataFrame(locations)
@@ -9344,7 +9344,7 @@ def module_centroid():
                 lambda r: math.sqrt((r["x"]-cx)**2 + (r["y"]-cy)**2), axis=1)
             locs_df["Ton-Miles"] = locs_df["Distance to Centroid"] * locs_df["v"]
             locs_df = locs_df.rename(columns={"name":"Location","x":"X","y":"Y","v":"Volume"})
-            st.dataframe(locs_df.round(2), use_container_width=True)
+            st.dataframe(locs_df.round(2), width='stretch')
             st.metric("Total Ton-Miles", f"{locs_df['Ton-Miles'].sum():,.0f}")
 
     with tab3:
@@ -9477,7 +9477,7 @@ def module_factor():
             fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,100])),
                               title="Factor Score Comparison", template="plotly_white",
                               height=500)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -9511,7 +9511,7 @@ def module_transportation():
             "Quality": ["Basic — high cost", "Good starting point", "Best initial BFS", "Optimal"],
             "Use":    ["Quick start", "Improved start", "Best heuristic start", "Final optimization"]
         })
-        st.dataframe(methods, use_container_width=True)
+        st.dataframe(methods, width='stretch')
 
     with tab2:
         st.markdown("### Northwest Corner Method")
@@ -9580,7 +9580,7 @@ def module_transportation():
                                 index=[f"S{i+1}" for i in range(n_sources)])
         alloc_df["Supply"] = supply
         alloc_df.loc["Demand"] = demand + [sum(demand)]
-        st.dataframe(alloc_df, use_container_width=True)
+        st.dataframe(alloc_df, width='stretch')
 
         total_cost = sum(alloc[i][j]*costs[i][j]
                          for i in range(n_sources) for j in range(n_dests))
@@ -9617,7 +9617,7 @@ def module_transportation():
                         })
             breakdown_df = pd.DataFrame(cost_breakdown)
             if not breakdown_df.empty:
-                st.dataframe(breakdown_df, use_container_width=True)
+                st.dataframe(breakdown_df, width='stretch')
                 st.metric("Custom Total Cost", f"${breakdown_df['Total Cost'].sum():,}")
 
 
@@ -9647,7 +9647,7 @@ def module_sourcing():
             "Innovative Products": ["Unpredictable", "Short (months)", "High (20–60%)",
                                     "High (40–100%)", "High", "Responsiveness/speed"]
         })
-        st.dataframe(df_fi, use_container_width=True)
+        st.dataframe(df_fi, width='stretch')
 
         st.markdown("#### Sourcing Strategy Matrix")
         col1, col2 = st.columns(2)
@@ -9711,7 +9711,7 @@ def module_sourcing():
         ])
         fig.update_layout(barmode="group", title="TCO Component Breakdown",
                           yaxis_title="Cost per Unit ($)", template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with tab3:
         st.markdown("### Supply Chain Risk Assessment")
@@ -9824,7 +9824,7 @@ def module_forecast():
             L, T = L_new, T_new
 
         df_holt = pd.DataFrame(rows)
-        st.dataframe(df_holt, use_container_width=True)
+        st.dataframe(df_holt, width='stretch')
 
         # Chart
         fig = go.Figure()
@@ -9836,7 +9836,7 @@ def module_forecast():
         fig.update_layout(title=f"Holt's Method (α={alpha}, β={beta})",
                           xaxis_title="Period", yaxis_title="Value",
                           template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Forecast future periods
         m = st.number_input("Forecast m periods ahead", value=3, min_value=1, max_value=12)
@@ -9874,7 +9874,7 @@ def module_forecast():
         df_si["SI"] = (df_si["Avg"] / overall_avg).round(3)
         df_si["Interpretation"] = df_si["SI"].apply(
             lambda s: "↑ Peak Season" if s > 1.1 else ("↓ Trough" if s < 0.9 else "≈ Average"))
-        st.dataframe(df_si, use_container_width=True)
+        st.dataframe(df_si, width='stretch')
 
         col1, col2 = st.columns(2)
         col1.metric("Overall Average", f"{overall_avg:.1f}")
@@ -9886,14 +9886,14 @@ def module_forecast():
         fig.add_hline(y=1.0, line_dash="dash", line_color="gray", annotation_text="Baseline SI=1.0")
         fig.update_layout(title="Seasonal Indices", yaxis_title="Seasonal Index",
                           template="plotly_white", height=350)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Deseasonalized forecast
         st.markdown("#### Apply Seasonal Index to Forecast")
         base_fcst = st.number_input("Base Forecast (deseasonalized)", value=float(round(overall_avg)))
         deseason_df = df_si[["Season","SI"]].copy()
         deseason_df["Adjusted Forecast"] = (deseason_df["SI"] * base_fcst).round(1)
-        st.dataframe(deseason_df, use_container_width=True)
+        st.dataframe(deseason_df, width='stretch')
 
     with tab4:
         st.markdown("### Tracking Signal Monitor")
@@ -9935,7 +9935,7 @@ def module_forecast():
             "MAD":  [round(m,2) for m in mad_cum],
             "TS":   [round(ts,2) for ts in ts_vals]
         })
-        st.dataframe(df_ts, use_container_width=True)
+        st.dataframe(df_ts, width='stretch')
 
         final_mad  = mad_cum[-1]
         final_rsfe = rsfe_cum[-1]
@@ -9958,7 +9958,7 @@ def module_forecast():
         fig.add_hline(y=0,  line_dash="dot",  line_color="green", annotation_text="0 (Unbiased)")
         fig.update_layout(title="Tracking Signal Over Time", xaxis_title="Period",
                           yaxis_title="Tracking Signal", template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         if abs(final_ts) > 4:
             st.error(f"⚠️ |TS| = {abs(final_ts):.2f} > 4 — **Forecast bias detected!** "
@@ -10017,7 +10017,7 @@ def module_regression():
                 "Forecasting trend or relationship strength"
             ]
         })
-        st.dataframe(fit_df, use_container_width=True, hide_index=True)
+        st.dataframe(fit_df, width='stretch', hide_index=True)
 
     with tab2:
         st.markdown("### Regression Calculator")
@@ -10085,7 +10085,7 @@ def module_regression():
         ))
         fig.update_layout(**get_plotly_layout("Regression Trend Line", height=420))
         fig.update_layout(xaxis_title="Period", yaxis_title="Value")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with tab3:
         st.markdown("### 📝 Practice Problems")
@@ -10221,14 +10221,14 @@ def module_aggregate():
             "Level Production": [level_prod] * 4,
             "Inventory End": inventory
         })
-        st.dataframe(plan_df, use_container_width=True, hide_index=True)
+        st.dataframe(plan_df, width='stretch', hide_index=True)
 
         fig = go.Figure()
         fig.add_trace(go.Bar(x=["Q1", "Q2", "Q3", "Q4"], y=demands, name="Demand"))
         fig.add_trace(go.Bar(x=["Q1", "Q2", "Q3", "Q4"], y=[level_prod] * 4, name="Level Production"))
         fig.update_layout(**get_plotly_layout("Aggregate Planning Demand vs Production", height=400))
         fig.update_layout(barmode="group", xaxis_title="Quarter", yaxis_title="Units")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         if chase_total < level_total:
             st.success(f"📊 **Recommendation:** Chase Strategy saves ${level_total - chase_total:,.0f}")
@@ -10303,7 +10303,7 @@ def module_eoq():
                 "Ordering cost = Holding cost"
             ]
         })
-        st.dataframe(eoq_df, use_container_width=True, hide_index=True)
+        st.dataframe(eoq_df, width='stretch', hide_index=True)
 
     with tab2:
         st.markdown("### EOQ Calculator")
@@ -10339,7 +10339,7 @@ def module_eoq():
         fig.add_vline(x=Q_star, line_dash="dash", line_color="#ef4444")
         fig.update_layout(**get_plotly_layout("EOQ Total Cost Curve", height=400))
         fig.update_layout(xaxis_title="Order Quantity (Q)", yaxis_title="Annual Cost ($)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with tab3:
         st.markdown("### Production Order Quantity (EPQ)")
@@ -10430,7 +10430,7 @@ def module_safetystock():
             "z-value": [1.28, 1.65, 1.96, 2.33, 3.09],
             "Relative SS (vs 95%)": ["–22%", "Base", "+19%", "+41%", "+87%"]
         })
-        st.dataframe(df_z, use_container_width=True)
+        st.dataframe(df_z, width='stretch')
 
         display_key_insight(
             "Service Level Trade-off",
@@ -10528,7 +10528,7 @@ def module_safetystock():
             template="plotly_white",
             height=420
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         st.markdown("#### Z-Score Impact on Safety Stock")
         base_ss = 1.65 * sigma_d * math.sqrt(lt)
@@ -10538,7 +10538,7 @@ def module_safetystock():
             "Safety Stock": [round(z_v * sigma_d * math.sqrt(lt)) for z_v in levels],
             "% vs 95% Baseline": [f"{((z_v/1.65)-1)*100:+.1f}%" for z_v in levels]
         })
-        st.dataframe(comparison, use_container_width=True)
+        st.dataframe(comparison, width='stretch')
 
 
 # ============================================================
@@ -10674,7 +10674,7 @@ def module_newsvendor():
                 yaxis_title="Expected Profit ($)",
                 template="plotly_white", height=420
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         else:
             st.warning("Ensure Price > Cost ≥ Salvage to generate chart.")
 
@@ -10808,7 +10808,7 @@ def module_mrp():
                     else "" for _ in row]
 
         st.dataframe(df_mrp.style.apply(highlight_release, axis=1),
-                     use_container_width=True)
+                     width='stretch')
 
         # Summary metrics
         total_orders  = sum(1 for r in planned_rcpt if r > 0)
@@ -10846,7 +10846,7 @@ def module_mrp():
             "Gross Requirement":[int(end_qty), int(end_qty*2), int(end_qty), int(end_qty*2*4 + end_qty*2),
                                  int(end_qty*3), int(end_qty*2)]
         }
-        st.dataframe(pd.DataFrame(bom_data), use_container_width=True)
+        st.dataframe(pd.DataFrame(bom_data), width='stretch')
 
         display_key_insight(
             "Shared Components",
@@ -10894,7 +10894,7 @@ def module_mrp_lotsizing():
         poq_T = round(eoq / avg_d) if avg_d > 0 else 1
 
         df_req = pd.DataFrame({"Week": list(range(1, 9)), "Net Requirements": requirements})
-        st.dataframe(df_req, use_container_width=True)
+        st.dataframe(df_req, width='stretch')
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Avg Weekly Demand", f"{avg_d:.1f}")
@@ -10976,7 +10976,7 @@ def module_mrp_lotsizing():
             "Holding Cost ($)":[l4l_holding, eoq_inv*H, poq_inv*H],
             "Total Cost ($)": [l4l_cost, eoq_cost, poq_cost]
         })
-        st.dataframe(results_df, use_container_width=True)
+        st.dataframe(results_df, width='stretch')
 
         best = results_df.loc[results_df["Total Cost ($)"].idxmin(), "Method"]
         st.success(f"✅ **Best Method: {best}** with ${results_df['Total Cost ($)'].min():.0f} total cost.")
@@ -10989,7 +10989,7 @@ def module_mrp_lotsizing():
         ])
         fig.update_layout(barmode="stack", title="Cost Breakdown by Lot Sizing Method",
                           yaxis_title="Cost ($)", template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -11022,7 +11022,7 @@ def module_scheduling():
             "Formula": ["Arrival order", "Min PT", "Min DD",
                         "Max PT", "(DD − Today) / PT", "DD − Today − PT"]
         })
-        st.dataframe(rule_data, use_container_width=True)
+        st.dataframe(rule_data, width='stretch')
 
         display_formula_card("Critical Ratio",
                              r"CR = \frac{D_j - t_{now}}{PT_j} \quad "
@@ -11111,7 +11111,7 @@ def module_scheduling():
             current_t = finish
 
         df_res = pd.DataFrame(results)
-        st.dataframe(df_res, use_container_width=True)
+        st.dataframe(df_res, width='stretch')
 
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Avg Flow Time",    f"{sum(flow_times)/len(flow_times):.2f}")
@@ -11150,7 +11150,7 @@ def module_scheduling():
             template="plotly_white", height=60 * n_jobs + 120,
             legend=dict(orientation="h", yanchor="bottom", y=1.02)
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Rule comparison
         st.markdown("#### Rule Comparison (All Rules)")
@@ -11173,7 +11173,7 @@ def module_scheduling():
                 "Avg Tardiness": round(sum(td)/len(td), 2),
                 "# Tardy": sum(1 for t in td if t > 0)
             })
-        st.dataframe(pd.DataFrame(comparison_rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(comparison_rows), width='stretch')
 
     with tab3:
         st.markdown("### 📝 Practice Problems")
@@ -11279,7 +11279,7 @@ def module_pokayoke():
             return colors.get(val, "")
 
         st.dataframe(filtered.style.applymap(color_type, subset=["Type"]),
-                     use_container_width=True)
+                     width='stretch')
         st.caption("🟢 Prevention | 🟡 Detection | 🔴 Shutdown")
 
         display_citation(
@@ -11541,7 +11541,7 @@ def module_sqc_practice():
                             display_hint(hints[title])
                     with ans_col:
                         if st.button("Show Answer ▼", key=f"sqc_prac_{i}_{diff}_{topic[:4]}",
-                                     use_container_width=True):
+                                     width='stretch'):
                             st.session_state[f"sqc_ans_{i}"] = True
                     if st.session_state.get(f"sqc_ans_{i}"):
                         display_solution(answer)
@@ -11689,7 +11689,7 @@ def module_sqc_practice():
                         "World class (Six Sigma goal)"
                     ]
                 })
-                st.dataframe(ref_df, use_container_width=True, hide_index=True)
+                st.dataframe(ref_df, width='stretch', hide_index=True)
 
         elif calc == "x̄ & R Chart Limits":
             st.markdown("#### x̄ & R Chart Limit Calculator")
@@ -11787,7 +11787,7 @@ def module_sqc_practice():
             "D₄":           [3.267,2.574,2.282,2.114,2.004,1.924,1.864,1.816,1.777],
             "d₂":           [1.128,1.693,2.059,2.326,2.534,2.704,2.847,2.970,3.078],
         })
-        st.dataframe(const_df, use_container_width=True, hide_index=True)
+        st.dataframe(const_df, width='stretch', hide_index=True)
 
         display_key_insight("When to Apply Each Chart",
             "p-chart: fraction defective, variable n (binomial) | "
@@ -11812,7 +11812,7 @@ def module_sqc_practice():
                 "Large sustained shift"
             ]
         })
-        st.dataframe(we_df, use_container_width=True, hide_index=True)
+        st.dataframe(we_df, width='stretch', hide_index=True)
 
         st.markdown("#### Chart Selection Guide")
         chart_guide = pd.DataFrame({
@@ -11825,7 +11825,7 @@ def module_sqc_practice():
                                "Fraction defective", "Count defective",
                                "Defects per unit", "Defects per unit (adjusted)"]
         })
-        st.dataframe(chart_guide, use_container_width=True, hide_index=True)
+        st.dataframe(chart_guide, width='stretch', hide_index=True)
 
     # ─────────────────────────────────────────────────────────
     with tab4:
@@ -11874,7 +11874,7 @@ def module_sqc_practice():
 
         qa_col1, qa_col2 = st.columns(2)
         with qa_col1:
-            if st.button("✅ I Got It Right", key="sqc_quiz_right", use_container_width=True):
+            if st.button("✅ I Got It Right", key="sqc_quiz_right", width='stretch'):
                 st.session_state.sqc_quiz_score  += 1
                 st.session_state.sqc_quiz_total  += 1
                 st.session_state.sqc_quiz_streak += 1
@@ -11883,13 +11883,13 @@ def module_sqc_practice():
                 display_solution(q_answer)
         with qa_col2:
             if st.button("❌ Show Answer (I Missed)", key="sqc_quiz_wrong",
-                         use_container_width=True):
+                         width='stretch'):
                 st.session_state.sqc_quiz_total  += 1
                 st.session_state.sqc_quiz_streak  = 0
                 st.session_state.correct_streak   = 0
                 display_solution(q_answer)
 
-        if st.button("⏭ Next Question →", key="sqc_quiz_next", use_container_width=True):
+        if st.button("⏭ Next Question →", key="sqc_quiz_next", width='stretch'):
             st.session_state.sqc_quiz_total = st.session_state.sqc_quiz_total  # trigger increment next press
             st.rerun()
 
@@ -12167,7 +12167,7 @@ def module_practice():
                         display_hint(key_hint)
                     if st.button("Show Solution ▼",
                                  key=f"prac_{i}_{chapter[:4]}_{diff}",
-                                 use_container_width=True):
+                                 width='stretch'):
                         st.session_state[f"prac_ans_{i}"] = True
                         st.session_state.problems_solved += 1
                     if st.session_state.get(f"prac_ans_{i}"):
@@ -12547,7 +12547,7 @@ def _render_welcome():
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("Open", key=f"welcome_quick_{key}", use_container_width=True):
+            if st.button("Open", key=f"welcome_quick_{key}", width='stretch'):
                 st.session_state.selected_module = key
                 st.rerun()
 
@@ -12683,7 +12683,7 @@ def _render_breadcrumb(key: str):
     with bc2:
         bm_label = "⭐" if is_bookmarked else "☆"
         if st.button(bm_label, key=f"bm_{key}", help="Bookmark this module",
-                     use_container_width=True):
+                     width='stretch'):
             if is_bookmarked:
                 st.session_state.bookmarks.discard(key)
             else:
@@ -12728,7 +12728,7 @@ def _render_search():
     st.sidebar.caption(f"{len(matches)} result(s):")
     for _, key, name, icon in matches[:6]:
         if st.sidebar.button(f"{icon} {name}", key=f"search_nav_{key}",
-                             use_container_width=True):
+                             width='stretch'):
             return key
 
     if len(matches) > 6:
@@ -12753,7 +12753,7 @@ def _render_bookmarks():
                 continue
             _, name, icon, *_ = meta
             if st.button(f"{icon} {name}", key=f"bm_nav_{key}",
-                         use_container_width=True):
+                         width='stretch'):
                 st.session_state.selected_module = key
                 st.rerun()
 
@@ -12782,7 +12782,7 @@ def _render_recent():
                 continue
             _, name, icon, *_ = meta
             if st.button(f"{icon} {name}", key=f"recent_{key}",
-                         use_container_width=True):
+                         width='stretch'):
                 st.session_state.selected_module = key
                 st.rerun()
 
@@ -12910,7 +12910,7 @@ def _render_chapter_nav():
                     """, unsafe_allow_html=True)
                 else:
                     if st.button(btn_label, key=f"nav_{key}",
-                                 use_container_width=True,
+                                 width='stretch',
                                  help=f"~{est_min} min"):
                         jump_to = key
 
@@ -12955,7 +12955,7 @@ def _render_module_footer(current_key: str):
             prev_meta = _get_module_meta(prev_key)
             if prev_meta and st.button(
                 f"← {prev_meta[2]} {prev_meta[1]}",
-                key="footer_prev", use_container_width=True,
+                key="footer_prev", width='stretch',
             ):
                 st.session_state.selected_module = prev_key
                 st.rerun()
@@ -12985,7 +12985,7 @@ def _render_module_footer(current_key: str):
             next_meta = _get_module_meta(next_key)
             if next_meta and st.button(
                 f"{next_meta[2]} {next_meta[1]} →",
-                key="footer_next", use_container_width=True,
+                key="footer_next", width='stretch',
             ):
                 st.session_state.selected_module = next_key
                 st.rerun()
