@@ -63,7 +63,7 @@ for _alias, _builtin in {
         setattr(np, _alias, _builtin)
 
 # ── Runtime version dict ──────────────────────────────────────
-import plotly  # top-level plotly has __version__; px submodule does not
+import plotly as _plotly 
 
 _VERSIONS: dict = {
     "python":    sys.version.split()[0],
@@ -71,7 +71,7 @@ _VERSIONS: dict = {
     "pandas":    pd.__version__,
     "numpy":     np.__version__,
     "scipy":     scipy.__version__,
-    "plotly":    plotly.__version__,   # ← FIX: use top-level plotly, not px
+    "plotly":    _plotly.__version__,     # ← fixed
 }
 logging.info("OSCM runtime: %s", _VERSIONS)
 
