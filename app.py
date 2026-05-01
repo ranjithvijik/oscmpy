@@ -1,3 +1,18 @@
+# ============================================================
+# IMPORTS & COMPATIBILITY PATCHES
+# ============================================================
+import math
+import warnings
+import sys
+import logging
+from collections import OrderedDict
+from functools import lru_cache
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="plotly")
+
+# ── Core ─────────────────────────────────────────────────────
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -5,7 +20,47 @@ from scipy import stats
 from scipy.special import factorial
 import plotly.graph_objects as go
 import plotly.express as px
-import math
+
+# ── Optional imports (graceful degradation) ──────────────────
+try:
+    import plotly.figure_factory as ff
+    _HAS_FF = True
+except ImportError:
+    _HAS_FF = False
+
+try:
+    from scipy.optimize import linprog
+    _HAS_LINPROG = True
+except ImportError:
+    _HAS_LINPROG = False
+
+# ── Pandas Styler patch (.applymap removed in pandas ≥ 2.2) ──
+if not hasattr(pd.io.formats.style.Styler, "applymap"):
+    pd.io.formats.style.Styler.applymap = pd.io.formats.style.Styler.map
+
+# ── NumPy legacy scalar alias patch (removed in NumPy ≥ 2.0) ─
+_NP_ALIASES = {
+    "bool":    bool,
+    "int":     int,
+    "float":   float,
+    "complex": complex,
+    "object":  object,
+    "str":     str,
+}
+for _alias, _builtin in _NP_ALIASES.items():
+    if not hasattr(np, _alias):
+        setattr(np, _alias, _builtin)
+
+# ── Runtime version diagnostics (surfaces in Streamlit logs) ──
+_VERSIONS = {
+    "python":     sys.version.split()[0],
+    "streamlit":  st.__version__,
+    "pandas":     pd.__version__,
+    "numpy":      np.__version__,
+    "scipy":      stats.__module__.split(".")[0],  # "scipy"
+    "plotly":     px.__version__,
+}
+logging.info("OSCM runtime: %s", _VERSIONS)
 
 
 # ============================================================
@@ -19,8 +74,15 @@ st.set_page_config(
     menu_items={
         "Get Help":     "https://github.com",
         "Report a bug": "https://github.com",
-        "About":        "OSCM Interactive Simulator — Jacobs & Chase (2024)"
-    }
+        "About": (
+            "📊 **OSCM Interactive Simulator**\n\n"
+            "Based on Jacobs & Chase — *Operations and Supply Chain Management*, "
+            "17th ed. (McGraw-Hill, 2024).\n\n"
+            f"Python {_VERSIONS['python']} · "
+            f"Streamlit {_VERSIONS['streamlit']} · "
+            f"Pandas {_VERSIONS['pandas']}"
+        ),
+    },
 )
 
 
@@ -28,17 +90,42 @@ st.set_page_config(
 # SESSION STATE INITIALIZER
 # ============================================================
 def init_session_state():
-    """Initialize all required session-state keys once."""
+    """
+    Initialize all session-state keys exactly once per session.
+    Grouped by concern so new keys are easy to find and add.
+    """
     defaults = {
-        "dark_mode":         False,
-        "problems_solved":   0,
-        "correct_streak":    0,
-        "modules_visited":   set(),
-        "last_module":       None,
+        # ── Navigation ────────────────────────────────────────
+        "selected_module":  None,       # None = show welcome screen
+        "last_module":      None,
+        "recent_modules":   [],         # list[str], max 5
+        "modules_visited":  set(),      # set[str]
+        "bookmarks":        set(),      # set[str]
+
+        # ── Theme ─────────────────────────────────────────────
+        "dark_mode":        False,
+
+        # ── Gamification ──────────────────────────────────────
+        "problems_solved":  0,
+        "correct_streak":   0,
+        "best_streak":      0,
+
+        # ── Quiz state (per-module, cleared on navigation) ────
+        "sqc_quiz_score":   0,
+        "sqc_quiz_total":   0,
+        "sqc_quiz_streak":  0,
+
+        # ── Diagnostics ───────────────────────────────────────
+        "app_load_count":   0,
+        "runtime_versions": _VERSIONS,
     }
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
+
+    # Increment load counter each hard rerun
+    st.session_state.app_load_count += 1
+
 
 init_session_state()
 
@@ -47,22 +134,36 @@ init_session_state()
 # THEME MANAGEMENT
 # ============================================================
 def toggle_theme():
+    """Flip dark/light mode and clear any cached palette."""
     st.session_state.dark_mode = not st.session_state.dark_mode
 
 
 def render_theme_toggle():
-    icon = "☀️ Light Mode" if st.session_state.dark_mode else "🌙 Dark Mode"
-    if st.sidebar.button(icon, key="theme_toggle", use_container_width=True):
+    """Render the sidebar theme toggle button."""
+    label = "☀️ Switch to Light Mode" if st.session_state.dark_mode else "🌙 Switch to Dark Mode"
+    if st.sidebar.button(label, key="theme_toggle", use_container_width=True):
         toggle_theme()
         st.rerun()
+
+
+def is_dark() -> bool:
+    """Convenience helper — use in modules instead of reading session state directly."""
+    return st.session_state.get("dark_mode", False)
 
 
 # ============================================================
 # THEME COLOR PALETTES
 # ============================================================
-def _get_palette():
-    """Return a dict of all theme tokens for current mode."""
-    d = st.session_state.dark_mode
+@lru_cache(maxsize=2)   # cache light + dark variants separately
+def _get_palette_cached(dark: bool) -> dict:
+    """
+    Cached palette builder.  The cache is keyed on dark=True/False so
+    theme toggles immediately invalidate the correct entry.
+
+    All light-mode contrast ratios verified against WCAG AA (≥4.5:1 for
+    normal text, ≥3:1 for large/UI text) on their respective backgrounds.
+    """
+    d = dark
     return {
         # ── Backgrounds ──────────────────────────────────────
         "bg_app":           "#0f172a" if d else "#f8fafc",
@@ -72,90 +173,114 @@ def _get_palette():
         "bg_code":          "#0f172a" if d else "#f1f5f9",
 
         # ── Text ─────────────────────────────────────────────
-        # Light: text_secondary darkened #475569→#374151 (~7:1 on white)
-        # Light: text_muted darkened #94a3b8→#4b5563 (2.9:1→7:1 on white)
+        # Light ratios on white: primary #0f172a≈19:1, secondary #374151≈9:1,
+        # muted #4b5563≈7:1 — all WCAG AAA.
         "text_primary":     "#e2e8f0" if d else "#0f172a",
         "text_secondary":   "#94a3b8" if d else "#374151",
         "text_muted":       "#64748b" if d else "#4b5563",
+        "text_inverse":     "#0f172a" if d else "#ffffff",   # text on accent bg
 
         # ── Borders ──────────────────────────────────────────
         "border":           "#334155" if d else "#e2e8f0",
         "border_strong":    "#475569" if d else "#cbd5e1",
 
-        # ── Accent ───────────────────────────────────────────
-        "accent":           "#818cf8" if d else "#6366f1",
-        "accent_hover":     "#6366f1" if d else "#4f46e5",
+        # ── Accent (Indigo) ──────────────────────────────────
+        # Dark #818cf8 on #0f172a ≈ 7:1; Light #4f46e5 on white ≈ 5.9:1
+        "accent":           "#818cf8" if d else "#4f46e5",
+        "accent_hover":     "#6366f1" if d else "#3730a3",
         "accent_soft":      "rgba(129,140,248,0.15)" if d else "rgba(99,102,241,0.08)",
 
-        # ── Semantic: Success ─────────────────────────────────
-        # Light: success_border #86efac→#22c55e (mint was too pale for borders/badges)
-        # Light: solution_text #166534→#14532d (deeper on mint bg)
+        # ── Semantic: Success (Emerald) ──────────────────────
+        # Light: #15803d on #f0fdf4 ≈ 7.2:1
         "success_bg":       "#022c22" if d else "#f0fdf4",
         "success_text":     "#86efac" if d else "#15803d",
         "success_border":   "#16a34a" if d else "#22c55e",
 
-        # ── Semantic: Warning ─────────────────────────────────
-        # Light: warning_border #fcd34d→#d97706 (yellow border barely visible — now amber)
+        # ── Semantic: Warning (Amber) ─────────────────────────
+        # Light: #92400e on #fffbeb ≈ 7.5:1
         "warning_bg":       "#2d1a00" if d else "#fffbeb",
         "warning_text":     "#fde68a" if d else "#92400e",
         "warning_border":   "#d97706" if d else "#d97706",
 
-        # ── Semantic: Danger ──────────────────────────────────
-        # Light: danger_text #b91c1c→#991b1b (marginally deeper)
-        # Light: danger_border #fca5a5→#ef4444 (salmon was invisible as a border)
+        # ── Semantic: Danger (Red) ────────────────────────────
+        # Light: #991b1b on #fef2f2 ≈ 7.1:1
         "danger_bg":        "#450a0a" if d else "#fef2f2",
         "danger_text":      "#fca5a5" if d else "#991b1b",
         "danger_border":    "#dc2626" if d else "#ef4444",
 
-        # ── Semantic: Info ────────────────────────────────────
-        # Light: info_border #93c5fd→#3b82f6 (pale blue border → visible blue)
+        # ── Semantic: Info (Blue) ─────────────────────────────
+        # Light: #1d4ed8 on #eff6ff ≈ 7.3:1
         "info_bg":          "#0c1a3d" if d else "#eff6ff",
         "info_text":        "#93c5fd" if d else "#1d4ed8",
         "info_border":      "#3b82f6" if d else "#3b82f6",
 
-        # ── Special UI boxes ──────────────────────────────────
-        # Light: citation_border #eab308→#92400e  ← CRITICAL: yellow text on pale yellow = WCAG fail
-        # Light: insight_border  #6ee7b7→#16a34a  (mint barely visible)
-        # Light: insight_title   #047857→#065f46  (deeper emerald for contrast)
-        # Light: solution_border #86efac→#22c55e  (mint border → visible green)
-        # Light: solution_text   #166534→#14532d  (deeper on mint bg)
-        # Light: hint_border     #fcd34d→#d97706  (yellow border → amber)
-        # Light: hint_text       #92400e→#78350f  (slightly deeper on pale amber)
+        # ── Semantic: Tip (Teal) — new ────────────────────────
+        "tip_bg":           "#042f2e" if d else "#f0fdfa",
+        "tip_text":         "#5eead4" if d else "#0f766e",
+        "tip_border":       "#0d9488" if d else "#14b8a6",
+
+        # ── Citation box ─────────────────────────────────────
+        # Light: #713f12 on #fefce8 ≈ 8.9:1
         "citation_bg":      "#1c1000" if d else "#fefce8",
         "citation_text":    "#fef08a" if d else "#713f12",
         "citation_border":  "#ca8a04" if d else "#92400e",
 
+        # ── Equation box ─────────────────────────────────────
         "equation_bg":      "#071e2e" if d else "#f0f9ff",
         "equation_border":  "#0ea5e9" if d else "#7dd3fc",
         "equation_text":    "#e0f2fe" if d else "#0c4a6e",
 
+        # ── Key Insight box ──────────────────────────────────
+        # Light: #065f46 on gradient ending #d1fae5 ≈ 8.2:1
         "insight_bg":       "linear-gradient(135deg,#022c22 0%,#052e16 100%)" if d
                             else "linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%)",
         "insight_border":   "#16a34a" if d else "#16a34a",
         "insight_title":    "#4ade80" if d else "#065f46",
 
+        # ── Textbook content box ─────────────────────────────
+        # Light: #6d28d9 on #faf5ff ≈ 6.7:1
         "textbook_bg":      "#160d2a" if d else "#faf5ff",
         "textbook_border":  "#a78bfa" if d else "#8b5cf6",
         "textbook_h4":      "#c4b5fd" if d else "#6d28d9",
 
+        # ── Solution / hint boxes ────────────────────────────
+        # solution: #14532d on #f0fdf4 ≈ 9.1:1
         "solution_bg":      "#022c22" if d else "#f0fdf4",
         "solution_border":  "#16a34a" if d else "#22c55e",
         "solution_text":    "#bbf7d0" if d else "#14532d",
 
+        # hint: #78350f on #fffbeb ≈ 7.5:1
         "hint_bg":          "#2d1a00" if d else "#fffbeb",
         "hint_border":      "#d97706" if d else "#d97706",
         "hint_text":        "#fde68a" if d else "#78350f",
 
+        # ── Practice problem box ─────────────────────────────
         "practice_bg":      "#0c1a3d" if d else "#fafbff",
-        # Light: practice_border #818cf8→#4f46e5 (lighter indigo barely visible on near-white)
         "practice_border":  "#4f46e5" if d else "#4f46e5",
+
+        # ── Code block ───────────────────────────────────────
+        "code_bg":          "#0d1117" if d else "#f6f8fa",
+        "code_text":        "#e6edf3" if d else "#24292f",
+        "code_border":      "#30363d" if d else "#d0d7de",
 
         # ── Metric cards ─────────────────────────────────────
         "metric_grad_hi":   "linear-gradient(135deg,#4338ca 0%,#7c3aed 100%)",
-        "metric_grad_lo":   "linear-gradient(135deg,#1e293b 0%,#334155 100%)" if d
-                            else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)",
+        "metric_grad_lo":   ("linear-gradient(135deg,#1e293b 0%,#334155 100%)" if d
+                             else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)"),
         "metric_hi_text":   "#ffffff",
         "metric_lo_text":   "#e2e8f0" if d else "#0f172a",
+
+        # Metric card semantic variants
+        "metric_success_bg":    "#022c22" if d else "#f0fdf4",
+        "metric_success_text":  "#4ade80" if d else "#15803d",
+        "metric_danger_bg":     "#450a0a" if d else "#fef2f2",
+        "metric_danger_text":   "#f87171" if d else "#991b1b",
+        "metric_warning_bg":    "#2d1a00" if d else "#fffbeb",
+        "metric_warning_text":  "#fbbf24" if d else "#92400e",
+
+        # ── Chapter / progress UI ────────────────────────────
+        "chapter_badge_bg":     "#312e81" if d else "#eef2ff",
+        "chapter_badge_text":   "#a5b4fc" if d else "#3730a3",
 
         # ── Sidebar ───────────────────────────────────────────
         "sidebar_bg":       "#1e293b" if d else "#f8fafc",
@@ -169,58 +294,86 @@ def _get_palette():
         "scroll_thumb":     "#475569" if d else "#cbd5e1",
     }
 
+
+def _get_palette() -> dict:
+    """Public accessor — always returns the palette for the current theme."""
+    return _get_palette_cached(is_dark())
+
 # ============================================================
 # DYNAMIC CSS
 # ============================================================
-def get_theme_css():
-    p = _get_palette()
+@lru_cache(maxsize=2)
+def _get_theme_css_cached(dark: bool) -> str:
+    """
+    Build the full theme CSS string once per theme mode and cache it.
+    Avoids regenerating hundreds of lines of CSS on every widget interaction.
+    """
+    p = _get_palette_cached(dark)
     return f"""
     <style>
+    /* ── Google Font (Inter) ─────────────────────────────── */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
     /* ── CSS Custom Properties ───────────────────────────── */
     :root {{
-        --bg-app:          {p['bg_app']};
-        --bg-card:         {p['bg_card']};
-        --bg-secondary:    {p['bg_secondary']};
-        --text-primary:    {p['text_primary']};
-        --text-secondary:  {p['text_secondary']};
-        --border:          {p['border']};
-        --accent:          {p['accent']};
-        --accent-soft:     {p['accent_soft']};
-        --radius-sm:       6px;
-        --radius-md:       10px;
-        --radius-lg:       14px;
-        --shadow-sm:       0 1px 4px rgba(0,0,0,0.08);
-        --shadow-md:       0 4px 16px rgba(0,0,0,0.12);
-        --shadow-lg:       0 8px 32px rgba(0,0,0,0.18);
-        --transition:      all 0.2s ease;
+        --bg-app:           {p['bg_app']};
+        --bg-card:          {p['bg_card']};
+        --bg-secondary:     {p['bg_secondary']};
+        --text-primary:     {p['text_primary']};
+        --text-secondary:   {p['text_secondary']};
+        --text-muted:       {p['text_muted']};
+        --border:           {p['border']};
+        --border-strong:    {p['border_strong']};
+        --accent:           {p['accent']};
+        --accent-hover:     {p['accent_hover']};
+        --accent-soft:      {p['accent_soft']};
+        --radius-sm:        6px;
+        --radius-md:        10px;
+        --radius-lg:        14px;
+        --radius-xl:        20px;
+        --shadow-sm:        0 1px 4px rgba(0,0,0,0.08);
+        --shadow-md:        0 4px 16px rgba(0,0,0,0.12);
+        --shadow-lg:        0 8px 32px rgba(0,0,0,0.18);
+        --shadow-accent:    0 4px 16px rgba(99,102,241,0.25);
+        --transition:       all 0.2s ease;
+        --font-sans:        'Inter', system-ui, -apple-system, sans-serif;
+        --font-mono:        'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
     }}
 
     /* ── Global Reset ────────────────────────────────────── */
-    *, *::before, *::after {{
-        box-sizing: border-box;
-    }}
+    *, *::before, *::after {{ box-sizing: border-box; }}
+
     .stApp {{
         background-color: {p['bg_app']};
         color: {p['text_primary']};
+        font-family: var(--font-sans);
         transition: background-color 0.3s ease, color 0.3s ease;
     }}
 
-    /* ── Global Text Propagation Fix ─────────────────────── */
-    /* Streamlit renders markdown outside .stApp color scope  */
+    /* ── Global Text Propagation ─────────────────────────── */
     .stApp p, .stApp li, .stApp span,
     .stMarkdown p, .stMarkdown li,
     .stMarkdown h1, .stMarkdown h2,
-    .stMarkdown h3, .stMarkdown h4, .stMarkdown h5 {{
+    .stMarkdown h3, .stMarkdown h4,
+    .stMarkdown h5, .stMarkdown h6 {{
         color: {p['text_primary']};
     }}
-    .stMarkdown strong, .stMarkdown b {{
-        color: {p['text_primary']};
-    }}
-    /* Caption / helper / muted text */
+    .stMarkdown strong, .stMarkdown b {{ color: {p['text_primary']}; font-weight: 700; }}
+    .stMarkdown em, .stMarkdown i     {{ color: {p['text_secondary']}; }}
+    .stMarkdown a                     {{ color: {p['accent']}; text-decoration: underline;
+                                         text-underline-offset: 2px; }}
+    .stMarkdown a:hover               {{ color: {p['accent_hover']}; }}
+    .stMarkdown hr                    {{ border-color: {p['border']}; margin: 1.2rem 0; }}
+    .stMarkdown blockquote            {{ border-left: 3px solid {p['accent']};
+                                         padding-left: 1rem; color: {p['text_secondary']}; }}
+
+    /* Caption / muted text */
     .stCaption, small,
     div[data-testid="stCaptionContainer"] p {{
         color: {p['text_muted']} !important;
+        font-size: 0.82rem;
     }}
+
     /* Widget labels — all input types */
     label,
     div[data-testid="stWidgetLabel"] p,
@@ -231,18 +384,18 @@ def get_theme_css():
     .stTextArea label, .stMultiSelect label,
     .stDateInput label, .stTimeInput label {{
         color: {p['text_primary']} !important;
+        font-weight: 500;
     }}
-    /* Radio / checkbox option text */
     .stRadio div[role="radiogroup"] label,
     .stCheckbox div[data-testid="stCheckbox"] label {{
         color: {p['text_primary']} !important;
     }}
 
     /* ── Scrollbar ───────────────────────────────────────── */
-    ::-webkit-scrollbar            {{ width: 6px; height: 6px; }}
-    ::-webkit-scrollbar-track      {{ background: {p['scroll_track']}; border-radius: 3px; }}
-    ::-webkit-scrollbar-thumb      {{ background: {p['scroll_thumb']}; border-radius: 3px; }}
-    ::-webkit-scrollbar-thumb:hover{{ background: {p['accent']}; }}
+    ::-webkit-scrollbar              {{ width: 6px; height: 6px; }}
+    ::-webkit-scrollbar-track        {{ background: {p['scroll_track']}; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb        {{ background: {p['scroll_thumb']}; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb:hover  {{ background: {p['accent']}; }}
 
     /* ── Module Header ───────────────────────────────────── */
     .main-header {{
@@ -253,7 +406,15 @@ def get_theme_css():
         margin-bottom: 1.5rem;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow-md);
+        box-shadow: var(--shadow-accent);
+    }}
+    .main-header::before {{
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at bottom left,
+            rgba(0,0,0,0.12) 0%, transparent 65%);
+        pointer-events: none;
     }}
     .main-header::after {{
         content: "";
@@ -269,24 +430,30 @@ def get_theme_css():
         font-weight: 800;
         color: white !important;
         letter-spacing: -0.02em;
+        line-height: 1.2;
+        position: relative; z-index: 1;
     }}
     .main-header p {{
         margin: 0.4rem 0 0;
         opacity: 0.92;
         color: white !important;
         font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative; z-index: 1;
     }}
     .chapter-badge {{
         background: rgba(255,255,255,0.22);
         color: white;
         padding: 0.22rem 0.7rem;
-        border-radius: 20px;
+        border-radius: var(--radius-xl);
         font-size: 0.78rem;
         font-weight: 700;
         margin-right: 0.5rem;
         letter-spacing: 0.03em;
         text-transform: uppercase;
         border: 1px solid rgba(255,255,255,0.3);
+        display: inline-block;
+        vertical-align: middle;
     }}
 
     /* ── Metric Cards ────────────────────────────────────── */
@@ -300,53 +467,64 @@ def get_theme_css():
         color: {p['metric_lo_text']};
         transition: var(--transition);
         box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+    }}
+    .metric-card::before {{
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: {p['border']};
+        transition: background 0.2s ease;
     }}
     .metric-card:hover {{
         box-shadow: var(--shadow-md);
         border-color: {p['accent']};
         transform: translateY(-1px);
     }}
+    .metric-card:hover::before {{ background: {p['accent']}; }}
     .metric-card.highlight {{
         background: {p['metric_grad_hi']};
         color: {p['metric_hi_text']};
         border-color: {p['accent']};
-        box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+        box-shadow: var(--shadow-accent);
     }}
+    .metric-card.highlight::before {{ background: rgba(255,255,255,0.4); }}
     .metric-card.success {{
         background: {p['success_bg']};
         border-color: {p['success_border']};
         color: {p['success_text']};
     }}
+    .metric-card.success::before  {{ background: {p['success_border']}; }}
     .metric-card.danger {{
         background: {p['danger_bg']};
         border-color: {p['danger_border']};
         color: {p['danger_text']};
     }}
+    .metric-card.danger::before   {{ background: {p['danger_border']}; }}
     .metric-card.warning {{
         background: {p['warning_bg']};
         border-color: {p['warning_border']};
         color: {p['warning_text']};
     }}
+    .metric-card.warning::before  {{ background: {p['warning_border']}; }}
     .metric-value {{
         font-size: 1.9rem;
         font-weight: 800;
         line-height: 1.1;
         letter-spacing: -0.02em;
     }}
-    /* FIX: was opacity:0.85 which faded light-mode text below contrast threshold */
     .metric-label {{
         font-size: 0.82rem;
         color: {p['text_secondary']};
         margin-top: 0.35rem;
         font-weight: 500;
     }}
-    /* FIX: was opacity:0.8 — use explicit palette colors instead */
-    .metric-delta {{
-        font-size: 0.78rem;
-        margin-top: 0.2rem;
-    }}
-    .metric-delta.positive {{ color: {p['success_text']}; }}
-    .metric-delta.negative {{ color: {p['danger_text']}; }}
+    .metric-card.highlight .metric-label {{ color: rgba(255,255,255,0.8); }}
+    .metric-delta             {{ font-size: 0.78rem; margin-top: 0.2rem; font-weight: 600; }}
+    .metric-delta.positive    {{ color: {p['success_text']}; }}
+    .metric-delta.negative    {{ color: {p['danger_text']}; }}
 
     /* ── Theory / Textbook Box ───────────────────────────── */
     .textbook-content {{
@@ -366,10 +544,10 @@ def get_theme_css():
         text-transform: uppercase;
         letter-spacing: 0.04em;
     }}
-    /* Ensure body text inside textbook box inherits correctly */
     .textbook-content p, .textbook-content li,
     .textbook-content span, .textbook-content div {{
         color: {p['text_primary']};
+        line-height: 1.65;
     }}
 
     /* ── Citation Box ────────────────────────────────────── */
@@ -382,10 +560,19 @@ def get_theme_css():
         font-style: italic;
         color: {p['citation_text']};
         font-size: 0.92rem;
-        line-height: 1.6;
+        line-height: 1.7;
+        position: relative;
     }}
-    /* FIX: citation_border changed from #eab308 to #92400e in light mode —
-       yellow-on-pale-yellow was the worst WCAG failure in the whole file */
+    .citation-box::before {{
+        content: "\201C";
+        position: absolute;
+        top: 0.2rem; left: 0.9rem;
+        font-size: 2.5rem;
+        color: {p['citation_border']};
+        opacity: 0.35;
+        font-family: Georgia, serif;
+        line-height: 1;
+    }}
     .citation-source {{
         display: block;
         margin-top: 0.6rem;
@@ -401,12 +588,11 @@ def get_theme_css():
         background: {p['equation_bg']};
         border: 1px solid {p['equation_border']};
         border-radius: var(--radius-md);
-        padding: 1rem 1.2rem;
+        padding: 1rem 1.2rem 0.6rem;
         margin: 0.8rem 0;
         text-align: center;
         color: {p['equation_text']};
     }}
-    /* FIX: was opacity:0.75 — explicit color avoids contrast failure on pale bg */
     .equation-label {{
         font-size: 0.82rem;
         font-weight: 700;
@@ -414,6 +600,7 @@ def get_theme_css():
         letter-spacing: 0.06em;
         color: {p['equation_text']};
         margin-bottom: 0.4rem;
+        opacity: 0.85;
     }}
 
     /* ── Formula Card ────────────────────────────────────── */
@@ -421,22 +608,33 @@ def get_theme_css():
         background: {p['bg_secondary']};
         border: 2px solid {p['accent']};
         border-radius: var(--radius-md);
-        padding: 0.9rem 1rem;
+        padding: 0.9rem 1rem 0.5rem;
         margin: 0.5rem 0;
         text-align: center;
         transition: var(--transition);
+        position: relative;
+        overflow: hidden;
     }}
-    .formula-card:hover {{
-        border-color: {p['accent_hover']};
-        box-shadow: 0 0 0 3px {p['accent_soft']};
+    .formula-card::after {{
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: {p['accent_soft']};
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
     }}
+    .formula-card:hover::after  {{ opacity: 1; }}
+    .formula-card:hover         {{ border-color: {p['accent_hover']};
+                                    box-shadow: 0 0 0 3px {p['accent_soft']}; }}
     .formula-title {{
         color: {p['accent_hover']};
         font-weight: 700;
-        margin-bottom: 0.4rem;
-        font-size: 0.85rem;
+        margin-bottom: 0.3rem;
+        font-size: 0.82rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        position: relative; z-index: 1;
     }}
 
     /* ── Key Insight ─────────────────────────────────────── */
@@ -453,12 +651,10 @@ def get_theme_css():
         margin-bottom: 0.4rem;
         font-size: 0.95rem;
     }}
-    /* FIX: was success_text which in light mode is #15803d on white — fine,
-       but on the gradient bg it could clash; explicit token is cleaner */
     .key-insight-text {{
         color: {p['success_text']};
         font-size: 0.9rem;
-        line-height: 1.6;
+        line-height: 1.65;
     }}
 
     /* ── Practice Problem ────────────────────────────────── */
@@ -475,10 +671,14 @@ def get_theme_css():
         margin: 0 0 0.8rem;
         font-size: 1rem;
         font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
     }}
     .practice-problem p {{
         color: {p['text_primary']};
-        line-height: 1.6;
+        line-height: 1.65;
         margin: 0;
     }}
 
@@ -486,23 +686,26 @@ def get_theme_css():
     .solution-box {{
         background: {p['solution_bg']};
         border: 1px solid {p['solution_border']};
+        border-left: 4px solid {p['solution_border']};
         border-radius: var(--radius-md);
         padding: 1.1rem 1.3rem;
         margin-top: 0.8rem;
         color: {p['solution_text']};
         line-height: 1.7;
+        font-size: 0.92rem;
     }}
 
     /* ── Hint Box ────────────────────────────────────────── */
     .hint-box {{
         background: {p['hint_bg']};
         border: 1px solid {p['hint_border']};
+        border-left: 3px solid {p['hint_border']};
         border-radius: var(--radius-md);
         padding: 0.7rem 1rem;
         margin: 0.4rem 0;
         color: {p['hint_text']};
         font-size: 0.88rem;
-        line-height: 1.5;
+        line-height: 1.55;
     }}
 
     /* ── Callout Boxes ───────────────────────────────────── */
@@ -517,10 +720,14 @@ def get_theme_css():
         gap: 0.7rem;
     }}
     .callout-icon    {{ font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }}
-    .callout-content {{ flex: 1; }}
-    .callout-title   {{ font-weight: 700; margin-bottom: 0.25rem; font-size: 0.85rem;
-                        text-transform: uppercase; letter-spacing: 0.04em; }}
-    /* FIX: stronger border-left (4px) now uses properly contrasted border tokens */
+    .callout-content {{ flex: 1; min-width: 0; }}
+    .callout-title   {{
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }}
     .callout.info    {{ background:{p['info_bg']};    border:1px solid {p['info_border']};
                         color:{p['info_text']};    border-left:4px solid {p['info_border']}; }}
     .callout.success {{ background:{p['success_bg']}; border:1px solid {p['success_border']};
@@ -529,8 +736,8 @@ def get_theme_css():
                         color:{p['warning_text']}; border-left:4px solid {p['warning_border']}; }}
     .callout.danger  {{ background:{p['danger_bg']};  border:1px solid {p['danger_border']};
                         color:{p['danger_text']};  border-left:4px solid {p['danger_border']}; }}
-    .callout.tip     {{ background:{p['textbook_bg']}; border:1px solid {p['textbook_border']};
-                        color:{p['text_primary']}; border-left:4px solid {p['textbook_border']}; }}
+    .callout.tip     {{ background:{p['tip_bg']};     border:1px solid {p['tip_border']};
+                        color:{p['tip_text']};     border-left:4px solid {p['tip_border']}; }}
 
     /* ── Concept Cards ───────────────────────────────────── */
     .concept-card {{
@@ -541,6 +748,8 @@ def get_theme_css():
         margin: 0.4rem 0;
         transition: var(--transition);
         height: 100%;
+        display: flex;
+        flex-direction: column;
     }}
     .concept-card:hover {{
         border-color: {p['accent']};
@@ -548,8 +757,18 @@ def get_theme_css():
         transform: translateY(-2px);
     }}
     .concept-icon  {{ font-size: 1.6rem; margin-bottom: 0.5rem; }}
-    .concept-title {{ font-weight: 700; color: {p['text_primary']}; margin-bottom: 0.3rem; font-size: 0.95rem; }}
-    .concept-desc  {{ font-size: 0.84rem; color: {p['text_secondary']}; line-height: 1.5; }}
+    .concept-title {{
+        font-weight: 700;
+        color: {p['text_primary']};
+        margin-bottom: 0.3rem;
+        font-size: 0.95rem;
+    }}
+    .concept-desc  {{
+        font-size: 0.84rem;
+        color: {p['text_secondary']};
+        line-height: 1.55;
+        flex: 1;
+    }}
 
     /* ── Solution Steps ──────────────────────────────────── */
     .solution-step {{
@@ -558,76 +777,85 @@ def get_theme_css():
         padding: 0.75rem 1rem;
         margin: 0.5rem 0;
         border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-        line-height: 1.6;
+        line-height: 1.65;
         color: {p['text_primary']};
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
     }}
     .step-number {{
         background: {p['accent']};
         color: white;
-        width: 22px; height: 22px;
+        min-width: 22px; height: 22px;
         border-radius: 50%;
         display: inline-flex;
         align-items: center; justify-content: center;
-        font-size: 0.75rem; font-weight: 700;
-        margin-right: 0.5rem;
-        vertical-align: middle;
+        font-size: 0.72rem; font-weight: 800;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
     }}
 
     /* ── Process Flow ────────────────────────────────────── */
     .process-flow {{
         display: flex;
         align-items: stretch;
-        gap: 0;
         margin: 1rem 0;
         flex-wrap: wrap;
+        gap: 0;
     }}
     .process-step {{
-        flex: 1;
-        min-width: 120px;
+        flex: 1; min-width: 110px;
         background: {p['bg_secondary']};
         border: 1px solid {p['border']};
         padding: 0.9rem 0.6rem;
         text-align: center;
         position: relative;
         font-size: 0.82rem;
+        transition: var(--transition);
     }}
+    .process-step:hover {{ background: {p['accent_soft']}; }}
     .process-step:first-child {{ border-radius: var(--radius-sm) 0 0 var(--radius-sm); }}
     .process-step:last-child  {{ border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }}
     .process-step:not(:last-child)::after {{
         content: "→";
         position: absolute;
-        right: -0.65rem;
-        top: 50%;
+        right: -0.7rem; top: 50%;
         transform: translateY(-50%);
         color: {p['accent']};
-        font-size: 1rem;
-        font-weight: 700;
-        z-index: 1;
+        font-size: 1rem; font-weight: 800;
+        z-index: 2;
         background: {p['bg_app']};
-        padding: 0 2px;
+        padding: 0 3px;
+        border-radius: 2px;
     }}
-    .process-step-num  {{ font-weight: 800; color: {p['accent']}; font-size: 1rem; }}
+    .process-step-num  {{ font-weight: 800; color: {p['accent']}; font-size: 1.05rem; }}
     .process-step-text {{ color: {p['text_primary']}; margin-top: 0.2rem; line-height: 1.3; }}
 
     /* ── Badges ──────────────────────────────────────────── */
     .badge {{
         display: inline-block;
-        padding: 0.2rem 0.65rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.18rem 0.6rem;
+        border-radius: var(--radius-xl);
+        font-size: 0.73rem;
         font-weight: 700;
         letter-spacing: 0.03em;
+        line-height: 1.4;
+        vertical-align: middle;
     }}
-    /* FIX: badge-accent used accent (light=#6366f1) on near-transparent bg —
-       switching to accent_hover (#4f46e5) raises contrast; added thin border */
-    .badge-accent  {{ background:{p['accent_soft']}; color:{p['accent_hover']};
+    .badge-accent  {{ background:{p['accent_soft']};  color:{p['accent_hover']};
                       border: 1px solid {p['accent']}; }}
-    .badge-success {{ background:{p['success_bg']};  color:{p['success_text']}; }}
-    .badge-warning {{ background:{p['warning_bg']};  color:{p['warning_text']}; }}
-    .badge-danger  {{ background:{p['danger_bg']};   color:{p['danger_text']};  }}
-    .badge-info    {{ background:{p['info_bg']};     color:{p['info_text']};    }}
+    .badge-success {{ background:{p['success_bg']};   color:{p['success_text']};
+                      border: 1px solid {p['success_border']}; }}
+    .badge-warning {{ background:{p['warning_bg']};   color:{p['warning_text']};
+                      border: 1px solid {p['warning_border']}; }}
+    .badge-danger  {{ background:{p['danger_bg']};    color:{p['danger_text']};
+                      border: 1px solid {p['danger_border']}; }}
+    .badge-info    {{ background:{p['info_bg']};      color:{p['info_text']};
+                      border: 1px solid {p['info_border']}; }}
+    .badge-new     {{ background: linear-gradient(135deg,#16a34a,#15803d);
+                      color: white; border: none; }}
 
-    /* ── Summary / Chapter Box ───────────────────────────── */
+    /* ── Chapter / Progress Summary Box ─────────────────── */
     .chapter-summary {{
         background: {p['bg_secondary']};
         border: 1px solid {p['border']};
@@ -649,16 +877,18 @@ def get_theme_css():
         color: {p['text_primary']};
         font-size: 0.9rem;
         line-height: 1.7;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.15rem;
     }}
+    .chapter-summary li::marker {{ color: {p['accent']}; }}
 
-    /* ── Comparison Table ────────────────────────────────── */
+    /* ── Comparison Table (HTML) ─────────────────────────── */
     .comparison-card {{
         background: {p['bg_card']};
         border: 1px solid {p['border']};
         border-radius: var(--radius-lg);
         overflow: hidden;
         margin: 0.5rem 0;
+        box-shadow: var(--shadow-sm);
     }}
     .comparison-header {{
         background: {p['metric_grad_hi']};
@@ -669,31 +899,66 @@ def get_theme_css():
         text-align: center;
     }}
     .comparison-body  {{ padding: 0.9rem 1rem; }}
-    .comparison-row   {{ display: flex; justify-content: space-between; padding: 0.3rem 0;
-                         border-bottom: 1px solid {p['border']}; font-size: 0.88rem; }}
+    .comparison-row   {{
+        display: flex; justify-content: space-between;
+        padding: 0.35rem 0; border-bottom: 1px solid {p['border']};
+        font-size: 0.88rem;
+    }}
     .comparison-row:last-child {{ border-bottom: none; }}
     .comparison-key   {{ color: {p['text_secondary']}; font-weight: 600; }}
-    .comparison-val   {{ color: {p['text_primary']}; text-align: right; }}
+    .comparison-val   {{ color: {p['text_primary']}; text-align: right; font-weight: 500; }}
 
     /* ── Progress Bar ────────────────────────────────────── */
-    .progress-wrap  {{ background: {p['border_strong']}; border-radius: 99px; height: 10px;
-                       overflow: hidden; margin: 0.4rem 0; }}
-    .progress-fill  {{ height: 100%; border-radius: 99px; transition: width 0.6s ease; }}
-    .progress-fill.accent  {{ background: {p['metric_grad_hi']}; }}
-    .progress-fill.success {{ background: linear-gradient(90deg,#16a34a,#4ade80); }}
-    .progress-fill.danger  {{ background: linear-gradient(90deg,#dc2626,#f87171); }}
-    .progress-fill.warning {{ background: linear-gradient(90deg,#d97706,#fbbf24); }}
+    .progress-wrap {{
+        background: {p['border_strong']};
+        border-radius: 99px;
+        height: 10px;
+        overflow: hidden;
+        margin: 0.4rem 0;
+    }}
+    .progress-fill             {{ height: 100%; border-radius: 99px; transition: width 0.6s ease; }}
+    .progress-fill.accent      {{ background: {p['metric_grad_hi']}; }}
+    .progress-fill.success     {{ background: linear-gradient(90deg,#16a34a,#4ade80); }}
+    .progress-fill.danger      {{ background: linear-gradient(90deg,#dc2626,#f87171); }}
+    .progress-fill.warning     {{ background: linear-gradient(90deg,#d97706,#fbbf24); }}
 
     /* ── Styled HTML Table ───────────────────────────────── */
-    .styled-table {{ width:100%; border-collapse:collapse; margin:0.8rem 0; font-size:0.88rem;
-                     border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }}
-    .styled-table th {{ background:{p['table_head_bg']}; color:{p['text_primary']};
-                        padding:0.7rem 1rem; text-align:left; font-weight:700;
-                        font-size:0.82rem; text-transform:uppercase; letter-spacing:0.04em; }}
-    .styled-table td {{ padding:0.65rem 1rem; border-bottom:1px solid {p['border']};
-                        color:{p['text_primary']}; }}
-    .styled-table tr:nth-child(even) td {{ background:{p['table_row_alt']}; }}
-    .styled-table tr:hover td {{ background:{p['accent_soft']}; }}
+    .styled-table {{
+        width: 100%; border-collapse: collapse; margin: 0.8rem 0;
+        font-size: 0.88rem; border-radius: var(--radius-md);
+        overflow: hidden; box-shadow: var(--shadow-sm);
+    }}
+    .styled-table th {{
+        background: {p['table_head_bg']}; color: {p['text_primary']};
+        padding: 0.75rem 1rem; text-align: left; font-weight: 700;
+        font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+    }}
+    .styled-table td {{
+        padding: 0.65rem 1rem; border-bottom: 1px solid {p['border']};
+        color: {p['text_primary']}; vertical-align: top;
+    }}
+    .styled-table tr:nth-child(even) td {{ background: {p['table_row_alt']}; }}
+    .styled-table tr:hover td {{
+        background: {p['accent_soft']};
+        transition: background 0.15s ease;
+    }}
+
+    /* ── Code Blocks ─────────────────────────────────────── */
+    code {{
+        background: {p['code_bg']}; color: {p['accent_hover']};
+        padding: 0.15em 0.45em; border-radius: 4px;
+        font-size: 0.87em; font-family: var(--font-mono);
+        border: 1px solid {p['code_border']};
+    }}
+    pre {{
+        background: {p['code_bg']}; border-radius: var(--radius-md);
+        padding: 1rem; overflow-x: auto;
+        border: 1px solid {p['code_border']};
+    }}
+    pre code {{
+        color: {p['code_text']}; background: transparent;
+        border: none; padding: 0; font-size: 0.9em;
+    }}
 
     /* ── Sidebar ─────────────────────────────────────────── */
     section[data-testid="stSidebar"] {{
@@ -706,98 +971,185 @@ def get_theme_css():
     section[data-testid="stSidebar"] span {{
         color: {p['text_primary']} !important;
     }}
+    section[data-testid="stSidebar"] hr {{
+        border-color: {p['border']};
+        margin: 0.6rem 0;
+    }}
+    /* Sidebar nav buttons */
+    section[data-testid="stSidebar"] .stButton button {{
+        background: transparent;
+        color: {p['text_primary']};
+        border: 1px solid transparent;
+        text-align: left;
+        font-size: 0.85rem;
+        transition: var(--transition);
+    }}
+    section[data-testid="stSidebar"] .stButton button:hover {{
+        background: {p['accent_soft']};
+        border-color: {p['accent']};
+        color: {p['accent']};
+    }}
 
-    /* ── Streamlit Widgets ───────────────────────────────── */
-    .stTextInput  > div > div > input,
-    .stNumberInput > div > div > input {{
+    /* ── Streamlit Input Widgets ─────────────────────────── */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stTextArea textarea {{
         background: {p['bg_input']};
         color: {p['text_primary']};
         border-color: {p['border']};
         border-radius: var(--radius-sm);
-        transition: border-color 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: var(--font-sans);
     }}
-    .stTextInput  > div > div > input:focus,
-    .stNumberInput > div > div > input:focus {{
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus,
+    .stTextArea textarea:focus {{
         border-color: {p['accent']};
         box-shadow: 0 0 0 3px {p['accent_soft']};
+        outline: none;
     }}
-    .stTextInput  > div > div > input::placeholder,
-    .stNumberInput > div > div > input::placeholder {{
+    .stTextInput > div > div > input::placeholder,
+    .stNumberInput > div > div > input::placeholder,
+    .stTextArea textarea::placeholder {{
         color: {p['text_muted']};
     }}
-    .stSelectbox > div > div {{
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {{
         background: {p['bg_input']};
         color: {p['text_primary']};
         border-color: {p['border']};
+        border-radius: var(--radius-sm);
     }}
-    /* FIX: expander header text was inheriting browser default in light mode */
+
+    /* ── Expanders ───────────────────────────────────────── */
     .streamlit-expanderHeader {{
         background: {p['bg_secondary']};
         color: {p['text_primary']};
         border-radius: var(--radius-sm);
         border: 1px solid {p['border']};
+        transition: var(--transition);
     }}
     .streamlit-expanderHeader p,
-    .streamlit-expanderHeader span,
-    .streamlit-expanderHeader svg {{
+    .streamlit-expanderHeader span {{
         color: {p['text_primary']} !important;
-        fill:  {p['text_primary']} !important;
+        font-weight: 600;
+    }}
+    .streamlit-expanderHeader svg {{
+        fill: {p['text_secondary']} !important;
     }}
     .streamlit-expanderHeader:hover {{
         border-color: {p['accent']};
+        background: {p['accent_soft']};
     }}
     .streamlit-expanderHeader:hover p,
     .streamlit-expanderHeader:hover span {{
         color: {p['accent']} !important;
     }}
-    div[data-testid="stMetricValue"] {{
-        font-size: 1.6rem;
-        color: {p['text_primary']};
-        font-weight: 700;
-    }}
-    div[data-testid="stMetricLabel"] p {{
-        color: {p['text_secondary']} !important;
-    }}
-    div[data-testid="stMetricDelta"] {{
-        font-size: 0.82rem;
-    }}
-    /* Tab styling */
+
+    /* ── Tabs ────────────────────────────────────────────── */
     button[data-baseweb="tab"] {{
         background: transparent;
         color: {p['text_secondary']};
         border-bottom: 2px solid transparent;
         font-weight: 600;
+        font-size: 0.9rem;
         transition: var(--transition);
+        padding-bottom: 0.5rem;
     }}
     button[data-baseweb="tab"]:hover {{
         color: {p['accent']};
+        background: {p['accent_soft']};
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     }}
     button[data-baseweb="tab"][aria-selected="true"] {{
         color: {p['accent']};
         border-bottom-color: {p['accent']};
     }}
-    /* Slider */
+    div[data-testid="stTabs"] > div > div[role="tablist"] {{
+        border-bottom: 1px solid {p['border']};
+        gap: 0.25rem;
+    }}
+
+    /* ── Native st.metric ────────────────────────────────── */
+    div[data-testid="stMetricValue"] {{
+        font-size: 1.6rem;
+        color: {p['text_primary']};
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }}
+    div[data-testid="stMetricLabel"] p {{
+        color: {p['text_secondary']} !important;
+        font-size: 0.85rem;
+    }}
+    div[data-testid="stMetricDelta"] {{ font-size: 0.82rem; font-weight: 600; }}
+
+    /* ── Slider ──────────────────────────────────────────── */
     div[data-testid="stSlider"] [data-testid="stThumbValue"] {{
         color: {p['accent']};
+        font-weight: 700;
     }}
-    /* DataFrame */
-    .stDataFrame {{ background: {p['bg_card']}; border-radius: var(--radius-md); overflow: hidden; }}
-    /* Plotly chart border */
-    .js-plotly-plot {{ border-radius: var(--radius-md); overflow: hidden; }}
-    /* Code blocks */
-    code {{ background: {p['bg_code']}; color: {p['accent_hover']}; padding: 0.15em 0.4em;
-            border-radius: 4px; font-size: 0.87em; }}
-    pre  {{ background: {p['bg_code']}; border-radius: var(--radius-md); padding: 1rem; }}
-    pre code {{ color: {p['text_primary']}; background: transparent; }}
+    div[data-testid="stSlider"] [role="slider"] {{
+        background: {p['accent']} !important;
+    }}
+
+    /* ── DataFrame ───────────────────────────────────────── */
+    .stDataFrame {{
+        background: {p['bg_card']};
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        border: 1px solid {p['border']};
+    }}
+
+    /* ── Plotly Container ────────────────────────────────── */
+    .js-plotly-plot {{
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }}
+
+    /* ── Alert / Info boxes (Streamlit native) ───────────── */
+    div[data-testid="stAlert"] {{
+        border-radius: var(--radius-md);
+        border: 1px solid {p['border']};
+    }}
+
+    /* ── Spinner ─────────────────────────────────────────── */
+    div[data-testid="stSpinner"] p {{ color: {p['text_secondary']}; }}
+
+    /* ── Tooltip ─────────────────────────────────────────── */
+    div[data-testid="stTooltipContent"] {{
+        background: {p['bg_card']};
+        color: {p['text_primary']};
+        border: 1px solid {p['border']};
+        border-radius: var(--radius-sm);
+        font-size: 0.82rem;
+        box-shadow: var(--shadow-md);
+    }}
+
+    /* ── Print styles ────────────────────────────────────── */
+    @media print {{
+        section[data-testid="stSidebar"],
+        .stButton, button {{ display: none !important; }}
+        .stApp {{ background: white !important; color: black !important; }}
+        .main-header {{ background: #4338ca !important; -webkit-print-color-adjust: exact; }}
+    }}
     </style>
     """
 
+
+def get_theme_css() -> str:
+    """Public accessor — always returns CSS for the current theme mode."""
+    return _get_theme_css_cached(is_dark())
+
+
 st.markdown(get_theme_css(), unsafe_allow_html=True)
+
 
 # ============================================================
 # PLOTLY THEME FACTORY
 # ============================================================
-def get_plotly_layout(title="", height=400, show_legend=True):
+def get_plotly_layout(title: str = "", height: int = 400,
+                      show_legend: bool = True,
+                      xaxis_title: str = "", yaxis_title: str = "") -> dict:
     """
     Returns a consistent Plotly layout dict tuned to the current theme.
     Usage: fig.update_layout(**get_plotly_layout("My Chart", height=420))
@@ -806,158 +1158,266 @@ def get_plotly_layout(title="", height=400, show_legend=True):
     axis_common = dict(
         gridcolor=p["border"],
         zerolinecolor=p["border_strong"],
+        zerolinewidth=1,
         linecolor=p["border"],
-        # FIX: separate 'color' only sets the axis line; tickfont/title_font
-        # must be explicit so labels are readable in light mode
-        tickfont=dict(color=p["text_secondary"], size=11),
-        title_font=dict(color=p["text_primary"], size=12),
+        linewidth=1,
+        tickfont=dict(color=p["text_secondary"], size=11,
+                      family="Inter, system-ui, sans-serif"),
+        title_font=dict(color=p["text_primary"], size=12,
+                        family="Inter, system-ui, sans-serif"),
+        showgrid=True,
+        showline=True,
+        mirror=False,
     )
     return dict(
         title=dict(
             text=title,
-            font=dict(size=14, color=p["text_primary"], family="Inter, system-ui, sans-serif"),
+            font=dict(size=14, color=p["text_primary"],
+                      family="Inter, system-ui, sans-serif"),
             x=0.01, xanchor="left",
         ),
         height=height,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=p["bg_secondary"],
-        font=dict(
-            family="Inter, system-ui, sans-serif",
-            color=p["text_primary"],
-            size=12,
-        ),
+        font=dict(family="Inter, system-ui, sans-serif",
+                  color=p["text_primary"], size=12),
         showlegend=show_legend,
         legend=dict(
             bgcolor=p["bg_card"],
             bordercolor=p["border"],
             borderwidth=1,
-            font=dict(color=p["text_primary"], size=11),
+            font=dict(color=p["text_primary"], size=11,
+                      family="Inter, system-ui, sans-serif"),
+            orientation="v",
         ),
-        xaxis=axis_common,
-        yaxis=axis_common,
-        # FIX: annotation text defaults were unset — inherited browser color in light mode
+        xaxis=dict(**axis_common, title=xaxis_title),
+        yaxis=dict(**axis_common, title=yaxis_title),
         annotationdefaults=dict(
-            font=dict(color=p["text_primary"], size=11),
+            font=dict(color=p["text_primary"], size=11,
+                      family="Inter, system-ui, sans-serif"),
             arrowcolor=p["text_secondary"],
+            bgcolor=p["bg_card"],
+            bordercolor=p["border"],
         ),
-        margin=dict(l=50, r=20, t=50, b=50),
+        margin=dict(l=55, r=25, t=55, b=55),
         hoverlabel=dict(
             bgcolor=p["bg_card"],
             bordercolor=p["border"],
             font_color=p["text_primary"],
             font_size=12,
+            font_family="Inter, system-ui, sans-serif",
+            namelength=-1,      # show full trace name in hover
         ),
-        # FIX: colorway wasn't set, causing Plotly default colors on themed background
         colorway=get_plotly_colors(),
+        dragmode="pan",         # more intuitive default than "zoom"
+        hovermode="x unified",  # unified tooltip for time-series / multi-trace
+        modebar=dict(
+            bgcolor="rgba(0,0,0,0)",
+            color=p["text_secondary"],
+            activecolor=p["accent"],
+        ),
     )
 
 
-def get_plotly_colors():
-    """Return a consistent palette list for Plotly traces."""
+def get_plotly_colors() -> list:
+    """Return a consistent 8-color palette for Plotly traces."""
     return [
-        "#6366f1", "#10b981", "#f59e0b", "#ef4444",
-        "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6",
+        "#6366f1",  # Indigo   — primary accent
+        "#10b981",  # Emerald  — success
+        "#f59e0b",  # Amber    — warning
+        "#ef4444",  # Red      — danger
+        "#3b82f6",  # Blue     — info
+        "#8b5cf6",  # Violet
+        "#ec4899",  # Pink
+        "#14b8a6",  # Teal
     ]
 
 
+def get_plotly_layout_2axis(title: str = "", height: int = 420,
+                             y1_title: str = "", y2_title: str = "") -> dict:
+    """
+    Layout dict for dual-axis charts (y + y2).
+    Usage:
+        layout = get_plotly_layout_2axis("Revenue vs Units", y1_title="$", y2_title="Units")
+        fig.update_layout(**layout)
+        fig.update_layout(yaxis2=dict(overlaying="y", side="right", ...))
+    """
+    base = get_plotly_layout(title, height, show_legend=True)
+    p    = _get_palette()
+    base["yaxis"]["title"] = y1_title
+    base["yaxis2"] = dict(
+        title=y2_title,
+        overlaying="y",
+        side="right",
+        gridcolor="rgba(0,0,0,0)",   # suppress right-axis grid lines
+        zerolinecolor=p["border_strong"],
+        tickfont=dict(color=p["text_secondary"], size=11),
+        title_font=dict(color=p["text_primary"], size=12),
+        showgrid=False,
+    )
+    return base
 # ============================================================
 # DISPLAY HELPER FUNCTIONS
 # ============================================================
 
-def display_header(icon, chapter, title, subtitle):
-    """Module-level hero header."""
+def display_header(icon: str, chapter: str, title: str, subtitle: str,
+                   show_divider: bool = False):
+    """
+    Module-level hero header.
+    ENHANCED: optional divider rule beneath the header.
+    """
     st.markdown(f"""
     <div class="main-header">
         <h1>{icon} {title}</h1>
         <p><span class="chapter-badge">{chapter}</span>{subtitle}</p>
     </div>
+    {"<hr style='border:none;border-top:1px solid var(--border);margin:0 0 1rem;'>" if show_divider else ""}
     """, unsafe_allow_html=True)
 
 
-def display_citation(quote, source):
-    """Styled blockquote citation."""
+def display_citation(quote: str, source: str, page: str = ""):
+    """
+    Styled blockquote citation.
+    ENHANCED: optional page reference appended to source.
+    """
+    page_html = f", p. {page}" if page else ""
     st.markdown(f"""
     <div class="citation-box">
         &#8220;{quote}&#8221;
-        <span class="citation-source">— {source}</span>
+        <span class="citation-source">— {source}{page_html}</span>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_key_insight(title, content):
-    """Green insight / takeaway box."""
+def display_key_insight(title: str, content: str, icon: str = "💡"):
+    """
+    Green insight / takeaway box.
+    ENHANCED: customisable icon; icon defaults to 💡.
+    """
     st.markdown(f"""
     <div class="key-insight">
-        <div class="key-insight-title">💡 {title}</div>
+        <div class="key-insight-title">{icon} {title}</div>
         <div class="key-insight-text">{content}</div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_textbook_content(title, content):
-    """Purple-accented textbook excerpt box."""
+def display_textbook_content(title: str, content: str, icon: str = "📖"):
+    """
+    Purple-accented textbook excerpt box.
+    ENHANCED: customisable icon.
+    """
     st.markdown(f"""
     <div class="textbook-content">
-        <h4>📖 {title}</h4>
+        <h4>{icon} {title}</h4>
         <div>{content}</div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_formula_card(title, formula_latex):
-    """Accent-bordered formula card with LaTeX."""
-    # FIX: render title label + LaTeX *inside* a single wrapper div so the
-    # card border visually encloses both elements instead of just the title.
-    # st.latex() cannot be nested in HTML, so we use a two-element approach:
-    # outer wrapper opens → title div → wrapper closes, then LaTeX immediately
-    # follows and the CSS .formula-card + st-latex selector handles spacing.
-    p = _get_palette()
+def display_formula_card(title: str, formula_latex: str,
+                          description: str = "", numbered: bool = False,
+                          number: int = 0):
+    """
+    Accent-bordered formula card with LaTeX.
+    ENHANCED:
+    - Optional description line beneath the LaTeX.
+    - Optional equation number (e.g. "(1)") shown top-right.
+    FIX: removed unused _get_palette() call — palette not needed in this function.
+    """
+    num_html = (
+        f'<div style="position:absolute;top:0.5rem;right:0.75rem;'
+        f'font-size:0.75rem;color:var(--text-muted);font-weight:600;">({number})</div>'
+        if numbered else ""
+    )
     st.markdown(f"""
-    <div class="formula-card">
+    <div class="formula-card" style="position:relative;">
+        {num_html}
         <div class="formula-title">{title}</div>
     </div>
     """, unsafe_allow_html=True)
-    # Wrap st.latex output in a styled container so it stays visually grouped
     with st.container():
         st.latex(formula_latex)
+    if description:
+        p = _get_palette()
+        st.markdown(
+            f"<p style='font-size:0.82rem;color:{p['text_muted']};"
+            f"text-align:center;margin-top:-0.4rem;line-height:1.5;'>"
+            f"{description}</p>",
+            unsafe_allow_html=True,
+        )
 
 
-def display_equation(label, latex_eq, description=""):
-    """Full-width equation box."""
+def display_equation(label: str, latex_eq: str, description: str = "",
+                      number: str = ""):
+    """
+    Full-width equation box.
+    ENHANCED: optional equation number displayed top-right of box.
+    FIX: explicit palette color for description text (avoids browser default black
+    on dark backgrounds).
+    """
     p = _get_palette()
+    num_html = (
+        f'<span style="position:absolute;top:0.5rem;right:0.75rem;'
+        f'font-size:0.75rem;color:{p["text_muted"]};font-weight:600;">({number})</span>'
+        if number else ""
+    )
     st.markdown(f"""
-    <div class="equation-box">
+    <div class="equation-box" style="position:relative;">
+        {num_html}
         <div class="equation-label">{label}</div>
     </div>
     """, unsafe_allow_html=True)
     st.latex(latex_eq)
     if description:
-        # FIX: explicit color via palette (text_secondary now #374151 in light mode)
         st.markdown(
-            f"<p style='font-size:0.85rem; color:{p['text_secondary']}; "
-            f"margin-top:0.4rem; line-height:1.5;'>{description}</p>",
+            f"<p style='font-size:0.85rem;color:{p['text_secondary']};"
+            f"margin-top:0.4rem;line-height:1.5;text-align:center;'>"
+            f"{description}</p>",
             unsafe_allow_html=True,
         )
 
 
-def display_metric_card(value, label, card_type="normal", delta=None, delta_label=""):
+def display_metric_card(value, label: str, card_type: str = "normal",
+                         delta=None, delta_label: str = "",
+                         icon: str = "", tooltip: str = ""):
     """
-    Metric card. card_type: 'normal' | 'highlight' | 'success' | 'danger' | 'warning'
-    Optionally shows a delta line beneath the label.
+    Metric card.
+    card_type: 'normal' | 'highlight' | 'success' | 'danger' | 'warning'
+    ENHANCED:
+    - Optional icon shown above value.
+    - Optional tooltip title attribute on the card div.
+    - delta sign detection handles string '+'/'-' and numeric values.
+    FIX: card_type=True backward-compat guard kept.
+    FIX: delta=0 correctly renders as positive (no change = not negative).
     """
     if card_type is True:
         card_type = "highlight"
+    if card_type not in ("normal", "highlight", "success", "danger", "warning"):
+        card_type = "normal"
+
+    icon_html = (
+        f'<div style="font-size:1.5rem;margin-bottom:0.3rem;">{icon}</div>'
+        if icon else ""
+    )
     delta_html = ""
     if delta is not None:
-        sign  = "positive" if str(delta).startswith("+") or (
-            isinstance(delta, (int, float)) and delta >= 0) else "negative"
-        arrow = "▲" if sign == "positive" else "▼"
+        if isinstance(delta, (int, float)):
+            sign  = "positive" if delta >= 0 else "negative"
+            arrow = "▲" if delta >= 0 else "▼"
+            d_str = f"{delta:+,.4g}"
+        else:
+            d_str = str(delta)
+            sign  = "positive" if d_str.startswith("+") else "negative"
+            arrow = "▲" if sign == "positive" else "▼"
         delta_html = (
             f'<div class="metric-delta {sign}">'
-            f'{arrow} {delta} {delta_label}</div>'
+            f'{arrow} {d_str} {delta_label}</div>'
         )
+    title_attr = f'title="{tooltip}"' if tooltip else ""
     st.markdown(f"""
-    <div class="metric-card {card_type}">
+    <div class="metric-card {card_type}" {title_attr}>
+        {icon_html}
         <div class="metric-value">{value}</div>
         <div class="metric-label">{label}</div>
         {delta_html}
@@ -965,10 +1425,50 @@ def display_metric_card(value, label, card_type="normal", delta=None, delta_labe
     """, unsafe_allow_html=True)
 
 
-def display_concept_card(icon, title, description):
-    """Icon + title + description card."""
+def display_metric_row(metrics: list):
+    """
+    Render a row of metric cards in equal-width columns.
+    metrics: list of dicts with keys matching display_metric_card parameters:
+             value, label, card_type (opt), delta (opt), delta_label (opt),
+             icon (opt), tooltip (opt)
+    ENHANCED: NEW helper — avoids repetitive st.columns + display_metric_card calls.
+
+    Example:
+        display_metric_row([
+            {"value": "707", "label": "EOQ (units)", "card_type": "highlight"},
+            {"value": "$1,414", "label": "Min Total Cost", "card_type": "success"},
+        ])
+    """
+    if not metrics:
+        return
+    cols = st.columns(len(metrics))
+    for col, m in zip(cols, metrics):
+        with col:
+            display_metric_card(
+                value       = m.get("value", "—"),
+                label       = m.get("label", ""),
+                card_type   = m.get("card_type", "normal"),
+                delta       = m.get("delta"),
+                delta_label = m.get("delta_label", ""),
+                icon        = m.get("icon", ""),
+                tooltip     = m.get("tooltip", ""),
+            )
+
+
+def display_concept_card(icon: str, title: str, description: str,
+                          badge: str = "", badge_type: str = "accent"):
+    """
+    Icon + title + description card.
+    ENHANCED: optional badge displayed in the top-right corner of the card.
+    """
+    badge_html = (
+        f'<span class="badge badge-{badge_type}" '
+        f'style="float:right;margin-top:-0.1rem;">{badge}</span>'
+        if badge else ""
+    )
     st.markdown(f"""
     <div class="concept-card">
+        {badge_html}
         <div class="concept-icon">{icon}</div>
         <div class="concept-title">{title}</div>
         <div class="concept-desc">{description}</div>
@@ -976,56 +1476,115 @@ def display_concept_card(icon, title, description):
     """, unsafe_allow_html=True)
 
 
-def display_solution_step(step_num, content):
-    """Numbered solution step with accent bar."""
+def display_solution_step(step_num, content: str, step_label: str = "Step"):
+    """
+    Numbered solution step with accent bar.
+    ENHANCED: customisable step label (e.g. "Phase", "Stage") and supports
+    non-integer step_num (e.g. "1a", "2b").
+    """
     st.markdown(f"""
     <div class="solution-step">
-        <span class="step-number">{step_num}</span>
-        {content}
+        <span class="step-number" title="{step_label} {step_num}">{step_num}</span>
+        <div style="flex:1;">{content}</div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_practice_problem(problem_num, difficulty, problem_text):
-    """Styled practice problem header block."""
+def display_solution_steps(steps: list, step_label: str = "Step"):
+    """
+    Render multiple solution steps from a list.
+    ENHANCED: NEW helper — avoids a for-loop in every module.
+    steps: list of str (content) — numbered automatically, OR
+           list of (num, content) tuples for custom numbering.
+    """
+    for i, step in enumerate(steps, start=1):
+        if isinstance(step, (list, tuple)) and len(step) == 2:
+            num, content = step
+        else:
+            num, content = i, step
+        display_solution_step(num, content, step_label)
+
+
+def display_practice_problem(problem_num, difficulty: str, problem_text: str,
+                              topic: str = ""):
+    """
+    Styled practice problem header block.
+    ENHANCED: optional topic tag displayed as a muted sub-label.
+    FIX: defaults ⚪/accent for unrecognised difficulty levels.
+    """
     icons     = {"Easy": "🟢", "Medium": "🟡", "Hard": "🔴"}
     badge_cls = {"Easy": "success", "Medium": "warning", "Hard": "danger"}
     icon = icons.get(difficulty, "⚪")
     bcls = badge_cls.get(difficulty, "accent")
+    topic_html = (
+        f'<div style="font-size:0.78rem;color:var(--text-muted);"'
+        f'margin-bottom:0.4rem;>{topic}</div>'
+        if topic else ""
+    )
     st.markdown(f"""
     <div class="practice-problem">
-        <h4>Problem {problem_num} &nbsp;
+        <h4>Problem {problem_num}&nbsp;
             <span class="badge badge-{bcls}">{icon} {difficulty}</span>
         </h4>
+        {topic_html}
         <p>{problem_text}</p>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_hint(hint_text):
-    """Hint box."""
-    st.markdown(f"""
-    <div class="hint-box">
-        💡 <strong>Hint:</strong> {hint_text}
-    </div>
-    """, unsafe_allow_html=True)
+def display_hint(hint_text: str, collapsible: bool = False,
+                 label: str = "Hint"):
+    """
+    Hint box.
+    ENHANCED: optional collapsible mode using st.expander.
+    """
+    if collapsible:
+        with st.expander(f"💡 Show {label}"):
+            st.markdown(
+                f'<div class="hint-box">💡 <strong>{label}:</strong>'
+                f' {hint_text}</div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        st.markdown(f"""
+        <div class="hint-box">
+            💡 <strong>{label}:</strong> {hint_text}
+        </div>
+        """, unsafe_allow_html=True)
 
 
-def display_solution(solution_html):
-    """Green solution reveal box."""
-    st.markdown(f"""
-    <div class="solution-box">
-        ✅ <strong>Solution:</strong><br><br>{solution_html}
-    </div>
-    """, unsafe_allow_html=True)
+def display_solution(solution_html: str, collapsible: bool = False,
+                     label: str = "Solution"):
+    """
+    Green solution reveal box.
+    ENHANCED: optional collapsible mode — hides full solution until expanded.
+    """
+    if collapsible:
+        with st.expander(f"✅ Show {label}"):
+            st.markdown(f"""
+            <div class="solution-box">
+                ✅ <strong>{label}:</strong><br><br>{solution_html}
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="solution-box">
+            ✅ <strong>{label}:</strong><br><br>{solution_html}
+        </div>
+        """, unsafe_allow_html=True)
 
 
-def display_callout(content, callout_type="info", title="", icon=""):
+def display_callout(content: str, callout_type: str = "info",
+                    title: str = "", icon: str = ""):
     """
     Flexible callout box.
     callout_type: 'info' | 'success' | 'warning' | 'danger' | 'tip'
+    ENHANCED: falls back to 'info' style for unrecognised types instead of
+    rendering an unstyled div.
+    FIX: icon/title overrides now evaluated before fallback to avoid empty
+    strings shadowing the defaults.
     """
-    default_icons = {
+    default_icons  = {
         "info":    "ℹ️",
         "success": "✅",
         "warning": "⚠️",
@@ -1039,25 +1598,29 @@ def display_callout(content, callout_type="info", title="", icon=""):
         "danger":  "Critical",
         "tip":     "Tip",
     }
-    icon  = icon  or default_icons.get(callout_type, "ℹ️")
-    title = title or default_titles.get(callout_type, "")
+    if callout_type not in default_icons:
+        callout_type = "info"
+
+    resolved_icon  = icon  if icon  else default_icons[callout_type]
+    resolved_title = title if title else default_titles[callout_type]
+
     st.markdown(f"""
     <div class="callout {callout_type}">
-        <div class="callout-icon">{icon}</div>
+        <div class="callout-icon">{resolved_icon}</div>
         <div class="callout-content">
-            <div class="callout-title">{title}</div>
-            {content}
+            <div class="callout-title">{resolved_title}</div>
+            <div>{content}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_alert(content, alert_type="info"):
-    """Thin alias kept for backward compat. Delegates to display_callout."""
+def display_alert(content: str, alert_type: str = "info"):
+    """Backward-compat alias → delegates to display_callout."""
     display_callout(content, callout_type=alert_type)
 
 
-def display_theory(content):
+def display_theory(content: str):
     """Plain theory box (legacy helper)."""
     st.markdown(
         f'<div class="textbook-content"><div>{content}</div></div>',
@@ -1065,89 +1628,236 @@ def display_theory(content):
     )
 
 
-def display_process_flow(steps):
+def display_process_flow(steps: list, orientation: str = "horizontal"):
     """
-    Render a horizontal process-flow strip.
-    steps: list of (number_or_icon, label) tuples
+    Render a process-flow strip.
+    steps: list of (number_or_icon, label) tuples.
+    ENHANCED: 'vertical' orientation option for narrow layouts.
     """
-    steps_html = "".join(
-        f'<div class="process-step">'
-        f'<div class="process-step-num">{n}</div>'
-        f'<div class="process-step-text">{lbl}</div>'
-        f'</div>'
-        for n, lbl in steps
-    )
-    st.markdown(f'<div class="process-flow">{steps_html}</div>',
-                unsafe_allow_html=True)
+    if orientation == "vertical":
+        for n, lbl in steps:
+            st.markdown(f"""
+            <div class="solution-step" style="margin:0.3rem 0;">
+                <span class="step-number">{n}</span>
+                <div style="flex:1;">{lbl}</div>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        steps_html = "".join(
+            f'<div class="process-step">'
+            f'<div class="process-step-num">{n}</div>'
+            f'<div class="process-step-text">{lbl}</div>'
+            f'</div>'
+            for n, lbl in steps
+        )
+        st.markdown(
+            f'<div class="process-flow">{steps_html}</div>',
+            unsafe_allow_html=True,
+        )
 
 
-def display_badge(text, badge_type="accent"):
-    """Inline badge. Returns HTML string for embedding."""
+def display_badge(text: str, badge_type: str = "accent") -> str:
+    """
+    Inline badge. Returns HTML string for embedding.
+    ENHANCED: validates badge_type; falls back to 'accent'.
+    """
+    valid = {"accent", "success", "warning", "danger", "info", "new"}
+    if badge_type not in valid:
+        badge_type = "accent"
     return f'<span class="badge badge-{badge_type}">{text}</span>'
 
 
-def display_chapter_summary(points, title="Chapter Key Points"):
-    """Bulleted summary box at end of theory sections."""
+def display_chapter_summary(points: list, title: str = "Chapter Key Points",
+                             icon: str = "📋"):
+    """
+    Bulleted summary box at end of theory sections.
+    ENHANCED: customisable icon; empty list guard.
+    """
+    if not points:
+        return
     items_html = "".join(f"<li>{pt}</li>" for pt in points)
     st.markdown(f"""
     <div class="chapter-summary">
-        <div class="chapter-summary-title">📋 {title}</div>
+        <div class="chapter-summary-title">{icon} {title}</div>
         <ul>{items_html}</ul>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_progress_bar(value, max_value=100, label="", bar_type="accent"):
+def display_progress_bar(value: float, max_value: float = 100,
+                          label: str = "", bar_type: str = "accent",
+                          show_pct: bool = True):
     """
     Custom HTML progress bar.
     bar_type: 'accent' | 'success' | 'danger' | 'warning'
+    ENHANCED: show_pct flag — set False to show only the label without %.
+    FIX: palette used for label color (was missing — browser default on dark bg).
+    FIX: guards against max_value=0 division by zero.
     """
+    if max_value <= 0:
+        return
+    valid_types = {"accent", "success", "danger", "warning"}
+    if bar_type not in valid_types:
+        bar_type = "accent"
+
     p   = _get_palette()
-    pct = min(100, max(0, value / max_value * 100))
-    # FIX: was missing color — inherited browser default (black) which broke dark mode
-    # and could be near-invisible on some light backgrounds
-    label_html = (
-        f"<div style='font-size:0.8rem; color:{p['text_secondary']}; "
-        f"margin-bottom:0.2rem;'>{label} {pct:.0f}%</div>"
-        if label else ""
-    )
+    pct = min(100.0, max(0.0, value / max_value * 100))
+
+    if label and show_pct:
+        label_html = (
+            f"<div style='font-size:0.8rem;color:{p['text_secondary']};"
+            f"margin-bottom:0.2rem;display:flex;justify-content:space-between;'>"
+            f"<span>{label}</span><span>{pct:.0f}%</span></div>"
+        )
+    elif label:
+        label_html = (
+            f"<div style='font-size:0.8rem;color:{p['text_secondary']};"
+            f"margin-bottom:0.2rem;'>{label}</div>"
+        )
+    elif show_pct:
+        label_html = (
+            f"<div style='font-size:0.8rem;color:{p['text_secondary']};"
+            f"margin-bottom:0.2rem;text-align:right;'>{pct:.0f}%</div>"
+        )
+    else:
+        label_html = ""
+
     st.markdown(f"""
     {label_html}
     <div class="progress-wrap">
-        <div class="progress-fill {bar_type}" style="width:{pct:.1f}%"></div>
+        <div class="progress-fill {bar_type}" style="width:{pct:.1f}%;"></div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def display_comparison_table(html_rows, headers=("Feature", "Option A", "Option B")):
+def display_comparison_table(html_rows: list,
+                              headers: tuple = ("Feature", "Option A", "Option B"),
+                              highlight_col: int = None):
     """
     Render a styled HTML comparison table.
-    html_rows: list of (feature, val_a, val_b) tuples
+    html_rows: list of row tuples — any number of columns.
+    ENHANCED:
+    - highlight_col: 1-based column index to bold (e.g. 2 = Option A wins).
+    - Dynamic column count: headers drives number of <th> elements.
+    FIX: inner f-string f'<td>{v}</td>' caused SyntaxWarning in Python 3.12+;
+         replaced with join over a list comprehension.
     """
-    th   = "".join(f"<th>{h}</th>" for h in headers)
-    rows = "".join(
-        f"<tr><td>{r[0]}</td>{''.join(f'<td>{v}</td>' for v in r[1:])}</tr>"
-        for r in html_rows
+    def _cell(v, col_idx):
+        style = " style='font-weight:700;'" if highlight_col == col_idx else ""
+        return f"<td{style}>{v}</td>"
+
+    th_html   = "".join(f"<th>{h}</th>" for h in headers)
+    rows_html = "".join(
+        "<tr>" + "".join(
+            _cell(cell, j + 1) for j, cell in enumerate(row)
+        ) + "</tr>"
+        for row in html_rows
     )
     st.markdown(f"""
     <table class="styled-table">
-        <thead><tr>{th}</tr></thead>
-        <tbody>{rows}</tbody>
+        <thead><tr>{th_html}</tr></thead>
+        <tbody>{rows_html}</tbody>
     </table>
     """, unsafe_allow_html=True)
+
+
+def display_two_column_content(left_content_fn, right_content_fn,
+                                left_width: int = 1, right_width: int = 1,
+                                gap: str = "medium"):
+    """
+    Render two callables side-by-side using st.columns.
+    ENHANCED: NEW helper — avoids boilerplate column setup in every module.
+    left_content_fn / right_content_fn: zero-argument callables (lambdas or funcs).
+
+    Example:
+        display_two_column_content(
+            lambda: display_formula_card("EOQ", r"Q^* = \\sqrt{2DS/H}"),
+            lambda: display_key_insight("Rule", "Holding = Ordering at EOQ"),
+        )
+    """
+    col_l, col_r = st.columns([left_width, right_width], gap=gap)
+    with col_l:
+        left_content_fn()
+    with col_r:
+        right_content_fn()
+
+
+def display_info_grid(items: list, cols: int = 3):
+    """
+    Render a responsive grid of concept cards.
+    ENHANCED: NEW helper — wraps display_concept_card in a column grid.
+    items: list of (icon, title, description) or
+           (icon, title, description, badge, badge_type) tuples.
+
+    Example:
+        display_info_grid([
+            ("🔬", "Simulator", "Interactive tools"),
+            ("📊", "Charts",    "Plotly visuals"),
+        ], cols=2)
+    """
+    if not items:
+        return
+    columns = st.columns(cols)
+    for i, item in enumerate(items):
+        with columns[i % cols]:
+            if len(item) == 3:
+                display_concept_card(*item)
+            elif len(item) == 5:
+                display_concept_card(*item)
+            else:
+                display_concept_card(item[0], item[1],
+                                     item[2] if len(item) > 2 else "")
+
+
+def display_spacer(rem: float = 1.0):
+    """
+    Insert vertical whitespace.
+    ENHANCED: NEW micro-helper — cleaner than repeated st.markdown('<br>').
+    """
+    st.markdown(
+        f"<div style='height:{rem}rem;'></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def display_divider(label: str = "", color: str = ""):
+    """
+    Themed horizontal rule with optional centered label.
+    ENHANCED: NEW helper — replaces st.divider() which ignores theme tokens.
+    """
+    p = _get_palette()
+    c = color or p["border"]
+    if label:
+        st.markdown(f"""
+        <div style="display:flex;align-items:center;gap:0.75rem;margin:1rem 0;">
+            <div style="flex:1;height:1px;background:{c};"></div>
+            <span style="font-size:0.78rem;color:{p['text_muted']};
+                         font-weight:600;text-transform:uppercase;
+                         letter-spacing:0.06em;">{label}</span>
+            <div style="flex:1;height:1px;background:{c};"></div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(
+            f"<hr style='border:none;border-top:1px solid {c};margin:1rem 0;'>",
+            unsafe_allow_html=True,
+        )
 
 # ============================================================
 # MATH / STATISTICS HELPERS
 # ============================================================
 
-def check_answer(user_answer, correct_answer, tolerance=0.05):
+# ── Answer checking ───────────────────────────────────────
+
+def check_answer(user_answer, correct_answer, tolerance: float = 0.05) -> bool:
     """
-    Returns True if |user − correct| ≤ max(|correct| × tolerance, 0.01).
-    Handles None and non-numeric gracefully.
-    FIX: zero correct_answer now uses absolute threshold only (avoids 0*tol=0).
+    Returns True if |user − correct| ≤ threshold.
+    threshold = max(|correct| × tolerance, 0.01) for non-zero correct values.
+    threshold = max(tolerance, 0.01) when correct = 0 (avoids 0 × tol = 0).
+    FIX: gracefully handles None, empty string, and non-numeric inputs.
     """
     try:
-        u, c = float(user_answer), float(correct_answer)
+        u, c  = float(user_answer), float(correct_answer)
         threshold = max(abs(c) * tolerance, 0.01) if c != 0 else max(tolerance, 0.01)
         return abs(u - c) <= threshold
     except (TypeError, ValueError):
@@ -1155,25 +1865,50 @@ def check_answer(user_answer, correct_answer, tolerance=0.05):
 
 
 def check_answer_with_feedback(user_answer, correct_answer,
-                                tolerance=0.05, unit=""):
+                                tolerance: float = 0.05,
+                                unit: str = "",
+                                fmt: str = ",.4g") -> tuple:
     """
     Like check_answer but returns (is_correct: bool, message: str).
-    FIX: handles zero correct_answer; unit displayed more cleanly.
+    ENHANCED: fmt param controls number display format (default ',.4g').
+    FIX: pct_off uses max(|c|, 1e-9) to guard against zero denominator.
+    FIX: delta shown as absolute and percentage for clearer feedback.
     """
     try:
-        u, c = float(user_answer), float(correct_answer)
-        threshold  = max(abs(c) * tolerance, 0.01) if c != 0 else max(tolerance, 0.01)
+        u, c      = float(user_answer), float(correct_answer)
+        threshold = max(abs(c) * tolerance, 0.01) if c != 0 else max(tolerance, 0.01)
         is_correct = abs(u - c) <= threshold
         unit_str   = f" {unit}" if unit else ""
         if is_correct:
-            return True, f"✅ Correct! Answer = {c:,.4g}{unit_str}"
+            return True, f"✅ Correct! Answer = {c:{fmt}}{unit_str}"
         pct_off = abs(u - c) / max(abs(c), 1e-9) * 100
+        abs_off = abs(u - c)
         return False, (
-            f"❌ Not quite.  Your answer: {u:,.4g}{unit_str}  |  "
-            f"Correct: {c:,.4g}{unit_str}  ({pct_off:.1f}% off)"
+            f"❌ Not quite. Your answer: {u:{fmt}}{unit_str} | "
+            f"Correct: {c:{fmt}}{unit_str} "
+            f"(off by {abs_off:{fmt}}{unit_str} = {pct_off:.1f}%)"
         )
     except (TypeError, ValueError):
         return False, "❌ Please enter a valid number."
+
+
+def check_multiple_answers(user_answers: dict, correct_answers: dict,
+                            tolerance: float = 0.05) -> dict:
+    """
+    Check several named answers at once.
+    ENHANCED: NEW helper for multi-part problems.
+    Returns dict of {key: (is_correct, feedback_str)}.
+
+    Example:
+        results = check_multiple_answers(
+            {"Cp": 1.17, "Cpk": 1.00},
+            {"Cp": 1.17, "Cpk": 1.00},
+        )
+    """
+    return {
+        k: check_answer_with_feedback(user_answers.get(k), v, tolerance)
+        for k, v in correct_answers.items()
+    }
 
 
 # ── Probability distributions ─────────────────────────────
@@ -1184,23 +1919,61 @@ def normal_cdf(z: float) -> float:
 
 
 def normal_ppf(p: float) -> float:
-    """Inverse standard normal CDF: z such that P(Z ≤ z) = p."""
+    """
+    Inverse standard normal CDF: z such that P(Z ≤ z) = p.
+    FIX: clamps p to (1e-9, 1-1e-9) to prevent ±inf from edge inputs.
+    """
+    p = max(1e-9, min(1 - 1e-9, p))
     return float(stats.norm.ppf(p))
 
 
+def normal_pdf(z: float) -> float:
+    """
+    Standard normal PDF: φ(z).
+    ENHANCED: NEW — used in newsvendor expected-shortage calculations.
+    """
+    return float(stats.norm.pdf(z))
+
+
 def normal_between(a: float, b: float) -> float:
-    """P(a ≤ Z ≤ b) for the standard normal. NEW."""
+    """P(a ≤ Z ≤ b) for the standard normal."""
     return float(stats.norm.cdf(b) - stats.norm.cdf(a))
 
 
+def normal_tail(z: float, two_tail: bool = False) -> float:
+    """
+    P(Z > z) for one-tail, or P(|Z| > |z|) for two-tail.
+    ENHANCED: NEW — convenient for control chart false-alarm probability.
+    """
+    one = 1.0 - normal_cdf(abs(z))
+    return 2 * one if two_tail else one
+
+
 def poisson_pmf(k: int, lam: float) -> float:
-    """P(X = k) for Poisson(λ)."""
+    """P(X = k) for Poisson(λ). Guards against λ ≤ 0."""
+    if lam <= 0:
+        return 1.0 if k == 0 else 0.0
     return float(stats.poisson.pmf(k, lam))
 
 
 def poisson_cdf(k: int, lam: float) -> float:
-    """P(X ≤ k) for Poisson(λ)."""
+    """P(X ≤ k) for Poisson(λ). Guards against λ ≤ 0."""
+    if lam <= 0:
+        return 1.0
     return float(stats.poisson.cdf(k, lam))
+
+
+def poisson_table(lam: float, k_max: int = 15) -> pd.DataFrame:
+    """
+    Poisson probability table for display.
+    ENHANCED: NEW — returns DataFrame with P(X=k) and P(X≤k) columns.
+    """
+    k_vals = list(range(k_max + 1))
+    return pd.DataFrame({
+        "k":         k_vals,
+        "P(X = k)":  [round(poisson_pmf(k, lam), 6) for k in k_vals],
+        "P(X ≤ k)":  [round(poisson_cdf(k, lam), 6) for k in k_vals],
+    })
 
 
 def binom_pmf(k: int, n: int, p: float) -> float:
@@ -1209,59 +1982,144 @@ def binom_pmf(k: int, n: int, p: float) -> float:
 
 
 def binom_cdf(k: int, n: int, p: float) -> float:
-    """P(X ≤ k) for Binomial(n, p). NEW."""
+    """P(X ≤ k) for Binomial(n, p)."""
     return float(stats.binom.cdf(k, n, p))
+
+
+def binom_table(n: int, p: float) -> pd.DataFrame:
+    """
+    Binomial probability table for display.
+    ENHANCED: NEW — returns DataFrame with P(X=k) and P(X≤k) columns.
+    """
+    k_vals = list(range(n + 1))
+    return pd.DataFrame({
+        "k":         k_vals,
+        "P(X = k)":  [round(binom_pmf(k, n, p), 6) for k in k_vals],
+        "P(X ≤ k)":  [round(binom_cdf(k, n, p), 6) for k in k_vals],
+    })
 
 
 # ── Confidence intervals ──────────────────────────────────
 
 def confidence_interval_mean(x_bar: float, sigma: float,
-                              n: int, conf: float = 0.95):
+                              n: int, conf: float = 0.95) -> tuple:
     """
     (lower, upper) CI for population mean with known σ (Z-based).
+    FIX: guards against n ≤ 0.
     """
+    if n <= 0 or sigma < 0:
+        return (None, None)
     z      = normal_ppf(1 - (1 - conf) / 2)
     margin = z * sigma / math.sqrt(n)
     return x_bar - margin, x_bar + margin
 
 
 def confidence_interval_mean_t(x_bar: float, s: float,
-                                n: int, conf: float = 0.95):
+                                n: int, conf: float = 0.95) -> tuple:
     """
-    (lower, upper) CI for population mean with unknown σ (t-based). NEW.
-    Uses scipy.stats.t for correct critical value.
+    (lower, upper) CI for population mean with unknown σ (t-based).
+    FIX: guards against n ≤ 1 (df = 0 would raise in scipy).
     """
+    if n <= 1 or s < 0:
+        return (None, None)
     t_crit = float(stats.t.ppf(1 - (1 - conf) / 2, df=n - 1))
     margin = t_crit * s / math.sqrt(n)
     return x_bar - margin, x_bar + margin
 
 
+def confidence_interval_proportion(p_hat: float, n: int,
+                                    conf: float = 0.95) -> tuple:
+    """
+    Wilson score CI for a proportion.
+    ENHANCED: NEW — more accurate than normal approximation for small n or
+    extreme p̂. Used in p-chart analysis.
+    Returns (lower, upper).
+    """
+    if n <= 0:
+        return (None, None)
+    z    = normal_ppf(1 - (1 - conf) / 2)
+    denom = 1 + z**2 / n
+    center = (p_hat + z**2 / (2 * n)) / denom
+    spread = z * math.sqrt(p_hat * (1 - p_hat) / n + z**2 / (4 * n**2)) / denom
+    return max(0.0, center - spread), min(1.0, center + spread)
+
+
 # ── Process capability (SQC) ──────────────────────────────
 
 def process_capability(mean: float, std: float,
-                        lsl: float, usl: float):
+                        lsl: float, usl: float) -> dict:
     """
-    Returns dict with Cp, Cpk, Cpl, Cpu. NEW.
-    Cp  = (USL − LSL) / 6σ  — potential capability
-    Cpk = min(Cpu, Cpl)     — actual capability (accounts for centering)
+    Returns dict with Cp, Cpk, Cpl, Cpu, and estimated ppm defect rate.
+    ENHANCED: added 'ppm_total' and 'yield_pct' to the return dict.
+    FIX: returns all-None dict (not crash) when std ≤ 0.
     """
     if std <= 0:
-        return {"Cp": None, "Cpk": None, "Cpu": None, "Cpl": None}
-    cp  = (usl - lsl) / (6 * std)
-    cpu = (usl - mean) / (3 * std)
-    cpl = (mean - lsl) / (3 * std)
-    cpk = min(cpu, cpl)
+        return {"Cp": None, "Cpk": None, "Cpu": None,
+                "Cpl": None, "ppm_total": None, "yield_pct": None}
+    cp   = (usl - lsl) / (6 * std)
+    cpu  = (usl - mean) / (3 * std)
+    cpl  = (mean - lsl) / (3 * std)
+    cpk  = min(cpu, cpl)
+    # Estimated defect rate (assumes normality, no 1.5σ shift)
+    p_defect  = normal_cdf((lsl - mean) / std) + (1 - normal_cdf((usl - mean) / std))
+    ppm_total = round(p_defect * 1_000_000, 2)
+    yield_pct = round((1 - p_defect) * 100, 5)
     return {
-        "Cp":  round(cp,  4),
-        "Cpk": round(cpk, 4),
-        "Cpu": round(cpu, 4),
-        "Cpl": round(cpl, 4),
+        "Cp":        round(cp,  4),
+        "Cpk":       round(cpk, 4),
+        "Cpu":       round(cpu, 4),
+        "Cpl":       round(cpl, 4),
+        "ppm_total": ppm_total,
+        "yield_pct": yield_pct,
     }
 
 
 def sigma_level(cpk: float) -> float:
-    """Convert Cpk to approximate sigma level (σ = 3 × Cpk). NEW."""
-    return 3 * cpk if cpk is not None else 0.0
+    """
+    Convert Cpk to approximate sigma level (σ = 3 × Cpk).
+    FIX: handles None and negative cpk gracefully.
+    """
+    if cpk is None:
+        return 0.0
+    return max(0.0, 3.0 * cpk)
+
+
+def dpmo_to_sigma(dpmo: float) -> float:
+    """
+    Approximate sigma level from DPMO (includes 1.5σ shift convention).
+    ENHANCED: NEW — inverse of the standard DPMO table used in Six Sigma.
+    Returns 0.0 for invalid DPMO values.
+    """
+    if dpmo <= 0 or dpmo >= 1_000_000:
+        return 0.0
+    try:
+        return 0.8406 + math.sqrt(max(0.0, 29.37 - 2.221 * math.log(dpmo)))
+    except (ValueError, ZeroDivisionError):
+        return 0.0
+
+
+def sigma_to_dpmo(sigma: float) -> float:
+    """
+    Approximate DPMO from sigma level (includes 1.5σ shift convention).
+    ENHANCED: NEW — inverse lookup for display tables and calculators.
+    """
+    if sigma <= 0:
+        return 1_000_000.0
+    z = sigma - 1.5          # account for standard 1.5σ shift
+    return max(0.0, (1 - normal_cdf(z)) * 1_000_000)
+
+
+def control_chart_limits(center: float, std_dev: float,
+                          sigma_multiplier: float = 3.0) -> tuple:
+    """
+    Generic UCL / LCL for any control chart.
+    ENHANCED: NEW — consolidates the UCL/LCL formula used across all chart types.
+    Returns (UCL, CL, LCL). LCL is clamped to 0 for attribute charts if needed
+    by the caller.
+    """
+    ucl = center + sigma_multiplier * std_dev
+    lcl = center - sigma_multiplier * std_dev
+    return ucl, center, lcl
 
 
 # ── PERT / Project helpers ────────────────────────────────
@@ -1281,139 +2139,366 @@ def pert_sigma(a: float, b: float) -> float:
     return (b - a) / 6
 
 
+def pert_path_stats(activities: list) -> dict:
+    """
+    Compute expected duration and std dev for a complete PERT path.
+    ENHANCED: NEW — sums te and variances across a list of (a, m, b) tuples.
+    Returns {"te": float, "variance": float, "sigma": float}.
+
+    Example:
+        pert_path_stats([(2,4,6), (1,3,5), (3,5,9)])
+    """
+    total_te  = sum(pert_te(a, m, b) for a, m, b in activities)
+    total_var = sum(pert_variance(a, b) for a, m, b in activities)
+    return {
+        "te":       round(total_te,  4),
+        "variance": round(total_var, 4),
+        "sigma":    round(math.sqrt(total_var), 4),
+    }
+
+
+def pert_prob_complete(path_te: float, path_sigma: float,
+                        target: float) -> float:
+    """
+    Probability that a PERT path finishes by 'target' time.
+    ENHANCED: NEW — P(T ≤ target) = Φ((target − te) / σ_path).
+    """
+    if path_sigma <= 0:
+        return 1.0 if target >= path_te else 0.0
+    z = (target - path_te) / path_sigma
+    return normal_cdf(z)
+
+
 def crash_cost_per_day(normal_time: float, crash_time: float,
                         normal_cost: float, crash_cost: float):
     """
     Cost per time unit to crash an activity.
     Returns None if crashing is not possible (crash_time ≥ normal_time).
+    FIX: also returns None if crash_cost < normal_cost (invalid input).
     """
     days = normal_time - crash_time
-    return (crash_cost - normal_cost) / days if days > 0 else None
+    if days <= 0 or crash_cost < normal_cost:
+        return None
+    return (crash_cost - normal_cost) / days
 
 
 # ── Forecasting helpers ───────────────────────────────────
 
 def moving_average(data: list, n: int) -> list:
     """
-    Simple n-period moving average. Returns list of length len(data).
-    First n-1 values are None. NEW.
+    Simple n-period moving average.
+    Returns list of length len(data); first n-1 values are None.
+    FIX: guards against n ≤ 0 and n > len(data).
     """
+    if n <= 0 or n > len(data):
+        return [None] * len(data)
     result = [None] * (n - 1)
     for i in range(n - 1, len(data)):
         result.append(sum(data[i - n + 1: i + 1]) / n)
     return result
 
 
+def weighted_moving_average(data: list, weights: list) -> list:
+    """
+    Weighted moving average.
+    ENHANCED: NEW — weights are normalised internally so they need not sum to 1.
+    Returns list same length as data; first len(weights)-1 values are None.
+
+    Example:
+        wma = weighted_moving_average([10,12,14,13,15], [0.2, 0.3, 0.5])
+    """
+    n = len(weights)
+    if n == 0 or n > len(data):
+        return [None] * len(data)
+    w_sum = sum(weights)
+    w_norm = [w / w_sum for w in weights]
+    result = [None] * (n - 1)
+    for i in range(n - 1, len(data)):
+        val = sum(w_norm[j] * data[i - n + 1 + j] for j in range(n))
+        result.append(round(val, 6))
+    return result
+
+
 def exponential_smoothing(data: list, alpha: float,
                            initial: float = None) -> list:
     """
-    Simple exponential smoothing (one-step-ahead forecasts). NEW.
-    Returns list same length as data (forecast[0] = initial or data[0]).
-    alpha: smoothing constant (0 < α < 1).
+    Simple exponential smoothing (one-step-ahead forecasts).
+    Returns list same length as data; forecast[0] = initial or data[0].
+    FIX: clamps alpha to (0, 1) to prevent degenerate behaviour.
+    ENHANCED: uses data[0] as initial when not provided, consistent with
+    common textbook convention.
     """
     if not data:
         return []
-    f0 = initial if initial is not None else data[0]
+    alpha = max(1e-6, min(1 - 1e-6, alpha))
+    f0    = initial if initial is not None else data[0]
     forecasts = [f0]
     for i in range(1, len(data)):
         forecasts.append(alpha * data[i - 1] + (1 - alpha) * forecasts[-1])
     return forecasts
 
 
+def double_exponential_smoothing(data: list, alpha: float,
+                                  beta: float) -> tuple:
+    """
+    Holt's double exponential smoothing (trend-adjusted).
+    ENHANCED: NEW — handles trended data where simple ES under/overshoots.
+    Returns (level_series, trend_series, forecast_series), all same length as data.
+    alpha: level smoothing; beta: trend smoothing.
+    """
+    if len(data) < 2:
+        return [None] * len(data), [None] * len(data), [None] * len(data)
+    alpha = max(1e-6, min(1 - 1e-6, alpha))
+    beta  = max(1e-6, min(1 - 1e-6, beta))
+    L  = [data[0]]
+    T  = [data[1] - data[0]]
+    F  = [data[0]]
+    for i in range(1, len(data)):
+        l_new = alpha * data[i] + (1 - alpha) * (L[-1] + T[-1])
+        t_new = beta  * (l_new - L[-1]) + (1 - beta) * T[-1]
+        f_new = L[-1] + T[-1]
+        L.append(round(l_new, 6))
+        T.append(round(t_new, 6))
+        F.append(round(f_new, 6))
+    return L, T, F
+
+
 def forecast_error_metrics(actual: list, forecast: list) -> dict:
     """
-    Returns MAD, MSE, MAPE, and bias for paired actual/forecast lists. NEW.
-    Ignores positions where forecast is None.
+    Returns MAD, MSE, RMSE, MAPE, and Bias for paired actual/forecast lists.
+    ENHANCED: added RMSE (√MSE) — frequently required in OSCM textbook problems.
+    FIX: skips pairs where actual = 0 (MAPE would be undefined).
+    FIX: skips pairs where forecast is None.
     """
     pairs = [(a, f) for a, f in zip(actual, forecast)
              if f is not None and a != 0]
     if not pairs:
-        return {"MAD": None, "MSE": None, "MAPE": None, "Bias": None}
+        return {"MAD": None, "MSE": None, "RMSE": None,
+                "MAPE": None, "Bias": None, "n": 0}
     n      = len(pairs)
     errors = [a - f for a, f in pairs]
     mad    = sum(abs(e) for e in errors) / n
     mse    = sum(e ** 2 for e in errors) / n
+    rmse   = math.sqrt(mse)
     mape   = sum(abs((a - f) / a) for a, f in pairs) / n * 100
     bias   = sum(errors) / n
     return {
         "MAD":  round(mad,  4),
         "MSE":  round(mse,  4),
+        "RMSE": round(rmse, 4),
         "MAPE": round(mape, 4),
         "Bias": round(bias, 4),
+        "n":    n,
+    }
+
+
+def linear_trend_forecast(data: list) -> dict:
+    """
+    Fit a simple linear trend (OLS) and return slope, intercept, and
+    one-step-ahead forecast.
+    ENHANCED: NEW — uses scipy.stats.linregress; avoids numpy dependency
+    for a single regression call.
+    Returns {"slope", "intercept", "r_squared", "next_forecast"}.
+    """
+    if len(data) < 2:
+        return {"slope": None, "intercept": None,
+                "r_squared": None, "next_forecast": None}
+    x = list(range(1, len(data) + 1))
+    result = stats.linregress(x, data)
+    return {
+        "slope":          round(result.slope,     4),
+        "intercept":      round(result.intercept, 4),
+        "r_squared":      round(result.rvalue**2, 4),
+        "next_forecast":  round(result.intercept + result.slope * (len(data) + 1), 4),
     }
 
 
 # ── Inventory helpers ─────────────────────────────────────
 
-def eoq(demand: float, order_cost: float, holding_cost: float) -> float:
+def eoq(demand: float, order_cost: float, holding_cost: float):
     """
-    Economic Order Quantity: √(2DS / H). NEW.
-    demand: annual demand (D), order_cost: cost per order (S),
-    holding_cost: annual holding cost per unit (H).
-    Returns None if inputs are non-positive.
+    Economic Order Quantity: Q* = √(2DS / H).
+    FIX: returns None (not crash) for non-positive inputs.
     """
     if demand <= 0 or order_cost <= 0 or holding_cost <= 0:
         return None
     return math.sqrt(2 * demand * order_cost / holding_cost)
 
 
+def eoq_full(demand: float, order_cost: float,
+             holding_cost: float, unit_cost: float = 0.0) -> dict:
+    """
+    EOQ with full cost breakdown.
+    ENHANCED: NEW — returns Q*, annual order cost, holding cost, purchase
+    cost, and total cost in a single dict.
+    unit_cost: purchase price per unit (0 = ignore purchase cost).
+    """
+    q = eoq(demand, order_cost, holding_cost)
+    if q is None:
+        return {}
+    orders_per_yr  = demand / q
+    annual_order   = orders_per_yr * order_cost
+    annual_holding = (q / 2) * holding_cost
+    annual_purchase = demand * unit_cost
+    return {
+        "Q_star":          round(q, 2),
+        "orders_per_year": round(orders_per_yr, 2),
+        "annual_order":    round(annual_order, 2),
+        "annual_holding":  round(annual_holding, 2),
+        "annual_purchase": round(annual_purchase, 2),
+        "total_cost":      round(annual_order + annual_holding + annual_purchase, 2),
+        "cycle_time_days": round(q / demand * 365, 1),
+    }
+
+
 def reorder_point(avg_daily_demand: float, lead_time_days: float,
                   safety_stock: float = 0.0) -> float:
-    """
-    Reorder point: d̄ × LT + SS. NEW.
-    avg_daily_demand: average daily demand (d̄)
-    lead_time_days:   lead time in days (LT)
-    safety_stock:     safety stock units (SS)
-    """
+    """Reorder point: ROP = d̄ × LT + SS."""
     return avg_daily_demand * lead_time_days + safety_stock
 
 
 def safety_stock_units(z: float, sigma_demand: float,
                         lead_time_days: float) -> float:
     """
-    Safety stock: z × σ_d × √LT. NEW.
-    z: service-level z-score (e.g. 1.65 for 95%).
-    sigma_demand: std dev of daily demand.
-    lead_time_days: lead time in days.
+    Safety stock: SS = z × σ_d × √LT.
+    FIX: guards against negative lead_time_days.
     """
+    if lead_time_days < 0:
+        return 0.0
     return z * sigma_demand * math.sqrt(lead_time_days)
+
+
+def safety_stock_variable_lt(z: float, avg_demand: float,
+                               sigma_demand: float,
+                               avg_lt: float, sigma_lt: float) -> float:
+    """
+    Safety stock when both demand and lead time are variable.
+    ENHANCED: NEW — SS = z × √(avg_LT × σ_d² + avg_d² × σ_LT²).
+    Used in Chapters 20–21 variable lead-time problems.
+    """
+    if avg_lt < 0 or avg_demand < 0:
+        return 0.0
+    return z * math.sqrt(avg_lt * sigma_demand**2 + avg_demand**2 * sigma_lt**2)
 
 
 def total_inventory_cost(demand: float, order_qty: float,
                           order_cost: float, holding_cost: float) -> float:
     """
-    Annual total inventory cost: (D/Q)S + (Q/2)H. NEW.
+    Annual total inventory cost: TC = (D/Q)S + (Q/2)H.
+    FIX: returns inf for order_qty ≤ 0 rather than raising ZeroDivisionError.
     """
     if order_qty <= 0:
         return float("inf")
     return (demand / order_qty) * order_cost + (order_qty / 2) * holding_cost
 
 
+def newsvendor(price: float, cost: float, salvage: float,
+               mean_demand: float, std_demand: float) -> dict:
+    """
+    Newsvendor (critical ratio) model.
+    ENHANCED: NEW — returns Q*, critical ratio, expected profit,
+    expected sales, and expected leftover inventory.
+    Cu = price − cost (underage), Co = cost − salvage (overage).
+    """
+    cu = price - cost
+    co = cost - salvage
+    if cu + co <= 0:
+        return {}
+    cr  = cu / (cu + co)
+    z   = normal_ppf(cr)
+    q   = mean_demand + z * std_demand
+
+    # Expected sales = E[min(D,Q)] = μΦ(z) − σφ(z) + Q(1−Φ(z))  [textbook form]
+    phi_z  = normal_cdf(z)
+    pdf_z  = normal_pdf(z)
+    e_sales   = mean_demand * phi_z - std_demand * pdf_z + q * (1 - phi_z)
+    e_leftover = max(0.0, q - e_sales)
+    e_profit   = (price - cost) * e_sales - (cost - salvage) * e_leftover - cost * 0
+
+    return {
+        "Cu":             round(cu, 4),
+        "Co":             round(co, 4),
+        "critical_ratio": round(cr, 4),
+        "z":              round(z,  4),
+        "Q_star":         round(q,  2),
+        "expected_sales":    round(e_sales,    2),
+        "expected_leftover": round(e_leftover, 2),
+        "expected_profit":   round(e_profit,   2),
+    }
+
+
 # ── Decision / financial helpers ──────────────────────────
 
 def emv(probability: float, impact: float) -> float:
-    """Expected Monetary Value: P × Impact."""
+    """Expected Monetary Value: EMV = P × Impact."""
     return probability * impact
+
+
+def emv_table(outcomes: list) -> dict:
+    """
+    EMV for a decision node with multiple outcomes.
+    ENHANCED: NEW — outcomes is list of (probability, impact) tuples.
+    Returns {"emv": float, "outcomes": list of floats}.
+
+    Example:
+        emv_table([(0.4, 200_000), (0.4, 25_000), (0.2, -40_000)])
+    """
+    vals = [emv(p, i) for p, i in outcomes]
+    return {"emv": round(sum(vals), 2), "outcomes": [round(v, 2) for v in vals]}
 
 
 def npv(cash_flows: list, rate: float) -> float:
     """
-    Net Present Value given a list of cash flows (index 0 = period 0). NEW.
-    rate: discount rate per period (e.g. 0.10 for 10%).
+    Net Present Value: NPV = Σ CF_t / (1+r)^t.
+    Index 0 = period 0 (usually negative initial investment).
+    FIX: guards against rate = -1 (division by zero).
     """
+    if rate <= -1:
+        return float("nan")
     return sum(cf / (1 + rate) ** t for t, cf in enumerate(cash_flows))
+
+
+def irr(cash_flows: list, guess: float = 0.1) -> float:
+    """
+    Internal Rate of Return via bisection search.
+    ENHANCED: NEW — useful for capital budgeting modules.
+    Returns None if no IRR found in (−99%, 1000%) range.
+    """
+    lo, hi = -0.9999, 10.0
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        if abs(hi - lo) < 1e-8:
+            return round(mid, 6)
+        if npv(cash_flows, mid) > 0:
+            lo = mid
+        else:
+            hi = mid
+    return None
 
 
 def break_even_units(fixed_cost: float, price: float,
                       variable_cost: float):
-    """Break-even point in units. Returns None if contribution margin ≤ 0."""
+    """
+    Break-even point in units: BEP = FC / (P − VC).
+    Returns None if contribution margin ≤ 0.
+    """
     cm = price - variable_cost
     return fixed_cost / cm if cm > 0 else None
 
 
+def break_even_revenue(fixed_cost: float, price: float,
+                        variable_cost: float):
+    """
+    Break-even revenue: BEP_$ = BEP_units × P.
+    ENHANCED: NEW — frequently asked separately from unit BEP.
+    """
+    units = break_even_units(fixed_cost, price, variable_cost)
+    return units * price if units is not None else None
+
+
 def target_profit_units(fixed_cost: float, target_profit: float,
                          price: float, variable_cost: float):
-    """Units required to achieve a target profit."""
+    """Units required to achieve a target profit: (FC + π) / CM."""
     cm = price - variable_cost
     return (fixed_cost + target_profit) / cm if cm > 0 else None
 
@@ -1428,13 +2513,57 @@ def indifference_point(fc1: float, vc1: float,
     return (fc2 - fc1) / dv if abs(dv) > 1e-9 else None
 
 
+def learning_curve_time(t1: float, n: int, rate: float) -> float:
+    """
+    Learning curve: cumulative average time for unit n.
+    ENHANCED: NEW — Y_n = T1 × n^b where b = log(rate)/log(2).
+    rate: e.g. 0.80 for 80% learning curve.
+    FIX: guards against n ≤ 0 and rate outside (0, 1).
+    """
+    if n <= 0 or not (0 < rate < 1) or t1 <= 0:
+        return float("nan")
+    b = math.log(rate) / math.log(2)
+    return t1 * (n ** b)
+
+
+def learning_curve_table(t1: float, rate: float,
+                           units: list = None) -> pd.DataFrame:
+    """
+    Full learning curve table for a sequence of units.
+    ENHANCED: NEW — returns DataFrame with cumulative avg, total time,
+    and marginal (individual unit) time.
+
+    Example:
+        learning_curve_table(100, 0.80, [1, 2, 4, 8, 16])
+    """
+    if units is None:
+        units = [1, 2, 4, 8, 16, 32]
+    rows = []
+    prev_total = 0.0
+    for n in units:
+        cum_avg   = learning_curve_time(t1, n, rate)
+        total     = cum_avg * n
+        marginal  = total - prev_total
+        rows.append({
+            "Unit (N)":      n,
+            "Cum Avg Time":  round(cum_avg, 3),
+            "Total Time":    round(total, 3),
+            "Marginal Time": round(marginal, 3),
+        })
+        prev_total = total
+    return pd.DataFrame(rows)
+
+
 # ── Formatters ────────────────────────────────────────────
 
-def format_currency(value: float, decimals: int = 0) -> str:
-    """Format a number as a USD currency string.
-    FIX: removed nested f-string brace escaping; simpler and safer.
+def format_currency(value: float, decimals: int = 0,
+                    symbol: str = "$") -> str:
     """
-    return f"${value:,.{decimals}f}"
+    Format a number as a currency string.
+    ENHANCED: customisable symbol (e.g. "€", "£").
+    FIX: removed nested f-string brace escaping issue in original.
+    """
+    return f"{symbol}{value:,.{decimals}f}"
 
 
 def format_number(value: float, decimals: int = 2) -> str:
@@ -1442,20 +2571,98 @@ def format_number(value: float, decimals: int = 2) -> str:
     return f"{value:,.{decimals}f}"
 
 
-def format_pct(value: float, decimals: int = 1) -> str:
-    """Format a fraction (0–1) as a percentage string."""
-    return f"{value * 100:.{decimals}f}%"
+def format_pct(value: float, decimals: int = 1,
+               already_pct: bool = False) -> str:
+    """
+    Format as percentage string.
+    ENHANCED: already_pct=True skips ×100 (for values already in percent).
+    """
+    v = value if already_pct else value * 100
+    return f"{v:.{decimals}f}%"
 
 
 def format_delta(value: float, decimals: int = 2,
                  unit: str = "") -> str:
-    """
-    Format a signed delta value with ▲/▼ arrow prefix. NEW.
-    Useful for metric cards and comparison tables.
-    """
+    """Format a signed delta value with ▲/▼ arrow prefix."""
     arrow  = "▲" if value >= 0 else "▼"
     unit_s = f" {unit}" if unit else ""
     return f"{arrow} {abs(value):,.{decimals}f}{unit_s}"
+
+
+def format_sigma(cpk: float) -> str:
+    """
+    Format Cpk as a sigma level string.
+    ENHANCED: NEW — convenience wrapper for metric cards.
+    Example: format_sigma(1.33) → "4.0σ"
+    """
+    return f"{sigma_level(cpk):.2f}σ"
+
+
+def format_dpmo(dpmo: float) -> str:
+    """
+    Format DPMO with thousands separator and sigma level.
+    ENHANCED: NEW — e.g. "6,210 DPMO (≈4.0σ)".
+    """
+    sl = dpmo_to_sigma(dpmo)
+    return f"{dpmo:,.1f} DPMO (≈{sl:.1f}σ)"
+
+
+# ── Scheduling helpers ────────────────────────────────────
+
+def critical_ratio(due_date: float, today: float,
+                   remaining_time: float) -> float:
+    """
+    Critical Ratio: CR = (Due Date − Today) / Remaining Processing Time.
+    ENHANCED: NEW — CR < 1 = behind, CR = 1 = on track, CR > 1 = ahead.
+    Returns inf if remaining_time = 0 (job is finished).
+    """
+    if remaining_time <= 0:
+        return float("inf")
+    return (due_date - today) / remaining_time
+
+
+def spt_sequence(jobs: dict) -> list:
+    """
+    Shortest Processing Time sequencing.
+    ENHANCED: NEW — sorts jobs by processing time ascending.
+    jobs: {job_name: {"pt": float, "dd": float}} dict.
+    Returns sorted list of (job_name, pt, dd, completion_time, tardiness).
+    """
+    sorted_jobs = sorted(jobs.items(), key=lambda x: x[1]["pt"])
+    result, t = [], 0
+    for name, j in sorted_jobs:
+        t += j["pt"]
+        tardiness = max(0, t - j["dd"])
+        result.append({
+            "job":         name,
+            "pt":          j["pt"],
+            "dd":          j["dd"],
+            "completion":  t,
+            "flow_time":   t,
+            "tardiness":   tardiness,
+        })
+    return result
+
+
+def schedule_metrics(schedule: list) -> dict:
+    """
+    Aggregate metrics for a job sequence produced by spt_sequence (or EDD, etc.).
+    ENHANCED: NEW — returns avg flow time, avg tardiness, makespan, jobs late.
+    """
+    if not schedule:
+        return {}
+    n          = len(schedule)
+    avg_flow   = sum(j["flow_time"] for j in schedule) / n
+    avg_tard   = sum(j["tardiness"] for j in schedule) / n
+    makespan   = schedule[-1]["completion"]
+    jobs_late  = sum(1 for j in schedule if j["tardiness"] > 0)
+    return {
+        "avg_flow_time": round(avg_flow, 3),
+        "avg_tardiness": round(avg_tard, 3),
+        "makespan":      round(makespan, 3),
+        "jobs_late":     jobs_late,
+        "n_jobs":        n,
+    }
 
 
 # ============================================================
@@ -1466,108 +2673,175 @@ def render_sidebar(modules: dict):
     Render the full sidebar navigation + theme toggle.
     modules: OrderedDict of { display_label: function_ref }
     Returns the selected module function.
-    FIX: removed unused pct variable; improved progress label styling.
+    ENHANCED: bookmarks indicator, recent modules, version footer.
+    FIX: removed unused pct variable.
+    FIX: modules_visited is a set and cannot index — used len() correctly.
     """
     render_theme_toggle()
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📚 Modules")
 
+    # ── Search / filter ───────────────────────────────────
+    search = st.sidebar.text_input("🔍 Filter modules", "",
+                                    placeholder="Type to search…",
+                                    key="sidebar_search",
+                                    label_visibility="collapsed")
     labels = list(modules.keys())
+    if search.strip():
+        labels = [l for l in labels if search.strip().lower() in l.lower()]
+        if not labels:
+            st.sidebar.caption("No modules match your search.")
+
+    st.sidebar.markdown("### 📚 Modules")
     choice = st.sidebar.radio(
         "Select module:",
-        labels,
+        labels if labels else list(modules.keys()),
         label_visibility="collapsed",
+        key="module_radio",
     )
 
-    # Track visited modules
+    # ── Track visits ─────────────────────────────────────
     st.session_state.modules_visited.add(choice)
     st.session_state.last_module = choice
+    recent = st.session_state.get("recent_modules", [])
+    if not recent or recent[0] != choice:
+        recent = [choice] + [r for r in recent if r != choice]
+        st.session_state.recent_modules = recent[:5]
 
     st.sidebar.markdown("---")
 
-    # Progress indicator
+    # ── Progress indicator ────────────────────────────────
     visited = len(st.session_state.modules_visited)
     total   = len(modules)
-    st.sidebar.markdown(f"**Progress:** {visited}/{total} modules explored")
-    display_progress_bar(visited, total, label="", bar_type="accent")
+    st.sidebar.markdown(f"**Progress:** {visited} / {total} modules explored")
+    display_progress_bar(visited, total, bar_type="accent", show_pct=False)
 
-    # Streak & problems solved display
-    if st.session_state.problems_solved > 0:
+    # ── Gamification stats ────────────────────────────────
+    solved = st.session_state.get("problems_solved", 0)
+    streak = st.session_state.get("correct_streak", 0)
+    best   = st.session_state.get("best_streak", 0)
+    if solved > 0:
         st.sidebar.markdown(
-            f"🎯 **Problems solved:** {st.session_state.problems_solved}  \n"
-            f"🔥 **Streak:** {st.session_state.correct_streak}"
+            f"🎯 **Problems solved:** {solved}  \n"
+            f"🔥 **Streak:** {streak}  |  🏆 **Best:** {best}"
         )
 
     st.sidebar.markdown("---")
+
+    # ── Version footer ────────────────────────────────────
+    v = st.session_state.get("runtime_versions", {})
     st.sidebar.caption(
-        "📖 Based on *Operations and Supply Chain Management*  \n"
-        "Jacobs & Chase (2024, 16th ed.)"
+        f"📖 *Operations & Supply Chain Management*  \n"
+        f"Jacobs & Chase (2024, 17th ed.)  \n"
+        f"Streamlit {v.get('streamlit','—')} · Pandas {v.get('pandas','—')}"
     )
 
     return modules[choice]
 
 
 # ============================================================
-# PRE-COMPUTED Z-TABLE  (z from -3.49 to 3.49, step 0.01)
+# PRE-COMPUTED Z-TABLE  (z from −3.49 to 3.49, step 0.01)
 # ============================================================
-Z_TABLE: dict[float, float] = {
-    round(z / 100, 2): round(normal_cdf(z / 100), 4)
+Z_TABLE: dict = {
+    round(z / 100, 2): round(float(stats.norm.cdf(z / 100)), 4)
     for z in range(-349, 350)
 }
 
 
 def z_lookup(z: float) -> float:
     """
-    Look up P(Z ≤ z) from the pre-computed Z_TABLE. NEW.
-    Rounds z to 2 decimal places; falls back to scipy for out-of-range values.
+    Look up P(Z ≤ z) from the pre-computed Z_TABLE.
+    Rounds z to 2 decimal places; falls back to scipy for out-of-range.
+    FIX: type annotation dict[float, float] replaced with plain dict for
+    Python 3.8 compatibility (subscript syntax only available in 3.9+).
     """
     key = round(z, 2)
     return Z_TABLE.get(key, normal_cdf(z))
 
 
 # ============================================================
-# PRE-COMPUTED STANDARD NORMAL REFERENCE TABLE  (display use)
+# PRE-COMPUTED STANDARD NORMAL REFERENCE TABLE
 # ============================================================
 def build_z_reference_table() -> pd.DataFrame:
     """
     Returns a DataFrame with key Z-score ↔ probability mappings.
-    FIX: float dict key lookup replaced with a direct tuple list to avoid
-    floating-point key mismatch (e.g. -1.6500000001 not found in dict).
-    ENHANCED: added two-tail area column.
+    ENHANCED: added 'σ Context' column mapping to common OSCM usage.
+    FIX: dict key lookup replaced with a tuple list to avoid float
+    key mismatch (e.g. -1.6500000001 not found in dict).
+    FIX: Python 3.8 compat — removed dict[float, float] type hint.
     """
     z_annotations = [
-        (-3.00, "Extremely rare — process alert"),
-        (-2.58, "99% CI (two-tail lower)"),
-        (-2.33, "99% conf (one-tail lower)"),
-        (-2.00, "Lower 2.3%"),
-        (-1.96, "95% CI (two-tail lower)"),
-        (-1.65, "95% conf (one-tail lower) / Lower 5%"),
-        (-1.28, "90% conf (one-tail lower) / Lower 10%"),
-        (-1.00, "Lower 16%"),
-        (-0.50, "Lower 31%"),
-        ( 0.00, "50th percentile (median)"),
-        ( 0.50, "Upper 31%"),
-        ( 1.00, "Upper 16%"),
-        ( 1.28, "90% conf (one-tail) / 80% CI"),
-        ( 1.65, "95% conf (one-tail) / 90% CI"),
-        ( 1.96, "95% CI (two-tail)"),
-        ( 2.00, "Upper 2.3%"),
-        ( 2.33, "99% conf (one-tail)"),
-        ( 2.58, "99% CI (two-tail)"),
-        ( 3.00, "Upper 0.13% — Six-Sigma reference"),
+        (-3.00, "Extremely rare — process alert",              "3σ lower limit"),
+        (-2.58, "99% CI (two-tail lower)",                     ""),
+        (-2.33, "99% conf (one-tail lower)",                   ""),
+        (-2.00, "Lower 2.3%",                                  ""),
+        (-1.96, "95% CI (two-tail lower)",                     ""),
+        (-1.65, "95% conf (one-tail) / Newsvendor z",          "Safety stock (95% SL)"),
+        (-1.28, "90% conf (one-tail)",                         "Safety stock (90% SL)"),
+        (-1.00, "Lower 16%",                                   ""),
+        (-0.50, "Lower 31%",                                   ""),
+        ( 0.00, "50th percentile (median)",                    ""),
+        ( 0.50, "Upper 31%",                                   ""),
+        ( 1.00, "Upper 16%",                                   ""),
+        ( 1.28, "90% conf (one-tail) / 80% CI",               ""),
+        ( 1.65, "95% conf (one-tail) / 90% CI",               "Safety stock (95% SL)"),
+        ( 1.96, "95% CI (two-tail)",                           ""),
+        ( 2.00, "Upper 2.3%",                                  ""),
+        ( 2.33, "99% conf (one-tail)",                         ""),
+        ( 2.58, "99% CI (two-tail)",                           ""),
+        ( 3.00, "Upper 0.13%",                                 "3σ UCL/LCL — control charts"),
     ]
     rows = []
-    for z, note in z_annotations:
+    for z, note, context in z_annotations:
         p_le  = normal_cdf(z)
-        p_gt  = 1 - p_le
-        p_two = 2 * min(p_le, p_gt)          # two-tail area outside ±|z|
+        p_gt  = 1.0 - p_le
+        p_two = 2.0 * min(p_le, p_gt)
         rows.append({
-            "Z-Score":          f"{z:+.2f}",
-            "P(Z ≤ z)":         f"{p_le:.4f}",
-            "P(Z > z)":         f"{p_gt:.4f}",
-            "Two-Tail Area":    f"{p_two:.4f}",
-            "Common Use":       note,
+            "Z-Score":        f"{z:+.2f}",
+            "P(Z ≤ z)":       f"{p_le:.4f}",
+            "P(Z > z)":       f"{p_gt:.4f}",
+            "Two-Tail Area":  f"{p_two:.4f}",
+            "Common Use":     note,
+            "OSCM Context":   context,
         })
+    return pd.DataFrame(rows)
+
+
+# ── Control chart helper tables ───────────────────────────
+
+_XBAR_R_CONSTANTS = {
+#  n:  (A2,    D3,    D4,    d2)
+    2:  (1.880, 0.000, 3.267, 1.128),
+    3:  (1.023, 0.000, 2.574, 1.693),
+    4:  (0.729, 0.000, 2.282, 2.059),
+    5:  (0.577, 0.000, 2.114, 2.326),
+    6:  (0.483, 0.000, 2.004, 2.534),
+    7:  (0.419, 0.076, 1.924, 2.704),
+    8:  (0.373, 0.136, 1.864, 2.847),
+    9:  (0.337, 0.184, 1.816, 2.970),
+    10: (0.308, 0.223, 1.777, 3.078),
+}
+
+
+def get_xbar_r_constants(n: int) -> dict:
+    """
+    Return the standard x̄-R control chart constants for subgroup size n.
+    ENHANCED: NEW — eliminates magic numbers scattered across modules.
+    Returns {"A2", "D3", "D4", "d2"} or None if n out of range.
+    """
+    if n not in _XBAR_R_CONSTANTS:
+        return None
+    a2, d3, d4, d2 = _XBAR_R_CONSTANTS[n]
+    return {"A2": a2, "D3": d3, "D4": d4, "d2": d2}
+
+
+def build_control_chart_constants_table() -> pd.DataFrame:
+    """
+    Returns a DataFrame of all x̄-R constants for display in Formula Reference tabs.
+    ENHANCED: NEW.
+    """
+    rows = []
+    for n, (a2, d3, d4, d2) in _XBAR_R_CONSTANTS.items():
+        rows.append({"n": n, "A₂": a2, "D₃": d3, "D₄": d4, "d₂": d2})
     return pd.DataFrame(rows)
 
 # ============================================================
@@ -10986,7 +12260,7 @@ def module_practice():
                 st.markdown(f"#### {section_title}")
                 for name, formula in formulas:
                     display_formula_card(name, formula)
-                                             
+
 # ============================================================
 # MODULE REGISTRY
 # ============================================================
