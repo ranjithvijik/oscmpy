@@ -55,17 +55,6 @@ for _alias, _builtin in {
     if not hasattr(np, _alias):
         setattr(np, _alias, _builtin)
 
-# ── Runtime version diagnostics ──────────────────────────────
-_VERSIONS = {
-    "python":    sys.version.split()[0],
-    "streamlit": st.__version__,
-    "pandas":    pd.__version__,
-    "numpy":     np.__version__,
-    "scipy":     scipy.__version__,   
-    "plotly":    px.__version__,
-}
-logging.info("OSCM runtime: %s", _VERSIONS)
-
 # ============================================================
 # PAGE CONFIGURATION
 # ============================================================
