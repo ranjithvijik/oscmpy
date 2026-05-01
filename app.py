@@ -62,16 +62,29 @@ for _alias, _builtin in {
     if not hasattr(np, _alias):
         setattr(np, _alias, _builtin)
 
-# ── Runtime version dict ──────────────────────────────────────
-import plotly as _plotly 
+# ── Runtime version dict (defensive — no attribute assumptions) ──
+def _get_version(module, fallback: str = "unknown") -> str:
+    """Safely extract __version__ from any module."""
+    for attr in ("__version__", "version", "VERSION"):
+        try:
+            return str(getattr(module, attr))
+        except AttributeError:
+            continue
+    try:
+        import importlib.metadata
+        return importlib.metadata.version(module.__name__.split(".")[0])
+    except Exception:
+        return fallback
+
+import plotly as _plotly_top
 
 _VERSIONS: dict = {
     "python":    sys.version.split()[0],
-    "streamlit": st.__version__,
-    "pandas":    pd.__version__,
-    "numpy":     np.__version__,
-    "scipy":     scipy.__version__,
-    "plotly":    _plotly.__version__,     # ← fixed
+    "streamlit": _get_version(st),
+    "pandas":    _get_version(pd),
+    "numpy":     _get_version(np),
+    "scipy":     _get_version(scipy),
+    "plotly":    _get_version(_plotly_top),   # top-level, never px
 }
 logging.info("OSCM runtime: %s", _VERSIONS)
 
