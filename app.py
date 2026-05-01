@@ -70,9 +70,6 @@ st.set_page_config(
             "📊 **OSCM Interactive Simulator**\n\n"
             "Based on Jacobs & Chase — *Operations and Supply Chain Management*, "
             "17th ed. (McGraw-Hill, 2024).\n\n"
-            f"Python {_VERSIONS['python']} · "
-            f"Streamlit {_VERSIONS['streamlit']} · "
-            f"Pandas {_VERSIONS['pandas']}"
         ),
     },
 )
