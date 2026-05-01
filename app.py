@@ -1,10 +1,9 @@
-# ============================================================
-# IMPORTS & COMPATIBILITY PATCHES
+# ===========================================================# IMPORTS & COMPATIBILITY PATCHES
 # ============================================================
 import math
-import warnings
 import sys
 import logging
+import warnings
 from collections import OrderedDict
 from functools import lru_cache
 
@@ -12,12 +11,11 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, module="plotly")
 
-# ── Core ─────────────────────────────────────────────────────
 import streamlit as st
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.special import factorial
+import scipy
 import plotly.graph_objects as go
 import plotly.express as px
 
@@ -34,34 +32,39 @@ try:
 except ImportError:
     _HAS_LINPROG = False
 
+try:
+    from scipy.special import factorial
+    _HAS_FACTORIAL = True
+except ImportError:
+    from math import factorial as _factorial
+    _HAS_FACTORIAL = False
+
 # ── Pandas Styler patch (.applymap removed in pandas ≥ 2.2) ──
-if not hasattr(pd.io.formats.style.Styler, "applymap"):
-    pd.io.formats.style.Styler.applymap = pd.io.formats.style.Styler.map
+try:
+    from pandas.io.formats.style import Styler as _Styler
+    if not hasattr(_Styler, "applymap"):
+        _Styler.applymap = _Styler.map
+except (ImportError, AttributeError):
+    pass
 
 # ── NumPy legacy scalar alias patch (removed in NumPy ≥ 2.0) ─
-_NP_ALIASES = {
-    "bool":    bool,
-    "int":     int,
-    "float":   float,
-    "complex": complex,
-    "object":  object,
-    "str":     str,
-}
-for _alias, _builtin in _NP_ALIASES.items():
+for _alias, _builtin in {
+    "bool": bool, "int": int, "float": float,
+    "complex": complex, "object": object, "str": str,
+}.items():
     if not hasattr(np, _alias):
         setattr(np, _alias, _builtin)
 
-# ── Runtime version diagnostics (surfaces in Streamlit logs) ──
+# ── Runtime version diagnostics ──────────────────────────────
 _VERSIONS = {
-    "python":     sys.version.split()[0],
-    "streamlit":  st.__version__,
-    "pandas":     pd.__version__,
-    "numpy":      np.__version__,
-    "scipy":      stats.__module__.split(".")[0],  # "scipy"
-    "plotly":     px.__version__,
+    "python":    sys.version.split()[0],
+    "streamlit": st.__version__,
+    "pandas":    pd.__version__,
+    "numpy":     np.__version__,
+    "scipy":     scipy.__version__,   
+    "plotly":    px.__version__,
 }
 logging.info("OSCM runtime: %s", _VERSIONS)
-
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -84,7 +87,6 @@ st.set_page_config(
         ),
     },
 )
-
 
 # ============================================================
 # SESSION STATE INITIALIZER
