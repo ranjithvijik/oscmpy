@@ -78,8 +78,8 @@ def init_session_state():
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
-
-    st.session_state.app_load_count += 1
+            if key == "app_load_count":
+                st.session_state.app_load_count += 1
 
 
 init_session_state()
@@ -2645,13 +2645,17 @@ def render_sidebar(modules: dict):
             st.sidebar.caption("No modules match your search.")
 
     st.sidebar.markdown("### 📚 Modules")
+    choice_options = labels if labels else ["No match found"]
     choice = st.sidebar.radio(
         "Select module:",
-        labels if labels else list(modules.keys()),
+        choice_options,
         label_visibility="collapsed",
         key="module_radio",
     )
 
+    if choice == "No match found":
+        st.sidebar.warning("Please clear your search to see available modules.")
+        st.stop()
     # ── Track visits ─────────────────────────────────────
     st.session_state.modules_visited.add(choice)
     st.session_state.last_module = choice
@@ -2683,7 +2687,7 @@ def render_sidebar(modules: dict):
     # ── Version footer ────────────────────────────────────
     v = st.session_state.get("runtime_versions", {})
     st.sidebar.caption(
-        f"📖 *Operations & Supply Chain Management*  \n"
+        f"📖 *Operations & Supply Chain Management* \n"
         f"Jacobs & Chase (2024, 17th ed.)  \n"
         f"Streamlit {v.get('streamlit','—')} · Pandas {v.get('pandas','—')}"
     )
@@ -6542,7 +6546,7 @@ def module_queuing():
                 P0  = 1 - rho
 
                 # Prob of n or more in system
-                Pn_gt_5 = rho**6  # P(n ≥ 5) for M/M/1
+                Pn_gt_5 = rho**5  # P(n ≥ 5) for M/M/1
 
                 col_a, col_b = st.columns(2)
                 with col_a:
@@ -8261,7 +8265,7 @@ def module_sqc():
         )
         st.plotly_chart(fig_xbar, use_container_width=True)
 
-        colors_r = ["#e74c3c" if r > ucl_r else "#9b59b6" for r in subgroup_ranges]
+        colors_r = ["#e74c3c" if (r > ucl_r or r < lcl_r) else "#9b59b6" for r in subgroup_ranges]
         fig_r = go.Figure()
         fig_r.add_hline(y=ucl_r, line_dash="dash", line_color="red",
                         annotation_text=f"UCL_R={ucl_r:.3f}")
@@ -10486,7 +10490,7 @@ def module_newsvendor():
             for q in q_range:
                 # E[profit] = price*E[min(D,Q)] - cost*Q + salvage*E[max(Q-D,0)]
                 z_q  = (q - mu_p) / sigma_p
-                exp_sold     = mu_p * normal_cdf(z_q) + q * (1 - normal_cdf(z_q)) - sigma_p * norm.pdf(z_q)
+                exp_sold     = mu_p * normal_cdf(z_q) + q * (1 - normal_cdf(z_q)) - sigma_p * normal_pdf(z_q)
                 exp_leftover = q - exp_sold
                 ep = price_p * exp_sold - cost_p * q + salvage_p * exp_leftover
                 profits.append(ep)
@@ -12308,6 +12312,8 @@ def init_session_state():
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
+            if key == "app_load_count":
+                st.session_state.app_load_count += 1
 
 init_session_state()
 
