@@ -6,6 +6,7 @@ import sys
 import logging
 import warnings
 import textwrap
+import html
 from collections import OrderedDict
 from functools import lru_cache
 
@@ -230,9 +231,11 @@ def _get_palette_cached(dark: bool) -> dict:
         "citation_border":  "#ca8a04" if d else "#92400e",
 
         # ── Equation box ─────────────────────────────────────
-        "equation_bg":      "#071e2e" if d else "#f0f9ff",
-        "equation_border":  "#0ea5e9" if d else "#7dd3fc",
-        "equation_text":    "#e0f2fe" if d else "#0c4a6e",
+        "equation_bg":      "#071e2e" if d else "#f8fbff",
+        "equation_accent_bg": "rgba(14,165,233,0.12)" if d else "rgba(29,78,216,0.08)",
+        "equation_border":  "#0ea5e9" if d else "#93c5fd",
+        "equation_text":    "#e0f2fe" if d else "#0f172a",
+        "equation_label":   "#7dd3fc" if d else "#1e3a8a",
 
         # ── Key Insight box ──────────────────────────────────
         # Light: #065f46 on gradient ending #d1fae5 ≈ 8.2:1
@@ -352,6 +355,32 @@ def _get_theme_css_cached(dark: bool) -> str:
         color: {p['text_primary']};
         font-family: var(--font-sans);
         transition: background-color 0.3s ease, color 0.3s ease;
+    }}
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+            radial-gradient(circle at 12% 8%, {p['accent_soft']} 0, transparent 28%),
+            radial-gradient(circle at 88% 0%, rgba(14,165,233,0.10) 0, transparent 24%);
+        opacity: 0.75;
+        z-index: 0;
+    }}
+    .main .block-container {{
+        position: relative;
+        z-index: 1;
+        max-width: 1320px;
+        padding-top: 1.6rem;
+        padding-bottom: 3rem;
+    }}
+    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] {{
+        gap: 1rem;
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        border-color: {p['border']} !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-sm);
     }}
 
     /* ── Global Text Propagation ─────────────────────────── */
@@ -601,20 +630,123 @@ def _get_theme_css_cached(dark: bool) -> str:
     .equation-box {{
         background: {p['equation_bg']};
         border: 1px solid {p['equation_border']};
-        border-radius: var(--radius-md);
-        padding: 1rem 1.2rem 0.6rem;
-        margin: 0.8rem 0;
+        border-radius: var(--radius-lg);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0 0.45rem;
         text-align: center;
         color: {p['equation_text']};
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+    }}
+    .equation-box::before {{
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 4px;
+        background: linear-gradient(90deg, {p['accent']}, {p['equation_border']});
+    }}
+    .equation-box.compact {{
+        margin-bottom: 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: none;
     }}
     .equation-label {{
         font-size: 0.82rem;
-        font-weight: 700;
+        font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: {p['equation_text']};
+        color: {p['equation_label']};
         margin-bottom: 0.4rem;
-        opacity: 0.85;
+        position: relative;
+        z-index: 1;
+    }}
+    .equation-description {{
+        color: {p['text_secondary']};
+        font-size: 0.86rem;
+        line-height: 1.55;
+        margin: 0.5rem auto 1rem;
+        max-width: 760px;
+        text-align: center;
+    }}
+
+    /* Streamlit renders st.latex as its own block, so style the rendered
+       KaTeX/MathML output directly instead of relying on HTML wrappers. */
+    div[data-testid="stLatex"],
+    .stLatex,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) {{
+        background: {p['equation_bg']};
+        border: 1px solid {p['equation_border']};
+        border-radius: var(--radius-lg);
+        color: {p['equation_text']} !important;
+        padding: 0.9rem 1rem;
+        margin: 0.45rem 0 1rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        box-shadow: var(--shadow-sm);
+        -webkit-overflow-scrolling: touch;
+    }}
+    .equation-box.compact + div[data-testid="stLatex"],
+    .equation-box.compact + .stLatex,
+    .equation-box.compact + div[data-testid="stMarkdownContainer"]:has(.katex-display),
+    .equation-box.compact + .stMarkdown div[data-testid="stMarkdownContainer"]:has(.katex-display) {{
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        margin-top: 0;
+        border-top: none;
+    }}
+    div[data-testid="stLatex"] .katex,
+    div[data-testid="stLatex"] .katex-display,
+    .stLatex .katex,
+    .stLatex .katex-display,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) .katex,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) .katex-display {{
+        color: {p['equation_text']} !important;
+        font-size: clamp(1.02rem, 0.92rem + 0.35vw, 1.32rem);
+        line-height: 1.55;
+    }}
+    div[data-testid="stLatex"] .katex-display,
+    .stLatex .katex-display,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) .katex-display {{
+        margin: 0;
+    }}
+    div[data-testid="stLatex"] svg,
+    div[data-testid="stLatex"] path,
+    .stLatex svg,
+    .stLatex path,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) svg,
+    div[data-testid="stMarkdownContainer"]:has(.katex-display) path {{
+        fill: currentColor;
+    }}
+    .formula-shell {{
+        background: {p['bg_card']};
+        border: 1px solid {p['border']};
+        border-radius: var(--radius-lg);
+        padding: 0.85rem 1rem;
+        margin: 0.9rem 0 0.35rem;
+        box-shadow: var(--shadow-sm);
+    }}
+    .formula-title {{
+        color: {p['accent_hover']};
+        font-weight: 800;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.055em;
+        text-align: center;
+    }}
+    .formula-number {{
+        float: right;
+        color: {p['text_muted']};
+        font-size: 0.75rem;
+        font-weight: 700;
+    }}
+    .formula-description {{
+        color: {p['text_secondary']};
+        font-size: 0.84rem;
+        line-height: 1.5;
+        text-align: center;
+        margin: -0.35rem 0 0.9rem;
     }}
 
     /* ── Formula Card ────────────────────────────────────── */
@@ -649,6 +781,26 @@ def _get_theme_css_cached(dark: bool) -> str:
         text-transform: uppercase;
         letter-spacing: 0.05em;
         position: relative; z-index: 1;
+    }}
+    .formula-shell + div[data-testid="stLatex"],
+    .formula-shell + .stLatex,
+    .formula-shell + .stMarkdown div[data-testid="stMarkdownContainer"]:has(.katex-display) {{
+        margin-top: 0;
+    }}
+    .formula-shell {{
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom-color: {p['equation_border']};
+        background:
+            linear-gradient(180deg, {p['equation_accent_bg']}, transparent),
+            {p['bg_card']};
+    }}
+    .formula-shell + div[data-testid="stLatex"],
+    .formula-shell + .stLatex,
+    .formula-shell + .stMarkdown div[data-testid="stMarkdownContainer"]:has(.katex-display) {{
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-top: none;
     }}
 
     /* ── Key Insight ─────────────────────────────────────── */
@@ -764,10 +916,11 @@ def _get_theme_css_cached(dark: bool) -> str:
         height: 100%;
         display: flex;
         flex-direction: column;
+        box-shadow: var(--shadow-sm);
     }}
     .concept-card:hover {{
         border-color: {p['accent']};
-        box-shadow: 0 4px 16px {p['accent_soft']};
+        box-shadow: 0 10px 26px {p['accent_soft']};
         transform: translateY(-2px);
     }}
     .concept-icon  {{ font-size: 1.6rem; margin-bottom: 0.5rem; }}
@@ -902,7 +1055,7 @@ def _get_theme_css_cached(dark: bool) -> str:
         border-radius: var(--radius-lg);
         overflow: hidden;
         margin: 0.5rem 0;
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--shadow-md);
     }}
     .comparison-header {{
         background: {p['metric_grad_hi']};
@@ -1147,6 +1300,21 @@ def _get_theme_css_cached(dark: bool) -> str:
     .streamlit-expanderHeader:hover span {{
         color: {p['accent']} !important;
     }}
+    details[data-testid="stExpander"] {{
+        border-color: {p['border']} !important;
+        border-radius: var(--radius-lg) !important;
+        background: {p['bg_card']};
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }}
+    details[data-testid="stExpander"] summary {{
+        background: {p['bg_secondary']};
+        color: {p['text_primary']} !important;
+        font-weight: 700;
+    }}
+    details[data-testid="stExpander"] summary:hover {{
+        background: {p['accent_soft']};
+    }}
 
     /* ── Tabs ────────────────────────────────────────────── */
     button[data-baseweb="tab"] {{
@@ -1203,21 +1371,26 @@ def _get_theme_css_cached(dark: bool) -> str:
     /* ── DataFrame ───────────────────────────────────────── */
     .stDataFrame {{
         background: {p['bg_card']};
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-lg);
         overflow: hidden;
         border: 1px solid {p['border']};
+        box-shadow: var(--shadow-sm);
     }}
 
     /* ── Plotly Container ────────────────────────────────── */
     .js-plotly-plot {{
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-lg);
         overflow: hidden;
+        border: 1px solid {p['border']};
+        box-shadow: var(--shadow-sm);
+        background: {p['bg_card']};
     }}
 
     /* ── Alert / Info boxes (Streamlit native) ───────────── */
     div[data-testid="stAlert"] {{
         border-radius: var(--radius-md);
         border: 1px solid {p['border']};
+        box-shadow: var(--shadow-sm);
     }}
 
     /* ── Spinner ─────────────────────────────────────────── */
@@ -1231,6 +1404,48 @@ def _get_theme_css_cached(dark: bool) -> str:
         border-radius: var(--radius-sm);
         font-size: 0.82rem;
         box-shadow: var(--shadow-md);
+    }}
+
+    @media (max-width: 768px) {{
+        .main .block-container {{
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 1rem;
+        }}
+        .main-header {{
+            padding: 1.1rem 1.2rem;
+            border-radius: var(--radius-md);
+        }}
+        .main-header h1 {{
+            font-size: 1.35rem;
+        }}
+        div[data-testid="stLatex"],
+        .stLatex,
+        div[data-testid="stMarkdownContainer"]:has(.katex-display) {{
+            padding: 0.8rem 0.85rem;
+            margin-left: -0.1rem;
+            margin-right: -0.1rem;
+        }}
+        div[data-testid="stLatex"] .katex,
+        div[data-testid="stLatex"] .katex-display,
+        .stLatex .katex,
+        .stLatex .katex-display,
+        div[data-testid="stMarkdownContainer"]:has(.katex-display) .katex,
+        div[data-testid="stMarkdownContainer"]:has(.katex-display) .katex-display {{
+            font-size: 1rem;
+        }}
+        .equation-box,
+        .formula-shell {{
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+        }}
+        .concept-card,
+        .metric-card,
+        .practice-problem,
+        .textbook-content,
+        .key-insight {{
+            border-radius: var(--radius-md);
+        }}
     }}
 
     /* ── Print styles ────────────────────────────────────── */
@@ -1471,91 +1686,25 @@ def display_formula_card(title: str, formula_latex: str,
                           numbered: bool = False,
                           number: int = 0):
     """
-    Accent-bordered formula card enclosing a LaTeX expression.
-    FIX: st.latex() cannot live inside an HTML <div>, so we use a
-    three-div sandwich:
-        ┌─ top div    (title bar  — top + left + right border)
-        │  st.latex() (rendered by Streamlit as a sibling element)
-        └─ bottom div (closing cap — bottom + left + right border)
-    CSS negative margins stitch the three pieces into one visual unit.
+    Accent-labelled formula card with the actual equation rendered by Streamlit.
+    Streamlit renders st.latex() as its own DOM block, so the global CSS styles
+    that block directly instead of trying to nest LaTeX inside raw HTML.
     """
-    p = _get_palette()
-
-    # ── Shared border style ───────────────────────────────────
-    border     = f"2px solid {p['accent']}"
-    bg         = p['bg_secondary']
-    radius_top = "var(--radius-md) var(--radius-md) 0 0"
-    radius_bot = "0 0 var(--radius-md) var(--radius-md)"
-
     num_html = (
-        f'<span style="position:absolute;top:0.5rem;right:0.75rem;'
-        f'font-size:0.72rem;color:{p["text_muted"]};font-weight:600;">'
-        f'({number})</span>'
+        f'<span class="formula-number">({html.escape(str(number))})</span>'
     ) if numbered else ""
-
-    desc_html = (
-        f'<p style="font-size:0.81rem;color:{p["text_muted"]};'
-        f'text-align:center;margin:0;line-height:1.5;">'
-        f'{description}</p>'
-    ) if description else ""
-
-    # ── TOP: title bar ────────────────────────────────────────
+    safe_title = html.escape(str(title))
     st.markdown(f"""
-    <div style="
-        background:{bg};
-        border-top:{border};
-        border-left:{border};
-        border-right:{border};
-        border-radius:{radius_top};
-        padding:0.55rem 1rem 0.35rem;
-        text-align:center;
-        position:relative;
-        margin-bottom:0;
-    ">
-        {num_html}
-        <span style="
-            color:{p['accent_hover']};
-            font-weight:700;
-            font-size:0.80rem;
-            text-transform:uppercase;
-            letter-spacing:0.05em;
-        ">{title}</span>
+    <div class="formula-shell">
+        {num_html}<div class="formula-title">{safe_title}</div>
     </div>
     """, unsafe_allow_html=True)
-
-    # ── MIDDLE: left/right borders only — st.latex fills center ──
-    # Outer wrapper provides the side borders; st.latex is rendered inside
-    st.markdown(f"""
-    <div style="
-        border-left:{border};
-        border-right:{border};
-        background:{bg};
-        margin-top:0;
-        margin-bottom:0;
-        padding:0 0.5rem;
-    ">
-    """, unsafe_allow_html=True)
-
     st.latex(formula_latex)
-
-    # Close the middle wrapper
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ── BOTTOM: closing cap + optional description ────────────
-    st.markdown(f"""
-    <div style="
-        background:{bg};
-        border-bottom:{border};
-        border-left:{border};
-        border-right:{border};
-        border-radius:{radius_bot};
-        padding:{'0.45rem 1rem 0.6rem' if description else '0.3rem 1rem 0.3rem'};
-        text-align:center;
-        margin-top:0;
-    ">
-        {desc_html}
-    </div>
-    """, unsafe_allow_html=True)
+    if description:
+        st.markdown(
+            f'<div class="formula-description">{html.escape(str(description))}</div>',
+            unsafe_allow_html=True,
+        )
 
 def display_equation(label: str, latex_eq: str, description: str = "",
                       number: str = ""):
@@ -1572,17 +1721,15 @@ def display_equation(label: str, latex_eq: str, description: str = "",
         if number else ""
     )
     st.markdown(f"""
-    <div class="equation-box" style="position:relative;">
+    <div class="equation-box compact">
         {num_html}
-        <div class="equation-label">{label}</div>
+        <div class="equation-label">{html.escape(str(label))}</div>
     </div>
     """, unsafe_allow_html=True)
     st.latex(latex_eq)
     if description:
         st.markdown(
-            f"<p style='font-size:0.85rem;color:{p['text_secondary']};"
-            f"margin-top:0.4rem;line-height:1.5;text-align:center;'>"
-            f"{description}</p>",
+            f'<div class="equation-description">{html.escape(str(description))}</div>',
             unsafe_allow_html=True,
         )
 
