@@ -842,11 +842,11 @@ def _get_theme_css_cached(dark: bool) -> str:
     }}
     .badge-accent  {{ background:{p['accent_soft']};  color:{p['accent_hover']};
                       border: 1px solid {p['accent']}; }}
-    .badge-success {{ background:{p['success_bg']};   color:{p['success_text']};
+    .badge-success {{ background:{p['success_bg']};  color:{p['success_text']};
                       border: 1px solid {p['success_border']}; }}
-    .badge-warning {{ background:{p['warning_bg']};   color:{p['warning_text']};
+    .badge-warning {{ background:{p['warning_bg']};  color:{p['warning_text']};
                       border: 1px solid {p['warning_border']}; }}
-    .badge-danger  {{ background:{p['danger_bg']};    color:{p['danger_text']};
+    .badge-danger  {{ background:{p['danger_bg']};   color:{p['danger_text']};
                       border: 1px solid {p['danger_border']}; }}
     .badge-info    {{ background:{p['info_bg']};      color:{p['info_text']};
                       border: 1px solid {p['info_border']}; }}
@@ -1588,7 +1588,7 @@ def display_practice_problem(problem_num, difficulty: str, problem_text: str,
 
 
 def display_hint(hint_text: str, collapsible: bool = False,
-                 label: str = "Hint"):
+                  label: str = "Hint"):
     """
     Hint box.
     ENHANCED: optional collapsible mode using st.expander.
@@ -1609,7 +1609,7 @@ def display_hint(hint_text: str, collapsible: bool = False,
 
 
 def display_solution(solution_html: str, collapsible: bool = False,
-                     label: str = "Solution"):
+                      label: str = "Solution"):
     """
     Green solution reveal box.
     ENHANCED: optional collapsible mode — hides full solution until expanded.
@@ -1630,7 +1630,7 @@ def display_solution(solution_html: str, collapsible: bool = False,
 
 
 def display_callout(content: str, callout_type: str = "info",
-                    title: str = "", icon: str = ""):
+                     title: str = "", icon: str = ""):
     """
     Flexible callout box.
     callout_type: 'info' | 'success' | 'warning' | 'danger' | 'tip'
@@ -1897,7 +1897,6 @@ def display_divider(label: str = "", color: str = ""):
             f"<hr style='border:none;border-top:1px solid {c};margin:1rem 0;'>",
             unsafe_allow_html=True,
         )
-
 # ============================================================
 # MATH / STATISTICS HELPERS
 # ============================================================
