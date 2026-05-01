@@ -19,14 +19,69 @@ from scipy import stats
 import scipy
 import plotly.graph_objects as go
 import plotly.express as px
-
 import plotly as _plotly_top
 
+# ── Optional imports ─────────────────────────────────────────
+try:
+    import plotly.figure_factory as ff
+    _HAS_FF = True
+except ImportError:
+    ff = None
+    _HAS_FF = False
+
+try:
+    from scipy.optimize import brentq
+    _HAS_BRENTQ = True
+except ImportError:
+    _HAS_BRENTQ = False
+
+# ── Compatibility patches ─────────────────────────────────────
+try:
+    from pandas.io.formats.style import Styler as _Styler
+    if not hasattr(_Styler, "applymap"):
+        _Styler.applymap = _Styler.map
+except (ImportError, AttributeError):
+    pass
+
+for _alias, _builtin in {
+    "bool": bool, "int": int, "float": float,
+    "complex": complex, "object": object, "str": str,
+}.items():
+    if not hasattr(np, _alias):
+        setattr(np, _alias, _builtin)
+
+
 # ============================================================
-# PAGE CONFIGURATION
+# STEP 1 — _VERSIONS  (must be before EVERYTHING that uses it)
+# ============================================================
+def _get_version(module, fallback: str = "unknown") -> str:
+    for attr in ("__version__", "version", "VERSION"):
+        try:
+            return str(getattr(module, attr))
+        except AttributeError:
+            continue
+    try:
+        import importlib.metadata
+        return importlib.metadata.version(module.__name__.split(".")[0])
+    except Exception:
+        return fallback
+
+_VERSIONS: dict = {
+    "python":    sys.version.split()[0],
+    "streamlit": _get_version(st),
+    "pandas":    _get_version(pd),
+    "numpy":     _get_version(np),
+    "scipy":     _get_version(scipy),
+    "plotly":    _get_version(_plotly_top),
+}
+logging.info("OSCM runtime: %s", _VERSIONS)
+
+
+# ============================================================
+# STEP 2 — st.set_page_config  (must be FIRST Streamlit call)
 # ============================================================
 st.set_page_config(
-    page_title="OSCM Simulator",
+    page_title="OSCM Simulator – Enhanced Edition",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -37,51 +92,42 @@ st.set_page_config(
             "📊 **OSCM Interactive Simulator**\n\n"
             "Based on Jacobs & Chase — *Operations and Supply Chain Management*, "
             "17th ed. (McGraw-Hill, 2024).\n\n"
+            f"Python {_VERSIONS['python']} · "
+            f"Streamlit {_VERSIONS['streamlit']} · "
+            f"Pandas {_VERSIONS['pandas']}"
         ),
     },
 )
 
 
 # ============================================================
-# SESSION STATE INITIALIZER
+# STEP 3 — init_session_state  (uses _VERSIONS — safe now)
 # ============================================================
 def init_session_state():
-    """
-    Initialize all session-state keys exactly once per session.
-    FIX: _VERSIONS is now defined above at module level before this
-    function is called, so 'runtime_versions' populates correctly.
-    """
     defaults = {
-        # ── Navigation ────────────────────────────────────────
         "selected_module":  None,
         "last_module":      None,
         "recent_modules":   [],
         "modules_visited":  set(),
         "bookmarks":        set(),
-
-        # ── Theme ─────────────────────────────────────────────
         "dark_mode":        False,
-
-        # ── Gamification ──────────────────────────────────────
         "problems_solved":  0,
         "correct_streak":   0,
         "best_streak":      0,
-
-        # ── Quiz state ────────────────────────────────────────
         "sqc_quiz_score":   0,
         "sqc_quiz_total":   0,
         "sqc_quiz_streak":  0,
-
-        # ── Diagnostics ───────────────────────────────────────
         "app_load_count":   0,
-        "runtime_versions": _VERSIONS
+        "runtime_versions": _VERSIONS,   # ✅ safe — defined in STEP 1
     }
     for key, val in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = val
-    st.session_state.app_load_count += 1
+    st.session_state.app_load_count += 1  # ✅ outside loop — increments every rerun
+
 
 init_session_state()
+
 # ============================================================
 # THEME MANAGEMENT
 # ============================================================
