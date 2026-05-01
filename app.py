@@ -6653,17 +6653,19 @@ def module_queuing():
         st.markdown("#### M/M/1 Formulas")
         col1, col2, col3 = st.columns(3)
         with col1:
-            display_formula_card("Utilization",       r"\rho = \frac{\lambda}{\mu}")
-            display_formula_card("Avg in System",     r"L_s = \frac{\lambda}{\mu - \lambda}")
+            display_formula_card("Utilization",        r"\rho = \frac{\lambda}{\mu}")
+            display_formula_card("Avg in System",      r"L_s = \frac{\lambda}{\mu - \lambda}")
         with col2:
-            display_formula_card("Avg in Queue",      r"L_q = \frac{\lambda^2}{\mu(\mu-\lambda)}")
-            display_formula_card("Avg Time in System",r"W_s = \frac{1}{\mu - \lambda}")
+            display_formula_card("Avg in Queue",       r"L_q = \frac{\lambda^2}{\mu(\mu-\lambda)}")
+            display_formula_card("Avg Time in System", r"W_s = \frac{1}{\mu - \lambda}")
         with col3:
-            display_formula_card("Avg Wait in Queue", r"W_q = \frac{\lambda}{\mu(\mu-\lambda)}")
-            display_formula_card("Prob. System Empty",r"P_0 = 1 - \rho")
+            display_formula_card("Avg Wait in Queue",  r"W_q = \frac{\lambda}{\mu(\mu-\lambda)}")
+            display_formula_card("Prob. System Empty",  r"P_0 = 1 - \rho")
 
-        display_formula_card("Little's Law (connects all metrics)",
-                             r"L = \lambda \cdot W \quad \Rightarrow \quad L_s = \lambda W_s \;\;\; L_q = \lambda W_q")
+        display_formula_card(
+            "Little's Law (connects all metrics)",
+            r"L = \lambda \cdot W \quad \Rightarrow \quad L_s = \lambda W_s \;\;\; L_q = \lambda W_q"
+        )
 
         display_key_insight(
             "Nonlinear Congestion Effect",
@@ -6672,6 +6674,7 @@ def module_queuing():
             "100% utilization is never sustainable."
         )
 
+    # ─────────────────────────────────────────────────────────
     with tab2:
         st.markdown("### M/M/1 Single Server Queue")
 
@@ -6689,32 +6692,34 @@ def module_queuing():
                 Ws  = 1 / (mu - lam)
                 Wq  = lam / (mu * (mu - lam))
                 P0  = 1 - rho
-
-                # Prob of n or more in system
                 Pn_gt_5 = rho**5  # P(n ≥ 5) for M/M/1
 
                 col_a, col_b = st.columns(2)
                 with col_a:
-                    st.metric("Utilization (ρ)",         f"{rho:.1%}")
-                    st.metric("Avg in System (Ls)",       f"{Ls:.3f}")
-                    st.metric("Avg in Queue (Lq)",        f"{Lq:.3f}")
-                    st.metric("P(System Empty)",          f"{P0:.1%}")
+                    st.metric("Utilization (ρ)",        f"{rho:.1%}")
+                    st.metric("Avg in System (Ls)",      f"{Ls:.3f}")
+                    st.metric("Avg in Queue (Lq)",       f"{Lq:.3f}")
+                    st.metric("P(System Empty)",         f"{P0:.1%}")
                 with col_b:
-                    st.metric("Avg Time in System (Ws)",  f"{Ws*60:.2f} min")
-                    st.metric("Avg Wait in Queue (Wq)",   f"{Wq*60:.2f} min")
-                    st.metric("Daily Customers Served",   f"{int(lam*hrs):,}")
-                    st.metric("P(≥ 5 in system)",         f"{Pn_gt_5:.1%}")
+                    st.metric("Avg Time in System (Ws)", f"{Ws*60:.2f} min")
+                    st.metric("Avg Wait in Queue (Wq)",  f"{Wq*60:.2f} min")
+                    st.metric("Daily Customers Served",  f"{int(lam*hrs):,}")
+                    st.metric("P(≥ 5 in system)",        f"{Pn_gt_5:.1%}")
 
                 # Utilization gauge
                 fig_g = go.Figure(go.Indicator(
-                    mode="gauge+number", value=rho*100,
+                    mode="gauge+number", value=rho * 100,
                     title={"text": "Server Utilization (%)"},
-                    gauge={"axis": {"range": [0, 100]},
-                           "bar":  {"color": "#e74c3c" if rho > 0.85 else
-                                              "#f39c12" if rho > 0.70 else "#2ecc71"},
-                           "steps": [{"range":[0,70],  "color":"rgba(46,204,113,0.2)"},
-                                     {"range":[70,85], "color":"rgba(243,156,18,0.2)"},
-                                     {"range":[85,100],"color":"rgba(231,76,60,0.2)"}]}
+                    gauge={
+                        "axis": {"range": [0, 100]},
+                        "bar":  {"color": "#e74c3c" if rho > 0.85 else
+                                          "#f39c12" if rho > 0.70 else "#2ecc71"},
+                        "steps": [
+                            {"range": [0,  70],  "color": "rgba(46,204,113,0.2)"},
+                            {"range": [70, 85],  "color": "rgba(243,156,18,0.2)"},
+                            {"range": [85, 100], "color": "rgba(231,76,60,0.2)"},
+                        ]
+                    }
                 ))
                 fig_g.update_layout(height=280, template="plotly_white")
                 st.plotly_chart(fig_g, use_container_width=True)
@@ -6728,109 +6733,104 @@ def module_queuing():
             else:
                 st.error("⚠️ Unstable system! λ must be < μ for steady state.")
 
-        # ─── Sensitivity to ρ ───
+        # ── Sensitivity to ρ ──────────────────────────────────
         st.markdown("#### Utilization Sensitivity Table")
         util_range = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95]
         sens_df = pd.DataFrame({
-            "ρ":    [f"{r:.0%}" for r in util_range],
-            "Lq":   [f"{r**2/(1-r):.3f}" for r in util_range],
-            "Wq (×1/μ)": [f"{r/(1-r):.3f}" for r in util_range],
-            "Ls":   [f"{r/(1-r):.3f}" for r in util_range],
+            "ρ":          [f"{r:.0%}"          for r in util_range],
+            "Lq":         [f"{r**2/(1-r):.3f}" for r in util_range],
+            "Wq (×1/μ)":  [f"{r/(1-r):.3f}"   for r in util_range],
+            "Ls":         [f"{r/(1-r):.3f}"    for r in util_range],
         })
         st.dataframe(sens_df, use_container_width=True)
 
+    # ─────────────────────────────────────────────────────────
     with tab3:
         st.markdown("### M/M/s — Multi-Server Queue")
         col1, col2 = st.columns(2)
-        with col1:
+        with col1:                                                  # ← inputs stay in col1
             lam_s = st.number_input("Arrival Rate λ (per hour)",  value=15.0, key="mms_lam")
             mu_s  = st.number_input("Service Rate μ per Server",  value=6.0,  key="mms_mu")
-            s     = st.number_input("Number of Servers (s)",      value=3,    min_value=1, key="mms_s")
+            s     = st.number_input("Number of Servers (s)",      value=3,
+                                    min_value=1, key="mms_s")
 
-    with col2:
-        s = int(s)
+        with col2:                                                  # ← ALL results in col2
+            s = int(s)
 
-        # ── Stability check ──────────────────────────────────
-        if lam_s >= s * mu_s:
-            st.error(
-                f"⚠️ Unstable system: λ ({lam_s}) ≥ s·μ ({s * mu_s:.1f}). "
-                f"Need λ < s·μ for steady state."
-            )
-            st.stop()
+            # ── Stability check ──────────────────────────────
+            if lam_s >= s * mu_s:
+                st.error(
+                    f"⚠️ Unstable system: λ ({lam_s}) ≥ s·μ ({s * mu_s:.1f}). "
+                    f"Need λ < s·μ for steady state."
+                )
+            else:
+                rho_s = lam_s / (s * mu_s)   # per-server utilisation
+                r     = lam_s / mu_s          # traffic intensity
 
-        rho_s = lam_s / (s * mu_s)          # per-server utilisation
-        r     = lam_s / mu_s                 # traffic intensity
+                # ── Saturation guard ─────────────────────────
+                SATURATION_THRESHOLD = 1e-6
+                if abs(1 - rho_s) < SATURATION_THRESHOLD:
+                    st.error(
+                        "🚨 System is at saturation (ρ ≈ 1.0) — "
+                        "P₀ and queue metrics are undefined. "
+                        "Increase servers or service rate slightly."
+                    )
+                else:
+                    # ── Erlang-C P0 ──────────────────────────
+                    # P0 = [Σ(n=0..s-1) r^n/n!  +  r^s/(s!·(1−ρ))]^−1
+                    try:
+                        sum_term  = sum(r**n / math.factorial(n) for n in range(s))
+                        last_term = (r**s) / (math.factorial(s) * (1 - rho_s))
 
-        # ── Saturation guard ─────────────────────────────────
-        SATURATION_THRESHOLD = 1e-6
-        if abs(1 - rho_s) < SATURATION_THRESHOLD:
-            st.error(
-                "🚨 System is at saturation (ρ ≈ 1.0) — "
-                "P₀ and queue metrics are undefined. "
-                "Increase servers or service rate slightly."
-            )
-            st.stop()
+                        if not math.isfinite(sum_term) or not math.isfinite(last_term):
+                            st.error("Numerical overflow — reduce arrival rate or server count.")
+                        else:
+                            P0s    = 1 / (sum_term + last_term)
+                            P_wait = (P0s * (r**s)) / (math.factorial(s) * (1 - rho_s))
 
-        # ── Erlang-C P0 ───────────────────────────────────────
-        # P0 = [ Σ(n=0 to s-1) r^n/n!  +  r^s / (s! × (1 − ρ)) ]^−1
-        try:
-            sum_term  = sum(r**n / math.factorial(n) for n in range(s))
-            last_term = (r**s) / (math.factorial(s) * (1 - rho_s))
+                            # ── Queue metrics ─────────────────
+                            Lq_s = P_wait * rho_s / (1 - rho_s)
+                            Wq_s = Lq_s / lam_s
+                            Ws_s = Wq_s + 1 / mu_s
+                            Ls_s = lam_s * Ws_s
 
-            # Guard against overflow on very large r or s
-            if not math.isfinite(sum_term) or not math.isfinite(last_term):
-                st.error("Numerical overflow — reduce arrival rate or server count.")
-                st.stop()
+                            # ── Display ───────────────────────
+                            col_a, col_b = st.columns(2)
+                            with col_a:
+                                st.metric("Server Utilisation ρ",  f"{rho_s:.1%}")
+                                st.metric("Avg in Queue Lq",        f"{Lq_s:.4f}")
+                                st.metric("Avg Wait in Queue Wq",   f"{Wq_s * 60:.3f} min")
+                            with col_b:
+                                st.metric("Avg in System Ls",       f"{Ls_s:.4f}")
+                                st.metric("Avg Time in System Ws",  f"{Ws_s * 60:.3f} min")
+                                st.metric("P(Must Wait)",           f"{P_wait:.1%}")
+                                st.metric("P(All Servers Idle) P₀", f"{P0s:.1%}")
 
-            P0s = 1 / (sum_term + last_term)
+                            # ── Utilisation band warning ──────
+                            if rho_s > 0.95:
+                                st.error(  f"🔴 ρ = {rho_s:.1%} — extreme congestion. Results unreliable in practice.")
+                            elif rho_s > 0.85:
+                                st.warning(f"🟡 ρ = {rho_s:.1%} — heavy utilisation. Queue grows rapidly.")
+                            elif rho_s > 0.70:
+                                st.info(   f"🔵 ρ = {rho_s:.1%} — moderate utilisation. Monitor closely.")
+                            else:
+                                st.success(f"🟢 ρ = {rho_s:.1%} — healthy utilisation.")
 
-        except (OverflowError, ZeroDivisionError) as e:
-            st.error(f"Computation error: {e}. Try reducing λ or s.")
-            st.stop()
+                    except (OverflowError, ZeroDivisionError) as e:
+                        st.error(f"Computation error: {e}. Try reducing λ or s.")
 
-        # ── Erlang-C probability of waiting ──────────────────
-        P_wait = (P0s * (r**s)) / (math.factorial(s) * (1 - rho_s))
-
-        # ── Queue metrics ─────────────────────────────────────
-        Lq_s = P_wait * rho_s / (1 - rho_s)
-        Wq_s = Lq_s / lam_s
-        Ws_s = Wq_s + 1 / mu_s
-        Ls_s = lam_s * Ws_s
-
-        # ── Display ───────────────────────────────────────────
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.metric("Server Utilisation ρ",   f"{rho_s:.1%}")
-            st.metric("Avg in Queue Lq",         f"{Lq_s:.4f}")
-            st.metric("Avg Wait in Queue Wq",    f"{Wq_s * 60:.3f} min")
-        with col_b:
-            st.metric("Avg in System Ls",        f"{Ls_s:.4f}")
-            st.metric("Avg Time in System Ws",   f"{Ws_s * 60:.3f} min")
-            st.metric("P(Must Wait)",            f"{P_wait:.1%}")
-            st.metric("P(All Servers Idle) P₀",  f"{P0s:.1%}")
-
-        # ── Saturation proximity warning ─────────────────────
-        if rho_s > 0.95:
-            st.error(  f"🔴 ρ = {rho_s:.1%} — extreme congestion. Results unreliable in practice.")
-        elif rho_s > 0.85:
-            st.warning(f"🟡 ρ = {rho_s:.1%} — heavy utilisation. Queue grows rapidly.")
-        elif rho_s > 0.70:
-            st.info(   f"🔵 ρ = {rho_s:.1%} — moderate utilisation. Monitor closely.")
-        else:
-            st.success(f"🟢 ρ = {rho_s:.1%} — healthy utilisation.")
-
+    # ─────────────────────────────────────────────────────────
     with tab4:
         st.markdown("### Queue Cost Analysis")
         st.write("Minimize total system cost = waiting cost + service cost.")
 
-        display_formula_card("Total Cost",
-                             r"TC = L_s \times C_w + S \times C_s")
+        display_formula_card("Total Cost", r"TC = L_s \times C_w + S \times C_s")
 
         col1, col2 = st.columns(2)
         with col1:
-            lam_c = st.number_input("Arrival Rate (λ)",          value=3.0, key="qc_lam")
-            Cw    = st.number_input("Waiting Cost ($/hr/customer)",value=25.0,key="qc_cw")
-            Cs    = st.number_input("Service Cost ($/hr/server)",  value=16.0,key="qc_cs")
+            lam_c = st.number_input("Arrival Rate (λ)",           value=3.0,  key="qc_lam")
+            Cw    = st.number_input("Waiting Cost ($/hr/customer)", value=25.0, key="qc_cw")
+            Cs    = st.number_input("Service Cost ($/hr/server)",   value=16.0, key="qc_cs")
 
         with col2:
             cost_scenarios = []
@@ -6841,51 +6841,55 @@ def module_queuing():
                     if servers == 1:
                         Ls_v = lam_c / (mu_v - lam_c)
                     else:
-                        sum_v  = sum(r_v**n/math.factorial(n) for n in range(servers))
-                        last_v = r_v**servers/(math.factorial(servers)*(1-rho_v))
-                        P0_v   = 1/(sum_v+last_v)
-                        Lq_v   = (P0_v*r_v**servers*rho_v)/(math.factorial(servers)*(1-rho_v)**2)
-                        Ls_v   = lam_c/(mu_v-lam_c/servers) if rho_v < 1 else float("inf")
-                        Ls_v   = Lq_v + lam_c/mu_v
+                        sum_v  = sum(r_v**n / math.factorial(n) for n in range(servers))
+                        last_v = r_v**servers / (math.factorial(servers) * (1 - rho_v))
+                        P0_v   = 1 / (sum_v + last_v)
+                        Lq_v   = (P0_v * r_v**servers * rho_v) / (math.factorial(servers) * (1 - rho_v)**2)
+                        Ls_v   = Lq_v + lam_c / mu_v
 
                     wait_cost  = Ls_v * Cw
                     labor_cost = servers * Cs
                     total_cost = wait_cost + labor_cost
                     cost_scenarios.append({
-                        "Scenario":  f"s={servers}, μ={mu_v}",
-                        "Servers":   servers,
-                        "μ":         mu_v,
-                        "ρ":         f"{rho_v:.1%}",
-                        "Ls":        f"{Ls_v:.3f}",
-                        "Wait Cost": f"${wait_cost:.2f}",
-                        "Labor Cost":f"${labor_cost:.2f}",
-                        "Total Cost":f"${total_cost:.2f}",
-                        "TC_num":    total_cost
+                        "Scenario":   f"s={servers}, μ={mu_v}",
+                        "Servers":    servers,
+                        "μ":          mu_v,
+                        "ρ":          f"{rho_v:.1%}",
+                        "Ls":         f"{Ls_v:.3f}",
+                        "Wait Cost":  f"${wait_cost:.2f}",
+                        "Labor Cost": f"${labor_cost:.2f}",
+                        "Total Cost": f"${total_cost:.2f}",
+                        "TC_num":     total_cost,
                     })
 
-            cost_df = pd.DataFrame(cost_scenarios)
-            min_tc  = cost_df["TC_num"].min()
-            cost_df["Optimal?"] = cost_df["TC_num"].apply(
-                lambda x: "✅ Best" if x == min_tc else "")
-            st.dataframe(cost_df.drop("TC_num", axis=1), use_container_width=True)
+            if cost_scenarios:
+                cost_df = pd.DataFrame(cost_scenarios)
+                min_tc  = cost_df["TC_num"].min()
+                cost_df["Optimal?"] = cost_df["TC_num"].apply(
+                    lambda x: "✅ Best" if x == min_tc else ""
+                )
+                st.dataframe(cost_df.drop("TC_num", axis=1), use_container_width=True)
 
-            best_row = cost_df.loc[cost_df["TC_num"].idxmin()]
-            st.success(f"📊 Minimum cost: {best_row['Scenario']} at {best_row['Total Cost']}/hr")
+                best_row = cost_df.loc[cost_df["TC_num"].idxmin()]
+                st.success(f"📊 Minimum cost: {best_row['Scenario']} at {best_row['Total Cost']}/hr")
 
-        # Cost chart
-        if 'cost_scenarios' in dir() and cost_scenarios:
+        # ── Cost chart (outside columns — full width) ─────────
+        if cost_scenarios:
             fig_c = go.Figure(data=[
-                go.Bar(name="Wait Cost",  x=[s["Scenario"] for s in cost_scenarios],
-                       y=[float(s["Wait Cost"].replace("$","")) for s in cost_scenarios],
+                go.Bar(name="Wait Cost",
+                       x=[sc["Scenario"] for sc in cost_scenarios],
+                       y=[float(sc["Wait Cost"].replace("$","")) for sc in cost_scenarios],
                        marker_color="#e74c3c"),
-                go.Bar(name="Labor Cost", x=[s["Scenario"] for s in cost_scenarios],
-                       y=[float(s["Labor Cost"].replace("$","")) for s in cost_scenarios],
+                go.Bar(name="Labor Cost",
+                       x=[sc["Scenario"] for sc in cost_scenarios],
+                       y=[float(sc["Labor Cost"].replace("$","")) for sc in cost_scenarios],
                        marker_color="#3498db"),
             ])
             fig_c.update_layout(barmode="stack", title="Cost Breakdown by Scenario",
                                 yaxis_title="$/hour", template="plotly_white", height=360)
             st.plotly_chart(fig_c, use_container_width=True)
 
+    # ─────────────────────────────────────────────────────────
     with tab5:
         st.markdown("### 📝 Queuing Practice Problems")
 
@@ -6894,9 +6898,9 @@ def module_queuing():
                 "λ = 12/hr, μ = 18/hr (M/M/1). Find ρ, Lq, Wq.")
             user_ans = st.number_input("Your Lq answer:", key="q_p1", format="%.4f", value=0.0)
             if st.button("Check Answer", key="q_p1_btn"):
-                rho_p1 = 12/18
-                Lq_p1  = 12**2/(18*(18-12))
-                Wq_p1  = 12/(18*(18-12))
+                rho_p1 = 12 / 18
+                Lq_p1  = 12**2 / (18 * (18 - 12))
+                Wq_p1  = 12 / (18 * (18 - 12))
                 if check_answer(user_ans, Lq_p1, tolerance=0.01):
                     st.success(f"✅ Correct! Lq = {Lq_p1:.4f}")
                 else:
@@ -6912,12 +6916,12 @@ def module_queuing():
                 "Find ρ, Ls, Lq, Ws, Wq, P₀, P(n ≥ 3).")
             if st.button("Show Answer", key="q_p2"):
                 lam2, mu2 = 8, 12
-                rho2 = lam2/mu2
-                Ls2  = lam2/(mu2-lam2)
-                Lq2  = lam2**2/(mu2*(mu2-lam2))
-                Ws2  = 1/(mu2-lam2)
-                Wq2  = lam2/(mu2*(mu2-lam2))
-                P0_2 = 1-rho2
+                rho2 = lam2 / mu2
+                Ls2  = lam2 / (mu2 - lam2)
+                Lq2  = lam2**2 / (mu2 * (mu2 - lam2))
+                Ws2  = 1 / (mu2 - lam2)
+                Wq2  = lam2 / (mu2 * (mu2 - lam2))
+                P0_2 = 1 - rho2
                 Pn3  = rho2**3
                 display_solution(
                     f"ρ = {lam2}/{mu2} = **{rho2:.4f}**\n\n"
@@ -6937,15 +6941,15 @@ def module_queuing():
                 lam3, mu3, Cw3, Cs3 = 10, 4, 30, 12
                 results3 = []
                 for s3 in range(3, 7):
-                    if lam3 < s3*mu3:
-                        rho3  = lam3/(s3*mu3)
-                        r3    = lam3/mu3
-                        sum3  = sum(r3**n/math.factorial(n) for n in range(s3))
-                        last3 = r3**s3/(math.factorial(s3)*(1-rho3))
-                        P0_3  = 1/(sum3+last3)
-                        Lq3   = P0_3*r3**s3*rho3/(math.factorial(s3)*(1-rho3)**2)
-                        Ls3   = Lq3 + lam3/mu3
-                        TC3   = Ls3*Cw3 + s3*Cs3
+                    if lam3 < s3 * mu3:
+                        rho3  = lam3 / (s3 * mu3)
+                        r3    = lam3 / mu3
+                        sum3  = sum(r3**n / math.factorial(n) for n in range(s3))
+                        last3 = r3**s3 / (math.factorial(s3) * (1 - rho3))
+                        P0_3  = 1 / (sum3 + last3)
+                        Lq3   = P0_3 * r3**s3 * rho3 / (math.factorial(s3) * (1 - rho3)**2)
+                        Ls3   = Lq3 + lam3 / mu3
+                        TC3   = Ls3 * Cw3 + s3 * Cs3
                         results3.append(f"  s={s3}: Ls={Ls3:.3f}, TC=${TC3:.2f}")
                 display_solution(
                     f"Need s > λ/μ = {lam3}/{mu3} = {lam3/mu3:.1f} → min s = {math.ceil(lam3/mu3)+1}\n\n"
