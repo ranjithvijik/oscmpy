@@ -20,79 +20,13 @@ import scipy
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ── Optional imports (graceful degradation) ──────────────────
-try:
-    import plotly.figure_factory as ff
-    _HAS_FF = True
-except ImportError:
-    ff = None
-    _HAS_FF = False
-
-try:
-    from scipy.optimize import linprog
-    _HAS_LINPROG = True
-except ImportError:
-    linprog = None
-    _HAS_LINPROG = False
-
-try:
-    from scipy.special import factorial
-    _HAS_FACTORIAL = True
-except ImportError:
-    from math import factorial
-    _HAS_FACTORIAL = False
-
-# ── Pandas Styler patch (.applymap removed in pandas ≥ 2.2) ──
-try:
-    from pandas.io.formats.style import Styler as _Styler
-    if not hasattr(_Styler, "applymap"):
-        _Styler.applymap = _Styler.map
-except (ImportError, AttributeError):
-    pass
-
-# ── NumPy legacy scalar alias patch (removed in NumPy ≥ 2.0) ─
-for _alias, _builtin in {
-    "bool":    bool,
-    "int":     int,
-    "float":   float,
-    "complex": complex,
-    "object":  object,
-    "str":     str,
-}.items():
-    if not hasattr(np, _alias):
-        setattr(np, _alias, _builtin)
-
-# ── Runtime version dict (defensive — no attribute assumptions) ──
-def _get_version(module, fallback: str = "unknown") -> str:
-    """Safely extract __version__ from any module."""
-    for attr in ("__version__", "version", "VERSION"):
-        try:
-            return str(getattr(module, attr))
-        except AttributeError:
-            continue
-    try:
-        import importlib.metadata
-        return importlib.metadata.version(module.__name__.split(".")[0])
-    except Exception:
-        return fallback
-
 import plotly as _plotly_top
-
-_VERSIONS: dict = {
-    "python":    sys.version.split()[0],
-    "streamlit": _get_version(st),
-    "pandas":    _get_version(pd),
-    "numpy":     _get_version(np),
-    "scipy":     _get_version(scipy),
-    "plotly":    _get_version(_plotly_top),   # top-level, never px
-}
-logging.info("OSCM runtime: %s", _VERSIONS)
 
 # ============================================================
 # PAGE CONFIGURATION
 # ============================================================
 st.set_page_config(
-    page_title="OSCM Simulator – Enhanced Edition",
+    page_title="OSCM Simulator",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -103,9 +37,6 @@ st.set_page_config(
             "📊 **OSCM Interactive Simulator**\n\n"
             "Based on Jacobs & Chase — *Operations and Supply Chain Management*, "
             "17th ed. (McGraw-Hill, 2024).\n\n"
-            f"Python {_VERSIONS['python']} · "
-            f"Streamlit {_VERSIONS['streamlit']} · "
-            f"Pandas {_VERSIONS['pandas']}"
         ),
     },
 )
@@ -142,8 +73,7 @@ def init_session_state():
         "sqc_quiz_streak":  0,
 
         # ── Diagnostics ───────────────────────────────────────
-        "app_load_count":   0,
-        "runtime_versions": _VERSIONS,   # safe — _VERSIONS defined above
+        "app_load_count":   0
     }
     for key, val in defaults.items():
         if key not in st.session_state:
