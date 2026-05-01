@@ -165,29 +165,34 @@ def _get_palette_cached(dark: bool) -> dict:
     d = dark
     return {
         # ── Backgrounds ──────────────────────────────────────
-        "bg_app":           "#0f172a" if d else "#f8fafc",
+        "bg_app":           "#0f172a" if d else "#f3f6fb",
         "bg_card":          "#1e293b" if d else "#ffffff",
-        "bg_secondary":     "#1e293b" if d else "#f1f5f9",
+        "bg_secondary":     "#1e293b" if d else "#eef2f7",
         "bg_input":         "#334155" if d else "#ffffff",
-        "bg_code":          "#0f172a" if d else "#f1f5f9",
+        "bg_code":          "#0f172a" if d else "#eef2f7",
 
         # ── Text ─────────────────────────────────────────────
-        # Light ratios on white: primary #0f172a≈19:1, secondary #374151≈9:1,
-        # muted #4b5563≈7:1 — all WCAG AAA.
+        # Light ratios on white: primary #0f172a≈19:1, secondary #1f2937≈14:1,
+        # muted #334155≈10:1 — all WCAG AAA.
         "text_primary":     "#e2e8f0" if d else "#0f172a",
-        "text_secondary":   "#94a3b8" if d else "#374151",
-        "text_muted":       "#64748b" if d else "#4b5563",
+        "text_secondary":   "#94a3b8" if d else "#1f2937",
+        "text_muted":       "#64748b" if d else "#334155",
         "text_inverse":     "#0f172a" if d else "#ffffff",   # text on accent bg
 
         # ── Borders ──────────────────────────────────────────
-        "border":           "#334155" if d else "#e2e8f0",
-        "border_strong":    "#475569" if d else "#cbd5e1",
+        "border":           "#334155" if d else "#cbd5e1",
+        "border_strong":    "#475569" if d else "#94a3b8",
 
-        # ── Accent (Indigo) ──────────────────────────────────
-        # Dark #818cf8 on #0f172a ≈ 7:1; Light #4f46e5 on white ≈ 5.9:1
-        "accent":           "#818cf8" if d else "#4f46e5",
-        "accent_hover":     "#6366f1" if d else "#3730a3",
-        "accent_soft":      "rgba(129,140,248,0.15)" if d else "rgba(99,102,241,0.08)",
+        # ── Accent (Blue/Indigo) ─────────────────────────────
+        # Light primary #1d4ed8 on white ≈ 6.7:1; hover #1e3a8a ≈ 10.4:1.
+        "accent":           "#818cf8" if d else "#1d4ed8",
+        "accent_hover":     "#6366f1" if d else "#1e3a8a",
+        "accent_soft":      "rgba(129,140,248,0.15)" if d else "rgba(29,78,216,0.12)",
+        "button_bg":        "#4f46e5" if d else "#1d4ed8",
+        "button_hover_bg":  "#6366f1" if d else "#1e3a8a",
+        "button_text":      "#ffffff",
+        "button_secondary_bg": "#1e293b" if d else "#ffffff",
+        "button_secondary_text": "#e2e8f0" if d else "#1d4ed8",
 
         # ── Semantic: Success (Emerald) ──────────────────────
         # Light: #15803d on #f0fdf4 ≈ 7.2:1
@@ -333,7 +338,7 @@ def _get_theme_css_cached(dark: bool) -> str:
         --shadow-sm:        0 1px 4px rgba(0,0,0,0.08);
         --shadow-md:        0 4px 16px rgba(0,0,0,0.12);
         --shadow-lg:        0 8px 32px rgba(0,0,0,0.18);
-        --shadow-accent:    0 4px 16px rgba(99,102,241,0.25);
+        --shadow-accent:    0 4px 16px rgba(29,78,216,0.24);
         --transition:       all 0.2s ease;
         --font-sans:        'Inter', system-ui, -apple-system, sans-serif;
         --font-mono:        'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -388,6 +393,16 @@ def _get_theme_css_cached(dark: bool) -> str:
     .stRadio div[role="radiogroup"] label,
     .stCheckbox div[data-testid="stCheckbox"] label {{
         color: {p['text_primary']} !important;
+    }}
+    .stApp [data-testid="stMarkdownContainer"],
+    .stApp [data-testid="stMarkdownContainer"] p,
+    .stApp [data-testid="stMarkdownContainer"] li {{
+        color: {p['text_primary']};
+    }}
+    .stApp [data-testid="stMarkdownContainer"] small,
+    .stApp [data-testid="stMarkdownContainer"] .caption,
+    .stApp [data-testid="stCaptionContainer"] {{
+        color: {p['text_muted']} !important;
     }}
 
     /* ── Scrollbar ───────────────────────────────────────── */
@@ -518,9 +533,9 @@ def _get_theme_css_cached(dark: bool) -> str:
         font-size: 0.82rem;
         color: {p['text_secondary']};
         margin-top: 0.35rem;
-        font-weight: 500;
+        font-weight: 650;
     }}
-    .metric-card.highlight .metric-label {{ color: rgba(255,255,255,0.8); }}
+    .metric-card.highlight .metric-label {{ color: rgba(255,255,255,0.94); }}
     .metric-delta             {{ font-size: 0.78rem; margin-top: 0.2rem; font-weight: 600; }}
     .metric-delta.positive    {{ color: {p['success_text']}; }}
     .metric-delta.negative    {{ color: {p['danger_text']}; }}
@@ -977,16 +992,100 @@ def _get_theme_css_cached(dark: bool) -> str:
     /* Sidebar nav buttons */
     section[data-testid="stSidebar"] .stButton button {{
         background: transparent;
-        color: {p['text_primary']};
+        color: {p['text_primary']} !important;
         border: 1px solid transparent;
         text-align: left;
         font-size: 0.85rem;
+        font-weight: 650;
         transition: var(--transition);
+    }}
+    section[data-testid="stSidebar"] .stButton button p,
+    section[data-testid="stSidebar"] .stButton button span {{
+        color: inherit !important;
+        font-weight: inherit;
     }}
     section[data-testid="stSidebar"] .stButton button:hover {{
         background: {p['accent_soft']};
         border-color: {p['accent']};
-        color: {p['accent']};
+        color: {p['accent_hover']} !important;
+    }}
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .stButton > button,
+    div[data-testid="stButton"] > button,
+    button[kind="primary"] {{
+        background: {p['button_bg']} !important;
+        color: {p['button_text']} !important;
+        border: 1px solid {p['button_bg']} !important;
+        border-radius: var(--radius-sm);
+        font-weight: 750;
+        letter-spacing: 0.01em;
+        box-shadow: 0 1px 2px rgba(15,23,42,0.14);
+    }}
+    .stButton > button:hover,
+    div[data-testid="stButton"] > button:hover,
+    button[kind="primary"]:hover {{
+        background: {p['button_hover_bg']} !important;
+        border-color: {p['button_hover_bg']} !important;
+        color: {p['button_text']} !important;
+        box-shadow: 0 4px 12px rgba(15,23,42,0.18);
+        transform: translateY(-1px);
+    }}
+    .stButton > button:focus-visible,
+    div[data-testid="stButton"] > button:focus-visible {{
+        outline: 3px solid {p['accent_soft']} !important;
+        outline-offset: 2px;
+    }}
+    .stDownloadButton button,
+    button[kind="secondary"] {{
+        background: {p['button_secondary_bg']} !important;
+        color: {p['button_secondary_text']} !important;
+        border: 1px solid {p['accent']} !important;
+        font-weight: 700;
+    }}
+    .stDownloadButton button:hover,
+    button[kind="secondary"]:hover {{
+        background: {p['accent_soft']} !important;
+        color: {p['accent_hover']} !important;
+        border-color: {p['accent_hover']} !important;
+    }}
+    section[data-testid="stSidebar"] .stButton button {{
+        background: transparent !important;
+        color: {p['text_primary']} !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
+        text-align: left;
+    }}
+    section[data-testid="stSidebar"] .stButton button p,
+    section[data-testid="stSidebar"] .stButton button span {{
+        color: inherit !important;
+        font-weight: 650;
+    }}
+    section[data-testid="stSidebar"] .stButton button:hover {{
+        background: {p['accent_soft']} !important;
+        border-color: {p['accent']} !important;
+        color: {p['accent_hover']} !important;
+        transform: none;
+    }}
+    .stApp .stButton button p,
+    .stApp .stButton button span,
+    .stApp .stButton button [data-testid="stMarkdownContainer"] p,
+    .stApp div[data-testid="stButton"] button p,
+    .stApp div[data-testid="stButton"] button span,
+    .stApp .stDownloadButton button p,
+    .stApp .stDownloadButton button span {{
+        color: {p['button_text']} !important;
+        font-weight: inherit;
+    }}
+    section[data-testid="stSidebar"] .stButton button p,
+    section[data-testid="stSidebar"] .stButton button span,
+    section[data-testid="stSidebar"] .stButton button [data-testid="stMarkdownContainer"] p {{
+        color: {p['text_primary']} !important;
+    }}
+    section[data-testid="stSidebar"] .stButton button:hover p,
+    section[data-testid="stSidebar"] .stButton button:hover span,
+    section[data-testid="stSidebar"] .stButton button:hover [data-testid="stMarkdownContainer"] p {{
+        color: {p['accent_hover']} !important;
     }}
 
     /* ── Streamlit Input Widgets ─────────────────────────── */
@@ -994,7 +1093,7 @@ def _get_theme_css_cached(dark: bool) -> str:
     .stNumberInput > div > div > input,
     .stTextArea textarea {{
         background: {p['bg_input']};
-        color: {p['text_primary']};
+        color: {p['text_primary']} !important;
         border-color: {p['border']};
         border-radius: var(--radius-sm);
         transition: border-color 0.2s, box-shadow 0.2s;
@@ -1015,9 +1114,13 @@ def _get_theme_css_cached(dark: bool) -> str:
     .stSelectbox > div > div,
     .stMultiSelect > div > div {{
         background: {p['bg_input']};
-        color: {p['text_primary']};
+        color: {p['text_primary']} !important;
         border-color: {p['border']};
         border-radius: var(--radius-sm);
+    }}
+    .stSelectbox [data-baseweb="select"] *,
+    .stMultiSelect [data-baseweb="select"] * {{
+        color: {p['text_primary']} !important;
     }}
 
     /* ── Expanders ───────────────────────────────────────── */
@@ -1048,20 +1151,25 @@ def _get_theme_css_cached(dark: bool) -> str:
     /* ── Tabs ────────────────────────────────────────────── */
     button[data-baseweb="tab"] {{
         background: transparent;
-        color: {p['text_secondary']};
+        color: {p['text_secondary']} !important;
         border-bottom: 2px solid transparent;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.9rem;
         transition: var(--transition);
         padding-bottom: 0.5rem;
     }}
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span {{
+        color: inherit !important;
+        font-weight: inherit;
+    }}
     button[data-baseweb="tab"]:hover {{
-        color: {p['accent']};
+        color: {p['accent_hover']} !important;
         background: {p['accent_soft']};
         border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     }}
     button[data-baseweb="tab"][aria-selected="true"] {{
-        color: {p['accent']};
+        color: {p['accent_hover']} !important;
         border-bottom-color: {p['accent']};
     }}
     div[data-testid="stTabs"] > div > div[role="tablist"] {{
@@ -1079,6 +1187,7 @@ def _get_theme_css_cached(dark: bool) -> str:
     div[data-testid="stMetricLabel"] p {{
         color: {p['text_secondary']} !important;
         font-size: 0.85rem;
+        font-weight: 650;
     }}
     div[data-testid="stMetricDelta"] {{ font-size: 0.82rem; font-weight: 600; }}
 
